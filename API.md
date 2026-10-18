@@ -94,6 +94,8 @@ Notas:
 ```
 Categorías vistas en los datos: "Estaciones Operativas", "Sillería Ergonómica" (lista completa: pedir al backend).
 
+Lista que usa el frontend en `src/mocks/categorias.js` (pendiente de confirmar con el backend): Escritorios (`escritorios`), Sillería (`silleria`), Comedores (`comedores`), Peinadores (`peinadores`), Camillas (`camillas`).
+
 ---
 
 ## Citas — `/api/v1/citas`

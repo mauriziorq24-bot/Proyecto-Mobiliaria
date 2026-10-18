@@ -233,7 +233,7 @@ Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
 
 **Fuente única:** Figtree (Google Fonts, pesos 400/500/600/700/800), con `system-ui, sans-serif` de respaldo.
 
-**Character:** sans geométrica cálida y redondeada; cercana para quien llega de Instagram y lo bastante sobria para la empresa que equipa una oficina.
+**Character:** sans geométrica cálida y redondeada; cercana para quien llega de Instagram y lo bastante sobria para quien compra en volumen (empresas, negocios).
 
 ### Hierarchy
 - **Display** (800, 28px → 36px, 1.2): título del inicio.
@@ -358,6 +358,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - Sacar categorías y tipos de espacio de la API.
 - Usar el mismo movimiento en todo el sitio (~200ms, `ease-out`) y respetar `prefers-reduced-motion` (cambio instantáneo).
 - Manejar en cada vista los estados cargando, error y vacío.
+- Alternar en textos, ejemplos e imágenes oficinas, negocios (salones, barberías, spas, consultorios) y espacios en casa.
 - Marcar los datos pendientes (dirección y horario del showroom, WhatsApp, teléfono, email) como pendientes, no inventarlos.
 
 **Don't**
@@ -366,4 +367,5 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - No aplicar textura a varias muestras a la vez ni a otros elementos.
 - No agregar sombras a tarjetas en reposo.
 - No inventar tipos de espacio, testimonios, cifras ni colores de material.
+- No escribir como si el sitio fuera solo para empresas (p. ej. "equipe su corporación"); el tono es profesional pero cercano para todos.
 - No enlazar imágenes del CDN de Instagram.

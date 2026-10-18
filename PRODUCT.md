@@ -8,14 +8,17 @@ web
 
 ## Users
 
-- **Principal: empresas (B2B).** Gerentes, compras o RR.HH. que equipan oficinas completas o varias estaciones a la vez. Piden cotización o visitan el showroom antes de decidir. Necesitan confianza profesional: ver bien el producto, sus materiales y medidas, y saber que hay una empresa seria detrás.
-- **Secundario: personas y emprendedores** que llegan desde Instagram buscando una silla o un escritorio para su casa u oficina pequeña. Necesitan encontrar rápido lo que vieron y cerrar sin fricción.
+La empresa vende a todo público interesado; no hay un segmento principal. Los clientes típicos son:
 
-La web debe transmitir confianza a las empresas y, a la vez, ser simple de navegar para cualquiera.
+- **Empresas y oficinas** que equipan varias estaciones a la vez y piden cotización. Necesitan confianza profesional: ver bien el producto, sus materiales y medidas, y saber que hay una empresa seria detrás.
+- **Negocios como salones de belleza, barberías, spas o consultorios** que compran peinadores, camillas o sillería. Necesitan ubicar rápido la pieza adecuada para su local y saber si pueden verla en el showroom.
+- **Personas y emprendedores** que llegan desde Instagram buscando una pieza para su casa u oficina pequeña. Necesitan encontrar rápido lo que vieron y cerrar sin fricción.
+
+La web debe sentirse profesional y confiable para quien compra en volumen, pero cercana y simple para cualquiera. Ningún segmento debe sentirse excluido por el tono o las imágenes.
 
 ## Product Purpose
 
-Tienda online propia de una empresa venezolana de mobiliario de oficina (sillas, escritorios, mesas, comedores). Hoy venden solo por Instagram (@mobiliariodeoficina) y cierran ventas por mensaje directo; el sitio les da un catálogo ordenado, buscable y filtrable, y un camino claro de la exploración a la venta.
+Tienda online propia de una empresa venezolana de mobiliario (sillas, escritorios, mesas, comedores, peinadores, camillas) para oficinas, negocios y hogares. Hoy venden solo por Instagram (@mobiliariodeoficina) y cierran ventas por mensaje directo; el sitio les da un catálogo ordenado, buscable y filtrable, y un camino claro de la exploración a la venta.
 
 Éxito: que un cliente pueda armar su lista de productos y enviar una **solicitud de cotización**, escribir por WhatsApp con esa lista o **agendar una visita al showroom**, sin depender de un intercambio de mensajes en Instagram.
 
@@ -29,7 +32,7 @@ Según la empresa, lo que la distingue es: **showroom físico** (se pueden ver y
 - El precio es **referencial** (`precioReferencialUsd`): el precio final lo da la empresa al responder la cotización. Mostrarlo como "Precio referencial" / "Desde $X", nunca como precio de compra cerrado.
 - Flujo de compra:
   1. El cliente arma su lista en el carrito (Pinia + localStorage).
-  2. **Flujo principal:** envía la lista como solicitud de cotización con sus datos (nombre, empresa, teléfono, email).
+  2. **Flujo principal:** envía la lista como solicitud de cotización con sus datos (nombre, teléfono, email y, si aplica, empresa o negocio).
   3. **Alternativa rápida:** botón "Enviar por WhatsApp" que abre un mensaje con la lista de productos (así cierran hoy los clientes de Instagram).
   4. **Opcional:** agendar una visita o asesoría en el showroom (`POST /api/v1/citas`).
 - Proyecto académico en equipo: frontend (Vue) y backend (Spring Boot) separados; el contrato vive en `API.md`.
@@ -60,7 +63,8 @@ Según la empresa, lo que la distingue es: **showroom físico** (se pueden ver y
 ## Product Principles
 
 1. **Cotizar, no cobrar.** El precio es referencial y la venta se cierra con una persona; cada pantalla debe acercar al cliente a pedir cotización, escribir por WhatsApp o visitar el showroom.
-2. **Confianza profesional sin complicar.** Información completa (materiales, medidas, fotos reales) para la empresa que equipa una oficina, en una navegación que una persona que viene de Instagram entiende al instante.
+2. **Confianza profesional sin complicar.** Información completa (materiales, medidas, fotos reales) para quien compra en volumen, en una navegación que cualquier persona que viene de Instagram entiende al instante.
 3. **El showroom es la prueba.** Lo que se puede ver en persona se señala y se conecta con agendar una visita.
-4. **Pensar en el pedido de una oficina, no solo de una pieza.** Armar listas con varios productos y cantidades debe ser fácil.
+4. **Una pieza o una oficina completa.** Armar listas con varios productos y cantidades debe ser fácil, y comprar una sola pieza también.
 5. **Fiel al catálogo real.** Productos, fotos y datos salen de la empresa y de la API; nada inventado ni enlazado a fuentes que caducan.
+6. **Nadie queda fuera.** Textos, ejemplos e imágenes alternan oficinas, negocios (salones, barberías, spas, consultorios) y espacios en casa; ninguno se presenta como el cliente "de verdad".
