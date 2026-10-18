@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env
 .env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -32,3 +33,4 @@ skills-lock.json
 
 # Claude Code
 CLAUDE.md
+.claude/settings.local.json
