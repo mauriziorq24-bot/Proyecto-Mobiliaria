@@ -34,3 +34,8 @@ skills-lock.json
 # Claude Code
 CLAUDE.md
 .claude/settings.local.json
+
+# Impeccable: solo se suben config.json y design.json
+.impeccable/*
+!.impeccable/config.json
+!.impeccable/design.json
