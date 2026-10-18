@@ -271,6 +271,7 @@ Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
 - El carrito muestra cantidad y total referencial; abre un drawer lateral.
 - Categorías desde `GET /api/v1/categorias`; "Todas" abre un panel con la lista completa. Activa: subrayado Azul Silla de 2px.
 - Al hacer scroll la fila blanca se oculta; la azul queda fija con sombra `sm`.
+  - **Pendiente (fase de pulido):** ocultar la fila de categorías según la dirección del scroll. Hoy la franja azul es fija y toma la sombra `sm`, y la fila blanca simplemente se desplaza con la página.
 
 ### Header — móvil (<768px)
 ```
@@ -283,6 +284,7 @@ Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
 ```
 - "Agendar visita" es siempre el primer chip (`chip-visit`).
 - La fila de chips se oculta al bajar y reaparece al subir.
+  - **Pendiente (fase de pulido):** hoy la fila de chips no es fija y se va con la página; falta que reaparezca al subir.
 - Menú ☰ (drawer): cuenta (ingresar / registrarse), todas las categorías, en showroom, agendar visita, contacto.
 
 ### Barra de presupuesto — móvil

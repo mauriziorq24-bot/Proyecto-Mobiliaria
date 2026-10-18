@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import BaseBadge from './BaseBadge.vue'
 
 const props = defineProps({
@@ -25,7 +26,11 @@ const props = defineProps({
   badge: { type: Number, default: null },
   disabled: { type: Boolean, default: false },
   type: { type: String, default: 'button' },
+  // Con "to" se dibuja como RouterLink (p. ej. el ícono de favoritos lleva a /favoritos).
+  to: { type: [String, Object], default: null },
 })
+
+const isLink = computed(() => Boolean(props.to))
 
 const emit = defineEmits(['click'])
 
@@ -50,9 +55,11 @@ const accessibleLabel = computed(() => (showBadge.value ? `${props.label}, ${pro
 </script>
 
 <template>
-  <button
-    :type="type"
-    :disabled="disabled"
+  <component
+    :is="isLink ? RouterLink : 'button'"
+    :to="to || undefined"
+    :type="isLink ? undefined : type"
+    :disabled="isLink ? undefined : disabled"
     :aria-label="accessibleLabel"
     :title="label"
     class="relative inline-flex shrink-0 items-center justify-center rounded-md transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-[0.94] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
@@ -69,5 +76,5 @@ const accessibleLabel = computed(() => (showBadge.value ? `${props.label}, ${pro
       :class="variant === 'inverse' ? 'ring-brand' : 'ring-surface'"
       aria-hidden="true"
     />
-  </button>
+  </component>
 </template>

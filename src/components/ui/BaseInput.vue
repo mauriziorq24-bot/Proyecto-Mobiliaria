@@ -11,6 +11,8 @@ const props = defineProps({
   // v-model en el padre se traduce a la prop "modelValue" + el evento "update:modelValue".
   modelValue: { type: [String, Number], default: '' },
   label: { type: String, required: true },
+  // Oculta la etiqueta a la vista pero la deja para lectores de pantalla (p. ej. el buscador del header).
+  hideLabel: { type: Boolean, default: false },
   type: {
     type: String,
     default: 'text',
@@ -41,7 +43,7 @@ function handleInput(event) {
 
 <template>
   <div class="flex flex-col gap-1.5">
-    <label :for="inputId" class="text-small font-semibold text-ink">
+    <label :for="inputId" class="text-small font-semibold text-ink" :class="hideLabel && 'sr-only'">
       {{ label }}
       <span v-if="required" class="text-ink-muted" aria-hidden="true">*</span>
     </label>

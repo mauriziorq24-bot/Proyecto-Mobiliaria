@@ -1,6 +1,7 @@
 <script setup>
 import { LoaderCircle } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 // Props: los datos que el componente padre le pasa a este botón.
 // Cada prop declara su tipo, su valor por defecto y, si hace falta, un validador.
@@ -27,7 +28,18 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   // Ocupa todo el ancho disponible (útil en móvil y en formularios).
   block: { type: Boolean, default: false },
+  // Si lleva "to", se dibuja como RouterLink (navegación interna);
+  // si lleva "href", como <a> (enlaces externos: WhatsApp, Instagram…). Si no, es un <button>.
+  to: { type: [String, Object], default: null },
+  href: { type: String, default: null },
 })
+
+const tag = computed(() => {
+  if (props.to) return RouterLink
+  if (props.href) return 'a'
+  return 'button'
+})
+const isButton = computed(() => tag.value === 'button')
 
 // Emits: los eventos que este botón le avisa al padre.
 // Al declarar "click" aquí, Vue deja de pasarlo directo al <button>
@@ -67,10 +79,14 @@ const classes = computed(() => [
 </script>
 
 <template>
-  <button
-    :type="type"
+  <!-- <component :is> elige la etiqueta: <button>, <a> o RouterLink -->
+  <component
+    :is="tag"
+    :to="to || undefined"
+    :href="href || undefined"
+    :type="isButton ? type : undefined"
     :class="classes"
-    :disabled="disabled"
+    :disabled="isButton ? disabled : undefined"
     :aria-disabled="loading || undefined"
     :aria-busy="loading || undefined"
     @click="handleClick"
@@ -89,5 +105,5 @@ const classes = computed(() => [
       <LoaderCircle class="animate-spin" aria-hidden="true" />
       <span class="sr-only">Cargando</span>
     </span>
-  </button>
+  </component>
 </template>
