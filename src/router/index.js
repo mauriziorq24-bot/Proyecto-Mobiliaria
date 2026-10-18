@@ -13,6 +13,8 @@ const routes = [
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
   { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue') },
   { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue') },
+  // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
+  { path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue') },
   // Cualquier ruta que no coincida con las anteriores muestra la página 404.
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue') },
 ]

@@ -1,1 +1,151 @@
 @import "tailwindcss";
+
+/*
+  Tokens del sistema de diseño (DESIGN.md).
+  En Tailwind v4 cada variable de @theme crea utilidades automáticamente:
+    --color-brand      → bg-brand, text-brand, border-brand, ring-brand…
+    --radius-md        → rounded-md
+    --shadow-lg        → shadow-lg
+    --text-headline    → text-headline (tamaño + interlineado + peso)
+  "static" hace que TODAS las variables existan en :root aunque ninguna clase las use
+  (por ejemplo los colores de muestras, que se leerán con var() desde un mapa en JS).
+*/
+@theme static {
+  /* Fuente única: Figtree (se carga en index.html) */
+  --font-sans: "Figtree", system-ui, sans-serif;
+
+  /* Marca */
+  --color-brand: #1f80e0;
+  --color-brand-deep: #1566b8;
+  --color-brand-deeper: #12579f;
+  --color-brand-tint: #e8f1fc;
+  --color-showroom-gold: #e4a11b;
+  --color-showroom-gold-deep: #cf8f10;
+
+  /* Neutros */
+  --color-ground: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-line: #dce2ea;
+  --color-ink: #14171c;
+  --color-ink-muted: #5b6573;
+  --color-footer-mesh: #14171c;
+
+  /* Canales y estados */
+  --color-whatsapp: #0f7a43;
+  --color-whatsapp-deep: #0b6337;
+  --color-success: #1e7f4f;
+  --color-success-bg: #e7f5ee;
+  --color-error: #c62f2f;
+  --color-error-bg: #fdecec;
+  --color-warning: #9a5b00;
+  --color-warning-bg: #fff4e0;
+
+  /* Muestras por tipo de espacio */
+  --color-swatch-gerencial: #1f80e0;
+  --color-swatch-operativo: #2b2f36;
+  --color-swatch-reserve-3: #6e7783;
+  --color-swatch-reserve-4: #8a6a4b;
+  --color-swatch-reserve-5: #c9cfd7;
+
+  /* Escala tipográfica (corta: la jerarquía se gana con peso) */
+  --text-display: clamp(1.75rem, 1.2rem + 2vw, 2.25rem);
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 800;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-headline: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+  --text-headline--line-height: 1.22;
+  --text-headline--font-weight: 700;
+  --text-headline--letter-spacing: -0.015em;
+
+  --text-title: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-title--line-height: 1.28;
+  --text-title--font-weight: 700;
+
+  --text-card-title: 1rem;
+  --text-card-title--line-height: 1.35;
+  --text-card-title--font-weight: 600;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.4;
+  --text-small--font-weight: 500;
+
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 700;
+  --text-label--letter-spacing: 0.12em;
+
+  --text-price: 1rem;
+  --text-price--line-height: 1.3;
+  --text-price--font-weight: 700;
+
+  --text-price-large: 1.75rem;
+  --text-price-large--line-height: 1.15;
+  --text-price-large--font-weight: 800;
+
+  /* Radios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Sombras: solo para lo que flota */
+  --shadow-sm: 0 1px 2px rgb(20 23 28 / 0.06);
+  --shadow-lg: 0 10px 28px rgb(20 23 28 / 0.14);
+
+  /* Movimiento: el mismo en todo el sitio */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Small sube a 14px desde tablet, como indica DESIGN.md */
+@media (min-width: 768px) {
+  :root {
+    --text-small: 0.875rem;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-ground font-sans text-body text-ink antialiased;
+  }
+
+  /* Superficies del navegador también llevan la marca */
+  ::selection {
+    background-color: var(--color-brand-tint);
+    color: var(--color-ink);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-brand);
+  }
+
+  /* Foco visible: anillo Azul Silla de 2px con 2px de separación */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  /* Con movimiento reducido los cambios son instantáneos.
+     Las animaciones (como el spinner de carga) se mantienen: son información, no adorno. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+    }
+  }
+}
