@@ -73,6 +73,10 @@ export async function obtenerProductos({ buscar, tipoEspacio, enShowroom, catego
 
 // GET /api/v1/productos/{id} → ProductoResponse
 export async function obtenerProductoPorId(id) {
+  // Un id que no es un entero (p. ej. /producto/abc) nunca existe. Además el backend responde
+  // a eso con 401 "Credenciales invalidas" (ver API.md), que se confundiría con una sesión vencida.
+  if (!/^\d+$/.test(String(id))) throw notFoundError('Producto no encontrado')
+
   if (useMocks) {
     const producto = mockProductos.find((p) => p.id === Number(id))
     await fakeDelay(null)

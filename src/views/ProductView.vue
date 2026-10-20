@@ -49,8 +49,10 @@ watch(
   { immediate: true },
 )
 
-// El backend responde 404 si el id no existe (y 400 si no es un número): ambos son "no encontrado".
-const notFound = computed(() => [400, 404].includes(error.value?.response?.status))
+// 404 = "no encontrado". Hoy el backend responde 500 a un id inexistente (pendiente en API.md),
+// así que ese caso cae en el estado de error genérico hasta que lo corrijan.
+// Los id que no son números ya los descarta el servicio con un 404 propio.
+const notFound = computed(() => error.value?.response?.status === 404)
 
 // Título de la pestaña: el nombre llega con la API, así que el router no lo puede fijar de antemano.
 // El chequeo de route.name evita pisar el título de la página siguiente al salir.

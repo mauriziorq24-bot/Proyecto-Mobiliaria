@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend).
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok).
 Swagger UI: `http://localhost:8080/swagger-ui/index.html` · Spec JSON: `http://localhost:8080/v3/api-docs`
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -17,7 +17,8 @@ Swagger UI: `http://localhost:8080/swagger-ui/index.html` · Spec JSON: `http://
 El backend tendrá un seed que carga:
 - **Categorías (5):** `escritorios`, `silleria`, `comedores`, `peinadores`, `camillas` (ver [Categorías](#categorías--apiv1categorias)).
 - **`tipoEspacio`:** `OFICINA`, `HOGAR`, `SALON_BELLEZA`, `CONSULTORIO` (ver [valores](#valores-de-tipoespacio)).
-- **Imágenes de productos** en `/uploads/productos/` (ver pendientes: el backend todavía tiene que servir esa carpeta).
+- **Imágenes de productos:** el plan es servirlas en `/uploads/productos/`, pero **hoy el seed trae URLs absolutas de Unsplash** (`https://images.unsplash.com/...`), que el navegador carga directamente sin pasar por el proxy (ver pendientes 4 y 19).
+- **15 productos**, 3 por categoría, todos con `categoriaId` y `categoriaNombre` correctos.
 
 ---
 
@@ -65,6 +66,29 @@ Response 200: arreglo de `ProductoResponse`.
 ### `GET /api/v1/productos/{id}`
 Response 200: un `ProductoResponse`.
 
+Errores reales (probados el 20/10/2026; ver pendientes 20 y 21):
+
+| Caso | Código | Content-Type | Cuerpo |
+|---|---|---|---|
+| `id` numérico que no existe (`99999`, `0`, `-1`) | **`500`** (debería ser `404`) | `application/json` | Error por defecto de Spring Boot (abajo) |
+| `id` no numérico (`abc`, `1.5`) | **`401`** (debería ser `400`) | `text/plain` | `Credenciales invalidas For input string: "abc"` |
+
+```json
+// 500 cuando el id no existe (el campo "trace" trae el stack trace completo de Java; aquí recortado)
+{
+  "timestamp": "2026-10-20T22:41:46.894Z",
+  "status": 500,
+  "error": "Internal Server Error",
+  "trace": "java.lang.RuntimeException: Producto no encontrado con ID: 99999\r\n\tat java27.backend...",
+  "message": "Producto no encontrado con ID: 99999",
+  "path": "/api/v1/productos/99999"
+}
+```
+
+Qué hace el frontend mientras tanto:
+- Los `id` que no son enteros los descarta `productoService` **sin llamar a la API** y los trata como "Producto no encontrado".
+- El `500` de un `id` inexistente se muestra como error genérico ("No pudimos cargar este producto", con *Reintentar*). Cuando el backend responda `404`, la ficha mostrará "Producto no encontrado" sin cambiar nada más.
+
 ### `POST /api/v1/productos`
 Crea un producto (uso administrativo). Body: `ProductoRequest` (igual a `ProductoResponse` sin `id` ni `categoriaNombre`).
 
@@ -87,6 +111,7 @@ Actualiza un producto (uso administrativo). Body: `ProductoRequest` (el mismo de
   "imagenes": ["/uploads/productos/escritorio-bench.jpg"]
 }
 ```
+> Hoy `imagenes` trae URLs absolutas de Unsplash, no rutas `/uploads/...`. El frontend usa cada valor tal cual en `<img src>`, así que acepta ambas formas. `precioReferencialUsd` llega con decimales (`480.00`), como número JSON.
 
 ### Valores de `tipoEspacio`
 
@@ -173,7 +198,7 @@ Cancela (elimina) una cita.
    - **Opción A:** el backend los crea (`/api/v1/carrito`, `/api/v1/favoritos`, `/api/v1/pedidos`).
    - **Opción B:** carrito y favoritos viven en el frontend (Pinia + localStorage) y el "checkout" se convierte en **solicitud de cotización** (vía cita, WhatsApp o un endpoint `POST /api/v1/cotizaciones`). Encaja con `precioReferencialUsd`.
 2. **Filtro por categoría:** `GET /api/v1/productos` no acepta categoría. Pedir `?categoria={slug}` o `?categoriaId={id}`.
-3. **`categoriaId` llega `null`** en los productos de ejemplo: la relación producto↔categoría no se está guardando o no se mapea en el DTO.
+3. ~~**`categoriaId` llega `null`**~~ ✅ **Resuelto** (20/10/2026): los 15 productos del seed traen `categoriaId`, y coincide con el `id` de `GET /api/v1/categorias`. Las migas de pan de la ficha resuelven la categoría por `categoriaId`.
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).
 
 ### Necesarios para el login
@@ -194,6 +219,11 @@ Cancela (elimina) una cita.
 15. **`POST /api/v1/categorias` debe requerir token de admin.**
 16. **`GET /api/v1/citas/{codigoCita}`:** agregarlo, para que el cliente pueda consultar su cita antes de modificarla o cancelarla.
 17. **Seguridad de `PUT` y `DELETE /api/v1/citas/{codigoCita}`:** definir quién puede usarlos (¿basta con conocer el `codigoCita`?, ¿se pide también el email?, ¿requiere token?). Si el código es adivinable (p. ej. secuencial), cualquiera podría cambiar o borrar citas ajenas.
+
+### Detectados al probar la ficha de producto (20/10/2026)
+19. **Imágenes rotas en el seed:** 3 URLs de Unsplash responden `404`: producto **2** (`photo-1497215848147-...`), **10** (`photo-1633534125867-...`) y **12** (`photo-1595514535310-...`). El frontend muestra el placeholder en su lugar, pero hay que cambiarlas. Además, los productos 8 y 9 usan la misma foto. Lo definitivo son las fotos reales de Instagram guardadas en `/uploads/productos/` (pendiente 4).
+20. **Un `id` inexistente devuelve `500` en vez de `404`.** `ProductoService.obtenerPorId` lanza una `RuntimeException` genérica; debería lanzar una excepción que termine en `404` (p. ej. `ResponseStatusException(HttpStatus.NOT_FOUND, ...)` o un `@ControllerAdvice`), con cuerpo `{ "message": "Producto no encontrado" }` (pendiente 9). **Seguridad:** la respuesta de error incluye el stack trace (`trace`); desactivarlo con `server.error.include-stacktrace=never`.
+21. **Un `id` no numérico devuelve `401` "Credenciales invalidas"** en un endpoint público. Parece que el manejo de errores de Spring Security convierte cualquier excepción en `401`; debería ser `400`. Es grave para el frontend: un `401` significa "sesión vencida", y el interceptor de axios cerrará la sesión y llevará al login (ver `CLAUDE.md`).
 
 ### CORS
 18. En desarrollo no hace falta: el frontend usa el proxy de Vite (ver `CLAUDE.md`). Solo falta confirmar CORS para el dominio de **producción** (`VITE_API_URL`).
