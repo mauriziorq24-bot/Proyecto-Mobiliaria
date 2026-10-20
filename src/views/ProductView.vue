@@ -176,7 +176,7 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
 
     <!-- Error de red o del servidor -->
     <div v-else-if="error" class="container-page py-12">
-      <BaseErrorState title="No pudimos cargar este producto" @retry="retry" />
+      <BaseErrorState title="No pudimos cargar este producto" :error="error" subject="este producto" @retry="retry" />
     </div>
 
     <template v-else-if="producto">

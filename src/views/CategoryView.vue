@@ -82,7 +82,12 @@ const conteo = computed(() => {
 <template>
   <!-- Error al cargar las categorías: no se puede saber si el slug existe -->
   <div v-if="categoriasError" class="container-page py-12">
-    <BaseErrorState title="No pudimos cargar esta categoría" @retry="retryCategorias" />
+    <BaseErrorState
+      title="No pudimos cargar esta categoría"
+      :error="categoriasError"
+      subject="esta categoría"
+      @retry="retryCategorias"
+    />
   </div>
 
   <!-- El slug no corresponde a ninguna categoría -->
@@ -168,7 +173,13 @@ const conteo = computed(() => {
     <section aria-labelledby="products-title" class="container-page py-8 md:py-10">
       <!-- Título solo para lectores de pantalla: une el h1 de la categoría con los h3 de las tarjetas -->
       <h2 id="products-title" class="sr-only">Productos de {{ categoria?.nombre ?? 'esta categoría' }}</h2>
-      <BaseErrorState v-if="productosError" title="No pudimos cargar los productos" @retry="loadProductos" />
+      <BaseErrorState
+        v-if="productosError"
+        title="No pudimos cargar los productos"
+        :error="productosError"
+        subject="los productos"
+        @retry="loadProductos"
+      />
       <ProductGrid v-else :productos="productos" :loading="productosLoading">
         <template #empty>
           <p class="text-card-title">Todavía no hay productos en {{ categoria?.nombre ?? 'esta categoría' }}</p>

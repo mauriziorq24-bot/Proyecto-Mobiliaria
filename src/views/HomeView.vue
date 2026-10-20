@@ -169,6 +169,8 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
         <BaseErrorState
           v-else-if="categoriasError"
           title="No pudimos cargar las categorías"
+          :error="categoriasError"
+          subject="las categorías"
           @retry="retryCategorias"
         />
 
@@ -200,6 +202,8 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
       <BaseErrorState
         v-if="productosError"
         title="No pudimos cargar los productos"
+        :error="productosError"
+        subject="los productos"
         @retry="loadProductos"
       />
       <!--

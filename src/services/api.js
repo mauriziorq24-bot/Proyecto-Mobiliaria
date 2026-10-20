@@ -5,6 +5,9 @@ import axios from 'axios'
 // los rewrites de vercel.json.
 const api = axios.create({
   baseURL: '',
+  // Sin límite, una petición colgada (p. ej. ngrok lento) dejaría la vista "cargando" para siempre.
+  // A los 15 s axios la corta y se muestra el error de conexión con "Reintentar".
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
     // Evita la página de advertencia de ngrok gratuito. Vercel reenvía los
@@ -14,6 +17,14 @@ const api = axios.create({
 })
 
 const HTML_RESPONSE_MESSAGE = 'El backend no respondió JSON: revisa que ngrok esté activo'
+// Código para reconocer ese error en errorMessages.js (no es un error de conexión de la persona).
+export const BACKEND_NOT_JSON = 'BACKEND_NOT_JSON'
+
+function backendNotJsonError() {
+  const error = new Error(HTML_RESPONSE_MESSAGE)
+  error.code = BACKEND_NOT_JSON
+  return error
+}
 
 // Si ngrok está caído o muestra su página de advertencia, llega HTML en vez de JSON.
 function isHtmlResponse(response) {
@@ -24,14 +35,14 @@ function isHtmlResponse(response) {
 api.interceptors.response.use(
   (response) => {
     if (isHtmlResponse(response)) {
-      return Promise.reject(new Error(HTML_RESPONSE_MESSAGE))
+      return Promise.reject(backendNotJsonError())
     }
     return response
   },
   (error) => {
     // ngrok también responde con HTML cuando el túnel está apagado (p. ej. 404).
     if (isHtmlResponse(error.response)) {
-      return Promise.reject(new Error(HTML_RESPONSE_MESSAGE))
+      return Promise.reject(backendNotJsonError())
     }
     return Promise.reject(error)
   },
