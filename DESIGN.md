@@ -41,6 +41,12 @@ typography:
     fontSize: "clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem)"
     fontWeight: 700
     lineHeight: 1.28
+  wordmark:
+    fontFamily: "Figtree, system-ui, sans-serif"
+    fontSize: "1.1875rem"
+    fontWeight: 800
+    lineHeight: 1.05
+    letterSpacing: "-0.01em"
   card-title:
     fontFamily: "Figtree, system-ui, sans-serif"
     fontSize: "1rem"
@@ -236,6 +242,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - **Display** (800, 28px → 36px, 1.2): título del inicio.
 - **Headline** (700, 24px → 30px, 1.22): título de página o de producto.
 - **Title** (700, 20px → 24px, 1.28): títulos de sección.
+- **Wordmark** (800, 19px, 1.05, −0.01em): solo el nombre "Mobiliario de Oficina" junto al logo, en header y footer (`text-wordmark`).
 - **Card title** (600, 16px, 1.35): nombre del producto en tarjetas; máximo 2 líneas.
 - **Body** (400, 16px, 1.5): texto general y descripciones, máximo ~70ch. 16px en inputs evita el zoom de iOS.
 - **Small** (500, 13px → 14px, 1.4): metadatos y ayudas.

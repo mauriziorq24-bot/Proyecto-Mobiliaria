@@ -41,6 +41,15 @@ const tag = computed(() => {
 })
 const isButton = computed(() => tag.value === 'button')
 
+// Cada etiqueta recibe solo su atributo de destino. RouterLink genera su propio href:
+// si además le llega la clave href (aunque valga undefined), Vue la aplica encima,
+// el <a> queda sin href y el teclado ya no puede llegar al enlace.
+const linkAttrs = computed(() => {
+  if (props.to) return { to: props.to }
+  if (props.href) return { href: props.href }
+  return {}
+})
+
 // Emits: los eventos que este botón le avisa al padre.
 // Al declarar "click" aquí, Vue deja de pasarlo directo al <button>
 // y somos nosotros quienes decidimos cuándo emitirlo.
@@ -82,8 +91,7 @@ const classes = computed(() => [
   <!-- <component :is> elige la etiqueta: <button>, <a> o RouterLink -->
   <component
     :is="tag"
-    :to="to || undefined"
-    :href="href || undefined"
+    v-bind="linkAttrs"
     :type="isButton ? type : undefined"
     :class="classes"
     :disabled="isButton ? disabled : undefined"

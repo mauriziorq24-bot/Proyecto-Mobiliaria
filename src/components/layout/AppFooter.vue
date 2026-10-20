@@ -28,7 +28,10 @@ const stripe = [
 ]
 
 const heading = 'mb-4 text-label text-white/60 uppercase'
-const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-white focus-visible:outline-white'
+// before: estira el área táctil 6px arriba y abajo: llena justo el espacio de 12px entre filas
+// (space-y-3), así el dedo acierta sin que las áreas de dos enlaces se pisen ni cambie el diseño.
+const link =
+  'relative text-white/80 transition-colors duration-200 ease-out before:absolute before:inset-x-0 before:-inset-y-1.5 hover:text-white focus-visible:outline-white'
 </script>
 
 <template>
@@ -37,12 +40,12 @@ const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-w
       <span v-for="color in stripe" :key="color" class="flex-1" :class="color" />
     </div>
 
-    <div class="mx-auto grid w-full max-w-[1280px] gap-10 px-4 py-12 md:grid-cols-2 md:px-6 lg:grid-cols-4 lg:gap-8 lg:px-8">
+    <div class="container-page grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
       <!-- Marca (desde tablet; en móvil ya está en el header) -->
       <section class="hidden md:order-1 md:block">
         <RouterLink to="/" class="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-white">
           <img :src="logoUrl" alt="" width="40" height="40" class="size-10 rounded-md" />
-          <span class="text-[1.1875rem] leading-[1.05] font-extrabold tracking-[-0.01em]">
+          <span class="text-wordmark">
             Mobiliario<br />de Oficina
           </span>
         </RouterLink>
@@ -65,7 +68,7 @@ const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-w
         <h2 class="md:hidden">
           <button
             type="button"
-            class="-mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between rounded-md px-1 py-2 text-label text-white/60 uppercase focus-visible:outline-white"
+            class="-mx-1 flex min-h-11 w-[calc(100%+0.5rem)] items-center justify-between rounded-md px-1 text-label text-white/60 uppercase focus-visible:outline-white"
             :aria-expanded="catalogOpen"
             :aria-controls="catalogId"
             @click="catalogOpen = !catalogOpen"
@@ -117,7 +120,7 @@ const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-w
           </li>
         </ul>
         <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-          <BaseButton to="/agendar-cita" variant="visit" class="max-md:w-full">
+          <BaseButton to="/agendar-cita" variant="visit" class="focus-visible:outline-white max-md:w-full">
             <template #icon-left><CalendarCheck /></template>
             Agendar visita
           </BaseButton>
@@ -142,7 +145,7 @@ const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-w
           target="_blank"
           rel="noopener"
           variant="whatsapp"
-          class="max-md:w-full"
+          class="focus-visible:outline-white max-md:w-full"
         >
           <template #icon-left><MessageCircle /></template>
           Escribir por WhatsApp
@@ -174,7 +177,7 @@ const link = 'text-white/80 transition-colors duration-200 ease-out hover:text-w
     </div>
 
     <div class="border-t border-white/10">
-      <p class="mx-auto w-full max-w-[1280px] px-4 py-6 text-small text-white/60 md:px-6 lg:px-8">
+      <p class="container-page py-6 text-small text-white/60">
         © {{ year }} {{ company.name }} · Los precios son referenciales; el precio final se confirma en la cotización.
       </p>
     </div>

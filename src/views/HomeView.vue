@@ -85,15 +85,13 @@ const resumenFiltro = computed(() => {
 // --- Cierre ---
 const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero información sobre sus muebles.')
 
-const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 </script>
 
 <template>
   <!-- ① HERO: la empresa y su showroom -->
   <section aria-labelledby="hero-title" class="border-b border-line bg-surface">
     <div
-      :class="container"
-      class="grid gap-8 py-8 md:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-14 lg:py-16"
+      class="container-page grid gap-8 py-8 md:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-14 lg:py-16"
     >
       <div>
         <h1 id="hero-title" class="max-w-[17ch] text-display text-balance">
@@ -154,7 +152,7 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 
   <!-- ② CATEGORÍAS -->
   <section id="categorias" aria-labelledby="categorias-title" class="scroll-mt-[136px] md:scroll-mt-24">
-    <div :class="container" class="pt-12 md:pt-16">
+    <div class="container-page pt-12 md:pt-16">
       <h2 id="categorias-title" ref="categoriasTitle" tabindex="-1" class="text-title focus:outline-none">
         Explora por categoría
       </h2>
@@ -191,7 +189,7 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 
   <!-- ③ COMPRA POR AMBIENTE + EN SHOWROOM -->
   <section aria-labelledby="ambientes-title">
-    <div :class="container" class="pt-12 md:pt-16">
+    <div class="container-page pt-12 md:pt-16">
       <h2 id="ambientes-title" class="text-title">Compra por ambiente</h2>
       <p class="mt-1 text-ink-muted">Piezas que puedes ver y probar en nuestro showroom.</p>
 
@@ -228,7 +226,7 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 
       <RouterLink
         :to="verTodos.to"
-        class="group mt-5 inline-flex items-center gap-1.5 py-1 font-semibold text-brand-deep hover:underline"
+        class="group mt-3.5 inline-flex min-h-11 items-center gap-1.5 font-semibold text-brand-deep hover:underline"
       >
         {{ verTodos.text }}
         <ArrowRight
@@ -241,7 +239,7 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 
   <!-- ④ CIERRE: visita, cotización y WhatsApp -->
   <section aria-labelledby="visita-title">
-    <div :class="container" class="py-12 md:py-16">
+    <div class="container-page py-12 md:py-16">
       <div
         class="grid overflow-hidden rounded-md border border-line bg-surface lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
       >

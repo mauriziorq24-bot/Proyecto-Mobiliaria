@@ -8,6 +8,7 @@ import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
 import { useCategorias } from '../composables/useCategorias'
 import { obtenerProductos } from '../services/productoService'
+import { setPageTitle } from '../utils/pageTitle'
 
 const route = useRoute()
 
@@ -23,6 +24,19 @@ const {
 // computed: se recalcula solo cuando cambia el slug de la URL o llega la lista.
 const categoria = computed(() => categorias.value.find((c) => c.slug === route.params.slug) ?? null)
 const notFound = computed(() => !categoriasLoading.value && !categoriasError.value && !categoria.value)
+
+// Título de la pestaña: el nombre llega con la API, así que el router no lo puede fijar de antemano.
+// Al salir hacia otra ruta el slug queda vacío justo antes de desmontar la vista:
+// sin el chequeo de route.name, la página siguiente recibiría "Categoría no encontrada".
+watch(
+  [categoria, notFound],
+  () => {
+    if (route.name !== 'category') return
+    if (categoria.value) setPageTitle(categoria.value.nombre)
+    else if (notFound.value) setPageTitle('Categoría no encontrada')
+  },
+  { immediate: true },
+)
 
 // --- Productos ---
 const productos = ref([])
@@ -63,17 +77,16 @@ const conteo = computed(() => {
   return `${countFormat.format(n)} ${n === 1 ? 'producto' : 'productos'}`
 })
 
-const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 </script>
 
 <template>
   <!-- Error al cargar las categorías: no se puede saber si el slug existe -->
-  <div v-if="categoriasError" :class="container" class="py-12">
+  <div v-if="categoriasError" class="container-page py-12">
     <BaseErrorState title="No pudimos cargar esta categoría" @retry="retryCategorias" />
   </div>
 
   <!-- El slug no corresponde a ninguna categoría -->
-  <section v-else-if="notFound" aria-labelledby="not-found-title" :class="container" class="py-12 md:py-16">
+  <section v-else-if="notFound" aria-labelledby="not-found-title" class="container-page py-12 md:py-16">
     <div class="flex flex-col items-center rounded-md border border-line bg-surface px-6 py-12 text-center md:py-16">
       <SearchX class="size-10 text-ink-muted" :stroke-width="1.5" aria-hidden="true" />
       <h1 id="not-found-title" class="mt-4 text-headline text-balance">Categoría no encontrada</h1>
@@ -104,12 +117,18 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
   <template v-else>
     <!-- Encabezado: ruta, nombre, descripción y cantidad -->
     <section aria-labelledby="category-title" class="border-b border-line bg-surface">
-      <div :class="container" class="flex items-end justify-between gap-8 py-6 md:py-8">
+      <div class="container-page flex items-end justify-between gap-8 py-6 md:py-8">
         <div class="min-w-0">
           <nav aria-label="Ruta de navegación">
             <ol class="flex items-center gap-1 text-small text-ink-muted">
               <li>
-                <RouterLink to="/" class="rounded-sm hover:text-brand-deep hover:underline">Inicio</RouterLink>
+                <!-- before: amplía el área táctil (~50×40px) sin mover el texto -->
+                <RouterLink
+                  to="/"
+                  class="relative rounded-sm before:absolute before:-inset-x-2 before:-inset-y-3 hover:text-brand-deep hover:underline"
+                >
+                  Inicio
+                </RouterLink>
               </li>
               <li aria-hidden="true"><ChevronRight class="size-3.5" /></li>
               <li aria-current="page" class="truncate text-ink">
@@ -146,7 +165,9 @@ const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
     </section>
 
     <!-- Productos de la categoría -->
-    <section aria-label="Productos" :class="container" class="py-8 md:py-10">
+    <section aria-labelledby="products-title" class="container-page py-8 md:py-10">
+      <!-- Título solo para lectores de pantalla: une el h1 de la categoría con los h3 de las tarjetas -->
+      <h2 id="products-title" class="sr-only">Productos de {{ categoria?.nombre ?? 'esta categoría' }}</h2>
       <BaseErrorState v-if="productosError" title="No pudimos cargar los productos" @retry="loadProductos" />
       <ProductGrid v-else :productos="productos" :loading="productosLoading">
         <template #empty>

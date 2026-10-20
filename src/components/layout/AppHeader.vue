@@ -23,12 +23,14 @@ function isActiveCategory(slug) {
 }
 
 // En móvil, si la categoría activa queda fuera de la fila de chips, se desplaza hasta verla.
+// 'nearest' mueve la fila solo lo justo: si el chip ya se ve, no la toca
+// (con 'center' el chip dorado "Agendar visita" quedaba cortado a la izquierda).
 const chipList = ref(null)
 watch(
   [() => route.params.slug, loading],
   async () => {
     await nextTick()
-    chipList.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
+    chipList.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   },
   { immediate: true },
 )
@@ -104,7 +106,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
 })
 
-const container = 'mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8'
 const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 </script>
 
@@ -116,8 +117,7 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       :class="scrolled && 'shadow-sm'"
     >
       <div
-        :class="container"
-        class="flex flex-wrap items-center gap-x-2 gap-y-2.5 pt-2 pb-3 md:h-[72px] md:flex-nowrap md:gap-x-6 md:py-0"
+        class="container-page flex flex-wrap items-center gap-x-2 gap-y-2.5 pt-2 pb-3 md:h-[72px] md:flex-nowrap md:gap-x-6 md:py-0"
       >
         <RouterLink
           to="/"
@@ -125,7 +125,7 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           aria-label="Mobiliario de Oficina, ir al inicio"
         >
           <img :src="logoUrl" alt="" width="40" height="40" class="size-10 rounded-md" />
-          <span class="text-[1.1875rem] leading-[1.05] font-extrabold tracking-[-0.01em] text-white">
+          <span class="text-wordmark text-white">
             Mobiliario<br />de Oficina
           </span>
         </RouterLink>
@@ -150,7 +150,8 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
         </form>
 
         <div class="order-2 ml-auto flex items-center gap-1 md:order-3 md:ml-0 lg:gap-2">
-          <BaseButton variant="visit" to="/agendar-cita" class="mr-2 max-lg:hidden">
+          <!-- Anillo de foco blanco: el Azul Silla por defecto no se vería sobre el header azul -->
+          <BaseButton variant="visit" to="/agendar-cita" class="mr-2 focus-visible:outline-white max-lg:hidden">
             <template #icon-left><CalendarCheck /></template>
             Agendar visita
           </BaseButton>
@@ -224,7 +225,7 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 
     <!-- Tablet y escritorio: barra blanca de categorías -->
     <nav aria-label="Categorías" class="hidden border-b border-line bg-surface md:block">
-      <div :class="container" class="flex h-12 items-center gap-2">
+      <div class="container-page flex h-12 items-center gap-2">
         <div ref="allWrapper" class="relative h-full shrink-0">
           <button
             type="button"

@@ -62,6 +62,12 @@
   --text-title--line-height: 1.28;
   --text-title--font-weight: 700;
 
+  /* Nombre de la marca junto al logo (header y footer): blanco sobre azul exige ≥19px en negrita */
+  --text-wordmark: 1.1875rem;
+  --text-wordmark--line-height: 1.05;
+  --text-wordmark--font-weight: 800;
+  --text-wordmark--letter-spacing: -0.01em;
+
   --text-card-title: 1rem;
   --text-card-title--line-height: 1.35;
   --text-card-title--font-weight: 600;
@@ -99,6 +105,24 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --default-transition-duration: 200ms;
   --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/*
+  Contenedor de página: ancho máximo 1280px y margen lateral 16 → 24 → 32px (DESIGN.md › Layout).
+  Definido una sola vez para que header, vistas y footer no repitan la misma cadena de clases.
+*/
+@utility container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1280px;
+  padding-inline: 1rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 1.5rem;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
 }
 
 /* Small sube a 14px y Price a 18px desde tablet, como indica DESIGN.md */
@@ -141,12 +165,17 @@
   }
 
   /* Con movimiento reducido los cambios son instantáneos.
-     Las animaciones (como el spinner de carga) se mantienen: son información, no adorno. */
+     El spinner de carga sigue girando: es información, no adorno.
+     El pulso de los skeletons sí es adorno (la barra gris ya dice "cargando"), así que se detiene. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
       transition-duration: 0ms !important;
+    }
+
+    .animate-pulse {
+      animation: none !important;
     }
   }
 }
