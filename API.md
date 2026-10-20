@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026.
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías).
 Swagger UI: `http://localhost:8080/swagger-ui/index.html` · Spec JSON: `http://localhost:8080/v3/api-docs`
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -50,7 +50,7 @@ Query params (todos opcionales):
 | Param | Tipo | Uso |
 |---|---|---|
 | `enShowroom` | boolean | Solo productos exhibidos en el showroom |
-| `tipoEspacio` | string | Filtra por tipo de espacio (`OPERATIVO`, `GERENCIAL`, …) |
+| `tipoEspacio` | string | Filtra por tipo de espacio (ver valores abajo) |
 | `buscar` | string | Búsqueda por texto |
 
 Response 200: arreglo de `ProductoResponse`.
@@ -67,9 +67,9 @@ Crea un producto (uso administrativo). Body: `ProductoRequest` (igual a `Product
   "id": 1,
   "nombre": "Escritorio Modular tipo Bench para 4 personas",
   "descripcion": "Estación de trabajo optimizada con pasacables integrados y pantallas divisorias.",
-  "categoriaId": 3,
-  "categoriaNombre": "Estaciones Operativas",
-  "tipoEspacio": "OPERATIVO",
+  "categoriaId": 1,
+  "categoriaNombre": "Escritorios",
+  "tipoEspacio": "OFICINA",
   "precioReferencialUsd": 450,
   "enShowroom": true,
   "material": "Melamina 18mm con estructura metálica electrostática.",
@@ -77,6 +77,17 @@ Crea un producto (uso administrativo). Body: `ProductoRequest` (igual a `Product
   "imagenes": ["https://.../escritorio-bench.jpg"]
 }
 ```
+
+### Valores de `tipoEspacio`
+
+| Valor | Texto en la UI |
+|---|---|
+| `OFICINA` | Oficina |
+| `HOGAR` | Hogar |
+| `SALON_BELLEZA` | Salón de belleza |
+| `CONSULTORIO` | Consultorio |
+
+Por ahora se documenta como **un solo string** por producto (ver pendientes: podría pasar a ser lista).
 
 Notas:
 - `precioReferencialUsd` es **referencial**: mostrar como "Precio referencial" / "Desde $450", no como precio final.
@@ -89,12 +100,21 @@ Notas:
 ### `GET /api/v1/categorias`
 ```json
 [
-  { "id": 1, "nombre": "Sillería Ergonómica", "slug": "silleria-ergonomica", "descripcion": "string" }
+  { "id": 2, "nombre": "Sillería", "slug": "silleria", "descripcion": "string" }
 ]
 ```
-Categorías vistas en los datos: "Estaciones Operativas", "Sillería Ergonómica" (lista completa: pedir al backend).
 
-Lista que usa el frontend en `src/mocks/categorias.js` (pendiente de confirmar con el backend): Escritorios (`escritorios`), Sillería (`silleria`), Comedores (`comedores`), Peinadores (`peinadores`), Camillas (`camillas`).
+Categorías:
+
+| Nombre | Slug |
+|---|---|
+| Escritorios | `escritorios` |
+| Sillería | `silleria` |
+| Comedores | `comedores` |
+| Peinadores | `peinadores` |
+| Camillas | `camillas` |
+
+Los `id` los asigna el backend: el frontend no debe depender de ellos (rutas por `slug`, lista desde `GET /api/v1/categorias`).
 
 ---
 
@@ -123,7 +143,7 @@ Agendar una visita o asesoría.
 ## ⚠️ Pendientes con el backend
 
 ### Bloquean funcionalidades del plan
-1. **Carrito, favoritos y pedidos:** no existen endpoints. Decidir:
+1. **Carrito, favoritos y pedidos:** no existen endpoints. Mientras se decide, el frontend guarda carrito y favoritos en Pinia + localStorage (ver `CLAUDE.md`). Decidir:
    - **Opción A:** el backend los crea (`/api/v1/carrito`, `/api/v1/favoritos`, `/api/v1/pedidos`).
    - **Opción B:** carrito y favoritos viven en el frontend (Pinia + localStorage) y el "checkout" se convierte en **solicitud de cotización** (vía cita, WhatsApp o un endpoint `POST /api/v1/cotizaciones`). Encaja con `precioReferencialUsd`.
 2. **Filtro por categoría:** `GET /api/v1/productos` no acepta categoría. Pedir `?categoria={slug}` o `?categoriaId={id}`.
@@ -139,8 +159,9 @@ Agendar una visita o asesoría.
 ### Para manejar errores bien
 9. Documentar respuestas de error: códigos (`400`, `401`, `403`, `404`, `409` usuario ya existe) y su forma, idealmente `{ "message": "..." }`.
 10. Qué endpoints son públicos y cuáles requieren token.
-11. Lista completa de valores de `tipoEspacio` y de `tipoAsesoria`.
+11. Lista completa de valores de `tipoAsesoria`.
 12. Forma exacta de la respuesta de `POST /api/v1/citas`.
+13. **`tipoEspacio`: confirmar si es valor único o lista.** Si es lista, cambia la forma del producto (`"tipoEspacio": ["OFICINA", "HOGAR"]`) y cómo funciona el filtro `?tipoEspacio=`.
 
 ### CORS
-13. Confirmar que se permite el origen `http://localhost:5173` (o usar el proxy de Vite en desarrollo, ver `CLAUDE.md`).
+14. En desarrollo no hace falta: el frontend usa el proxy de Vite (ver `CLAUDE.md`). Solo falta confirmar CORS para el dominio de **producción** (`VITE_API_URL`).
