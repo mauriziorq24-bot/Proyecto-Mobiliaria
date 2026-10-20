@@ -37,9 +37,3 @@ export const company = {
     ],
   },
 }
-
-// Enlace de WhatsApp con un mensaje opcional ya escrito.
-export function whatsappUrl(message = '') {
-  const base = `https://wa.me/${company.whatsapp.number}`
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base
-}

@@ -25,8 +25,9 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // Al cambiar de página, volver arriba (como en cualquier tienda online).
-  scrollBehavior: () => ({ top: 0 }),
+  // Al cambiar de página (también de un producto a otro relacionado), volver arriba.
+  // Con "Atrás"/"Adelante" del navegador, savedPosition trae dónde estaba la persona: se respeta.
+  scrollBehavior: (to, from, savedPosition) => savedPosition ?? { top: 0 },
 })
 
 // Título de la pestaña: las rutas con meta.title lo fijan aquí. Las que dependen de datos (categoría, producto)

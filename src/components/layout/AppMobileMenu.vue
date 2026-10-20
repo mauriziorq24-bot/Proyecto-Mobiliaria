@@ -2,7 +2,7 @@
 import { CalendarCheck, ChevronRight, MessageCircle, Phone, X } from 'lucide-vue-next'
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { whatsappUrl } from '../../config/empresa'
+import { whatsappUrl } from '../../utils/whatsapp'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
 

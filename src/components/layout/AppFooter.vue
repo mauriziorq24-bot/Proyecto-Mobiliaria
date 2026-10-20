@@ -4,7 +4,8 @@ import { computed, ref, useId } from 'vue'
 import { RouterLink } from 'vue-router'
 import logoUrl from '../../assets/logo.png'
 import { useCategorias } from '../../composables/useCategorias'
-import { company, whatsappUrl } from '../../config/empresa'
+import { company } from '../../config/empresa'
+import { whatsappUrl } from '../../utils/whatsapp'
 import BaseButton from '../ui/BaseButton.vue'
 
 const { categorias, loading, error } = useCategorias()
