@@ -302,6 +302,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - Con productos: resumen + `button-primary` "Solicitar cotización" + `button-whatsapp`.
 - Lista vacía: "¿Quieres verlas en persona?" + `button-visit` "Agendar visita".
 - Se oculta en las vistas de cotización/carrito, cita, login y registro.
+- En la ficha de producto la reemplaza la **barra del producto**: selector de cantidad + `button-primary` "Agregar a la cotización" (WhatsApp y visita quedan en el contenido de la ficha, no en la barra). Mismo fondo, sombra `lg` y `env(safe-area-inset-bottom)`; la página reserva espacio al final para que la barra no tape los relacionados ni el footer.
 - En escritorio no existe: su función la cumple el carrito del header.
 
 ### Footer
@@ -368,6 +369,11 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **WhatsApp** (verde WhatsApp, con ícono): "Enviar por WhatsApp".
 - **Secundario** (blanco, borde y texto Azul Acción): acciones de apoyo.
 - Altura mínima 44px para toque; foco visible con anillo Azul Silla de 2px y 2px de separación.
+
+### Agregar a la cotización
+- **Se implementa en la Fase 7** (cuando exista el store del carrito). Hasta entonces el botón se ve, pero no simula una confirmación.
+- Al agregar, la persona **no sale de la página**: el botón muestra brevemente "✓ Agregado" y aparece un aviso (Éxito) "Agregado a tu cotización" con el enlace "Ver mi cotización". El aviso se anuncia a lectores de pantalla (`aria-live="polite"`) y desaparece solo después de unos segundos.
+- Si el producto ya está en la cotización, la cantidad **se suma** (3 + 2 = 5). La ficha lo indica junto al selector: "Ya tienes 3 en tu cotización".
 
 ### Buscador
 - Blanco, radio `md`, 46px, ícono de lupa, placeholder "Buscar sillas, escritorios, mesas…".

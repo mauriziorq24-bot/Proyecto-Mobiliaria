@@ -22,6 +22,7 @@ import BaseIconButton from '../components/ui/BaseIconButton.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
 import ProductCard from '../components/product/ProductCard.vue'
 import ProductCardSkeleton from '../components/product/ProductCardSkeleton.vue'
+import ProductGallery from '../components/product/ProductGallery.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
 import { productos as mockProductos } from '../mocks/productos'
 
@@ -186,6 +187,25 @@ const gridStates = [
 ]
 const gridState = ref('loaded')
 const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProductos.slice(0, 8)))
+
+// Demo de ProductGallery. Las fotos reales aún no están en el repo, así que se usan
+// imágenes de prueba numeradas (SVG en línea) para ver claramente el cambio de foto.
+function demoPhoto(number, background) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><rect width="600" height="600" fill="${background}"/><text x="300" y="300" font-family="Figtree, sans-serif" font-size="56" font-weight="700" fill="#5B6573" text-anchor="middle" dominant-baseline="middle">Foto ${number}</text></svg>`
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`
+}
+const demoPhotos = [
+  demoPhoto(1, '#F3F5F8'),
+  demoPhoto(2, '#E8F1FC'),
+  demoPhoto(3, '#EFE9E3'),
+  demoPhoto(4, '#E9ECF0'),
+]
+const galleryCases = [
+  { note: 'Sin fotos: placeholder', imagenes: [] },
+  { note: 'Una foto: sin miniaturas ni puntos', imagenes: [demoPhotos[0]] },
+  { note: 'Cuatro fotos', imagenes: demoPhotos },
+  { note: 'Cuatro fotos, la tercera falla', imagenes: [demoPhotos[0], demoPhotos[1], '/no-existe.jpg', demoPhotos[3]] },
+]
 </script>
 
 <template>
@@ -622,6 +642,18 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
               </template>
             </ProductGrid>
           </div>
+
+          <h3 class="mt-12 text-title">Galería</h3>
+          <p class="mt-1 max-w-[65ch] text-small text-ink-muted">
+            En el teléfono se desliza con el dedo; desde tablet, con las miniaturas. Con el foco en la foto
+            (tecla Tab), las flechas ← → cambian de foto. Las fotos numeradas son de prueba.
+          </p>
+          <ul class="mt-4 grid gap-8 md:grid-cols-2 lg:gap-12">
+            <li v-for="item in galleryCases" :key="item.note" class="flex flex-col gap-2">
+              <span class="text-small text-ink-muted">{{ item.note }}</span>
+              <ProductGallery :imagenes="item.imagenes" :nombre="baseProduct.nombre" class="max-w-[480px]" />
+            </li>
+          </ul>
         </section>
       </main>
     </div>
