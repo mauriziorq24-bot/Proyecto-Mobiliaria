@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://scorpion-tusk-phoenix.ngrok-free.dev/api/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://scorpion-tusk-phoenix.ngrok-free.dev/auth/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
