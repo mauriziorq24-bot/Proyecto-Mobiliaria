@@ -144,12 +144,6 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.sm}"
     padding: "3px 7px"
-  chip-material:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    typography: "{typography.label}"
-    rounded: "{rounded.sm}"
-    padding: "3px 7px"
   card-product:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -336,9 +330,13 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - Es un grupo de botones accesible (`aria-pressed`); en móvil hace scroll horizontal.
 
 ### Tarjeta de producto
-- Superficie blanca, borde 1px, radio `md`, sin sombra.
-- Foto (proporción fija) con `tag-showroom` "EN SHOWROOM" arriba a la derecha si `enShowroom`, y `chip-material` con el texto de `material` abajo a la izquierda (sin color: la API no da colores de material).
-- Nombre (`card-title`, 2 líneas), "Precio referencial" (`small`, Tinta Suave) y el precio (`price`).
+- Superficie blanca, borde 1px, radio `md`, sin sombra. Toda la tarjeta enlaza a `/producto/:id` (enlace estirado sobre el nombre).
+- Foto cuadrada (1:1, `object-cover`, `loading="lazy"`) con `tag-showroom` "EN SHOWROOM" arriba a la derecha si `enShowroom`. Sin foto o si falla: placeholder `/placeholder-producto.svg`.
+- La tarjeta **no** lleva el material: en la API es una frase larga y no cabe; se muestra completo en la ficha del producto.
+- Categoría (`small`, Tinta Suave, 1 línea), nombre (`card-title`, máximo 2 líneas con espacio reservado para que los precios de una fila queden alineados), "Precio referencial" (`small`, Tinta Suave) y el precio (`price`). Sin precio: "Consultar precio".
+- Botón de favorito a la derecha del precio: ícono de 20px con área táctil de 44px.
+- Hover (solo en dispositivos con puntero): el borde se oscurece y la foto crece un 3%. Sin sombra, sin elevar la tarjeta.
+- Versión de carga (skeleton) con la misma forma y medidas.
 - La misma tarjeta se reconoce en todas sus escalas: miniatura del drawer, tarjeta de grilla y ficha.
 
 ### Botones

@@ -101,10 +101,11 @@
   --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Small sube a 14px desde tablet, como indica DESIGN.md */
+/* Small sube a 14px y Price a 18px desde tablet, como indica DESIGN.md */
 @media (min-width: 768px) {
   :root {
     --text-small: 0.875rem;
+    --text-price: 1.125rem;
   }
 }
 

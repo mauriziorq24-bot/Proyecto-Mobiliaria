@@ -20,6 +20,10 @@ import BaseBadge from '../components/ui/BaseBadge.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseIconButton from '../components/ui/BaseIconButton.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
+import ProductCard from '../components/product/ProductCard.vue'
+import ProductCardSkeleton from '../components/product/ProductCardSkeleton.vue'
+import ProductGrid from '../components/product/ProductGrid.vue'
+import { productos as mockProductos } from '../mocks/productos'
 
 const sections = [
   { id: 'colores', title: 'Colores' },
@@ -29,6 +33,7 @@ const sections = [
   { id: 'botones-icono', title: 'Botones de ícono' },
   { id: 'campos', title: 'Campos de texto' },
   { id: 'etiquetas', title: 'Etiquetas' },
+  { id: 'productos', title: 'Productos' },
 ]
 
 const colorGroups = [
@@ -140,6 +145,47 @@ const email = ref('')
 const searchQuery = ref('')
 
 const favoritesCount = ref(2)
+
+// Demo de productos: casos límite armados a partir de los mocks.
+const [baseProduct] = mockProductos
+const cardCases = [
+  { note: 'En showroom', producto: baseProduct },
+  {
+    note: 'Nombre largo, sin showroom',
+    producto: {
+      ...baseProduct,
+      id: 901,
+      nombre: 'Silla Ergonómica Ejecutiva con Cabezal Ajustable, Soporte Lumbar y Brazos 4D',
+      categoriaNombre: 'Sillería',
+      enShowroom: false,
+      precioReferencialUsd: 1250,
+    },
+  },
+  {
+    note: 'La foto falla al cargar',
+    producto: { ...baseProduct, id: 902, imagenes: ['/no-existe.jpg'], precioReferencialUsd: 99.5 },
+  },
+  {
+    note: 'Sin fotos ni precio',
+    producto: { ...baseProduct, id: 903, imagenes: [], precioReferencialUsd: null, enShowroom: false },
+  },
+]
+
+// Favoritos solo visuales: se guardan los ids en memoria mientras no exista el store.
+const demoFavorites = ref([baseProduct.id])
+function toggleDemoFavorite(producto) {
+  const ids = demoFavorites.value
+  demoFavorites.value = ids.includes(producto.id) ? ids.filter((id) => id !== producto.id) : [...ids, producto.id]
+}
+
+// Demo de ProductGrid: los tres estados con un selector.
+const gridStates = [
+  { value: 'loaded', label: 'Con productos' },
+  { value: 'loading', label: 'Cargando' },
+  { value: 'empty', label: 'Vacío' },
+]
+const gridState = ref('loaded')
+const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProductos.slice(0, 8)))
 </script>
 
 <template>
@@ -509,6 +555,72 @@ const favoritesCount = ref(2)
                 <BaseBadge variant="error"><CircleAlert />No se pudo cargar el catálogo</BaseBadge>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- PRODUCTOS -->
+        <section id="productos" class="scroll-mt-16 pt-20">
+          <h2 class="text-headline">Productos</h2>
+          <p class="mt-2 max-w-[65ch] text-ink-muted">
+            La tarjeta entera lleva a la ficha del producto. Pasa el cursor para ver el hover y prueba el
+            corazón: por ahora es solo visual.
+          </p>
+
+          <h3 class="mt-8 text-title">Tarjeta</h3>
+          <ul class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-6">
+            <li v-for="item in cardCases" :key="item.producto.id" class="flex flex-col gap-2">
+              <span class="text-small text-ink-muted">{{ item.note }}</span>
+              <ProductCard
+                :producto="item.producto"
+                :favorito="demoFavorites.includes(item.producto.id)"
+                class="flex-1"
+                @toggle-favorito="toggleDemoFavorite"
+              />
+            </li>
+          </ul>
+
+          <h3 class="mt-12 text-title">Tarjeta cargando</h3>
+          <p class="mt-1 text-small text-ink-muted">
+            Misma forma que la tarjeta, para que nada salte al llegar los datos.
+          </p>
+          <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-6">
+            <ProductCard :producto="baseProduct" />
+            <ProductCardSkeleton />
+          </div>
+
+          <h3 class="mt-12 text-title">Grilla</h3>
+          <p class="mt-1 text-small text-ink-muted">2 columnas en móvil, 3 en tablet y 4 en escritorio.</p>
+          <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Estado de la grilla">
+            <button
+              v-for="state in gridStates"
+              :key="state.value"
+              type="button"
+              :aria-pressed="gridState === state.value"
+              class="rounded-sm border px-3 py-1.5 text-small transition-colors"
+              :class="
+                gridState === state.value
+                  ? 'border-brand-deep bg-brand-tint text-brand-deep'
+                  : 'border-line bg-surface text-ink-muted hover:text-ink'
+              "
+              @click="gridState = state.value"
+            >
+              {{ state.label }}
+            </button>
+          </div>
+          <div class="mt-4">
+            <ProductGrid
+              :productos="gridProducts"
+              :loading="gridState === 'loading'"
+              :favoritos="demoFavorites"
+              @toggle-favorito="toggleDemoFavorite"
+            >
+              <template #empty>
+                <p class="text-card-title">No hay productos en showroom con ese filtro</p>
+                <p class="mt-1 text-small text-ink-muted">
+                  Ejemplo del slot <code>#empty</code>: cada vista escribe su propio mensaje.
+                </p>
+              </template>
+            </ProductGrid>
           </div>
         </section>
       </main>
