@@ -20,11 +20,11 @@ colors:
   error-bg: "#FDECEC"
   warning: "#9A5B00"
   warning-bg: "#FFF4E0"
-  swatch-gerencial: "#1F80E0"
-  swatch-operativo: "#2B2F36"
-  swatch-reserve-3: "#6E7783"
-  swatch-reserve-4: "#8A6A4B"
-  swatch-reserve-5: "#C9CFD7"
+  swatch-oficina: "#1566B8"
+  swatch-hogar: "#8A6A4B"
+  swatch-salon-belleza: "#2B2F36"
+  swatch-consultorio: "#C9CFD7"
+  swatch-fallback: "#6E7783"
 typography:
   display:
     fontFamily: "Figtree, system-ui, sans-serif"
@@ -150,10 +150,10 @@ components:
     rounded: "{rounded.md}"
   swatch:
     rounded: "{rounded.md}"
-    width: "84px"
-    height: "112px"
+    width: "120px"
+    height: "136px"
   swatch-selected:
-    height: "132px"
+    height: "156px"
   cart-dock:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -165,7 +165,7 @@ components:
 
 # Design System: Mobiliario de Oficina
 
-> Dirección aprobada el 2026-10-18 («Muestrario de tapicería», con la barra de presupuesto móvil incorporada). Es un documento **previo a la implementación**: cuando exista el código, se vuelve a generar desde el código real (`/impeccable document`) para que no se separe de lo construido.
+> Dirección aprobada el 2026-10-18 («Muestrario de tapicería», con la barra de cotización móvil incorporada). Actualizado el 2026-10-20: muestras con los cuatro `tipoEspacio` de la API, sin cantidad de productos, y "cotización" en lugar de "presupuesto" en toda la interfaz. Es un documento **previo a la implementación**: cuando exista el código, se vuelve a generar desde el código real (`/impeccable document`) para que no se separe de lo construido.
 
 ## Overview
 
@@ -175,14 +175,14 @@ La tienda se usa como se elige en el showroom: tocando la muestra. La firma del 
 
 El azul de la marca (el del logo) ocupa el header completo: es un compromiso de color, no un acento suelto. Un dorado cálido se reserva para lo que lleva al showroom (agendar visita). El fondo es un gris frío derivado del azul; las tarjetas son blancas, planas y con borde de 1px.
 
-El sitio es **mobile-first**: la mayoría de visitantes llega desde Instagram en el teléfono. En móvil, una barra fija inferior mantiene siempre visible el presupuesto en curso.
+El sitio es **mobile-first**: la mayoría de visitantes llega desde Instagram en el teléfono. En móvil, una barra fija inferior mantiene siempre visible la cotización en curso.
 
 **Key Characteristics:**
 - Header azul de marca, completo; barra de categorías blanca debajo.
 - Tira de muestras por tipo de espacio como único gesto expresivo.
 - Dorado solo para "Agendar visita" y lo relacionado con el showroom.
 - Superficies planas, bordes de 1px, sombras solo en lo que flota.
-- Barra de presupuesto fija en móvil con total referencial en cifras tabulares.
+- Barra de cotización fija en móvil con total referencial en cifras tabulares.
 - Precio siempre como "Precio referencial", nunca como precio de compra.
 
 ## Colors
@@ -190,8 +190,8 @@ El sitio es **mobile-first**: la mayoría de visitantes llega desde Instagram en
 Azul de marca comprometido sobre neutros fríos, con un dorado de showroom y estados claros.
 
 ### Primary
-- **Azul Silla** (#1F80E0): el azul del logo. Fondo del header, indicador de categoría activa (subrayado de 2px), anillo de foco, muestra "Gerencial". Con texto blanco solo para íconos y texto ≥19px en negrita (contraste ~4.0:1).
-- **Azul Acción** (#1566B8, hover #12579F): botones principales y enlaces. Contraste ~5.6:1 con blanco.
+- **Azul Silla** (#1F80E0): el azul del logo. Fondo del header, indicador de categoría activa (subrayado de 2px), anillo de foco. Con texto blanco solo para íconos y texto ≥19px en negrita (contraste ~4.0:1).
+- **Azul Acción** (#1566B8, hover #12579F): botones principales, enlaces y muestra "Oficina". Contraste ~5.8:1 con blanco.
 - **Tinte Azul** (#E8F1FC): fondos suaves de filtros activos y estados seleccionados.
 
 ### Secondary
@@ -199,7 +199,7 @@ Azul de marca comprometido sobre neutros fríos, con un dorado de showroom y est
 
 ### Neutral
 - **Fondo Frío** (#F3F5F8): fondo de página.
-- **Superficie** (#FFFFFF): tarjetas, buscador, barra de categorías, barra de presupuesto.
+- **Superficie** (#FFFFFF): tarjetas, buscador, barra de categorías, barra de cotización.
 - **Línea** (#DCE2EA): bordes y divisores, siempre de 1px.
 - **Tinta** (#14171C): títulos y texto.
 - **Tinta Suave** (#5B6573): "Precio referencial", metadatos, categorías inactivas.
@@ -207,16 +207,19 @@ Azul de marca comprometido sobre neutros fríos, con un dorado de showroom y est
 
 ### Estados y canales
 - **WhatsApp** (#0F7A43): solo el botón "Enviar por WhatsApp", con su ícono. El verde oficial (#25D366) no alcanza contraste con texto blanco.
-- **Éxito** (#1E7F4F / fondo #E7F5EE): "Agregado a tu presupuesto", cita confirmada.
+- **Éxito** (#1E7F4F / fondo #E7F5EE): "Agregado a tu cotización", cita confirmada.
 - **Error** (#C62F2F / fondo #FDECEC): errores de formulario o de carga.
 - **Aviso** (#9A5B00 / fondo #FFF4E0): avisos.
 
 ### Muestras (tipo de espacio)
-Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
-- `GERENCIAL` → Azul Silla (#1F80E0)
-- `OPERATIVO` → Malla Negra (#2B2F36)
-- Reservados para los tipos que aún no define `API.md`: Gris Oxford (#6E7783), Madera (#8A6A4B), Gris Claro (#C9CFD7, con texto `ink`).
-- Un tipo sin color asignado usa Gris Oxford. **No inventar tipos de espacio**: la tira muestra solo los que vienen de la API.
+Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados en un solo mapa del frontend. Contrastes medidos para el nombre (700, 14px) y el ícono sobre la muestra:
+- `OFICINA` → Azul Acción (#1566B8), texto blanco (5.8:1), ícono `Briefcase`.
+- `HOGAR` → Madera (#8A6A4B), texto blanco (5.0:1), ícono `Home`.
+- `SALON_BELLEZA` → Malla Negra (#2B2F36), texto blanco (13.4:1), ícono `Scissors`.
+- `CONSULTORIO` → Gris Claro (#C9CFD7), texto `ink` (11.5:1), ícono `Stethoscope`. Lleva borde Línea de 1px porque casi no se separa del Fondo Frío.
+- Un tipo nuevo sin entrada en el mapa usa Gris Oxford (#6E7783, texto blanco 4.5:1, justo en el límite de AA) y un ícono genérico. **No inventar tipos de espacio**: la tira muestra solo los que vienen de la API.
+- Azul Silla (#1F80E0) **no** se usa en muestras: con texto de 14px no llega a AA ni con blanco (4.0:1) ni con tinta (4.5:1 justo en el límite).
+- `tipoEspacio` es un valor único, como lo devuelve hoy el backend. Si pasa a ser lista, el cambio se resuelve en `productoService`, no en las vistas.
 
 ### Named Rules
 **La regla del dorado.** El dorado significa "showroom". Si no lleva a ver los muebles en persona, no es dorado.
@@ -281,17 +284,17 @@ Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
   - **Pendiente (fase de pulido):** hoy la fila de chips no es fija y se va con la página; falta que reaparezca al subir.
 - Menú ☰ (drawer): cuenta (ingresar / registrarse), todas las categorías, en showroom, agendar visita, contacto.
 
-### Barra de presupuesto — móvil
+### Barra de cotización — móvil
 ```
 ┌──────────────────────────────────┐
-│ Mi presupuesto · 3      ref. $720 │
+│ Mi cotización · 3       ref. $720 │
 │ [ Solicitar cotización ] [WhatsApp]│
 └──────────────────────────────────┘
 ```
 - Fija abajo, fondo blanco, sombra `lg`, respeta `env(safe-area-inset-bottom)`.
 - Con productos: resumen + `button-primary` "Solicitar cotización" + `button-whatsapp`.
 - Lista vacía: "¿Quieres verlas en persona?" + `button-visit` "Agendar visita".
-- Se oculta en las vistas de presupuesto/carrito, cita, login y registro.
+- Se oculta en las vistas de cotización/carrito, cita, login y registro.
 - En escritorio no existe: su función la cumple el carrito del header.
 
 ### Footer
@@ -301,7 +304,7 @@ Un color por valor de `tipoEspacio`, asignado en un solo mapa del frontend:
   3. Showroom: dirección, horario, `button-visit` "Agendar visita", "Cómo llegar".
   4. Contacto: `button-whatsapp`, teléfono, email, @mobiliariodeoficina.
   - Fila inferior: "© 2026 Mobiliario de Oficina · Los precios son referenciales; el precio final se confirma en la cotización."
-- **Móvil:** una columna en orden de utilidad — Showroom → Contacto (WhatsApp a todo el ancho) → Catálogo en acordeón → aviso. Relleno inferior extra para que la barra de presupuesto no tape contenido.
+- **Móvil:** una columna en orden de utilidad — Showroom → Contacto (WhatsApp a todo el ancho) → Catálogo en acordeón → aviso. Relleno inferior extra para que la barra de cotización no tape contenido.
 
 ## Elevation & Depth
 
@@ -309,7 +312,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 
 ### Shadow Vocabulary
 - **sm** (`box-shadow: 0 1px 2px rgba(20,23,28,.06)`): header fijo después de hacer scroll.
-- **lg** (`box-shadow: 0 10px 28px rgba(20,23,28,.14)`): menús desplegables, drawer, barra de presupuesto, muestra seleccionada.
+- **lg** (`box-shadow: 0 10px 28px rgba(20,23,28,.14)`): menús desplegables, drawer, barra de cotización, muestra seleccionada.
 
 ### Named Rules
 **La regla de lo que flota.** Si no está encima de otra cosa, no lleva sombra.
@@ -318,16 +321,29 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 
 - **Radios:** `sm` 6px (chips, etiquetas), `md` 10px (botones, inputs, tarjetas, muestras, logo), `lg` 16px (drawer, modales), `full` (contadores).
 - **Líneas:** siempre 1px y color Línea. Un solo peso en todo el sitio.
-- **Muestra:** tarjeta de 84×112px con radio `md` arriba y 6px abajo, y un ojal circular de 11px cerca de la esquina superior izquierda (el agujero del aro).
+- **Muestra:** tarjeta de 120×136px (156px la elegida) con radio `md` arriba y 6px abajo, y un ojal circular de 11px a 30px del borde izquierdo y 18px del superior: es un agujero real (`mask-image`), fuera de la franja de 18px que se monta sobre la muestra anterior, así que por él se ve el fondo. Es más ancha que el boceto original (84px) para que "Consultorio" quepa a 14px en negrita.
 
 ## Components
 
 ### Tira de muestras (firma)
 - En el inicio y en las páginas de categoría, encima de la grilla; nunca en el header.
-- Etiqueta "TIPO DE ESPACIO" (`label`) y, debajo, una muestra por `tipoEspacio` de la API: nombre (700, 14px) y cantidad de productos (`label`).
-- Las muestras se superponen como abanico (−18px). La seleccionada se separa, crece a 132px, toma sombra `lg` y es la única con textura sutil (trama diagonal).
-- Tocar una muestra filtra la grilla al instante, sin recargar; tocarla de nuevo quita el filtro.
+- Etiqueta "TIPO DE ESPACIO" (`label`) y, debajo, una muestra por `tipoEspacio` de la API: ícono (20px) arriba y nombre (700, 14px) debajo. **No muestra la cantidad de productos.** Ningún ambiente se distingue solo por el color: el ícono y el nombre siempre están.
+- Las muestras se superponen como abanico (−18px). La seleccionada se separa, crece a 156px, toma sombra (como `drop-shadow`, porque la máscara recortaría una `box-shadow`) y es la única con textura sutil (trama diagonal); la trama no baja el contraste del nombre por debajo de AA.
+- Tocar una muestra filtra la grilla al instante, sin recargar; tocarla de nuevo quita el filtro. Mientras llega la respuesta, la grilla muestra skeletons; una respuesta vieja que llega tarde se descarta.
+- En el inicio filtra los productos en showroom (máximo 4) y debajo ofrece "Ver todos los de [ambiente]" → `/buscar?tipoEspacio=VALOR`.
 - Es un grupo de botones accesible (`aria-pressed`); en móvil hace scroll horizontal.
+
+### Tarjeta de categoría
+- Enlaza a `/categoria/:slug`. Móvil: fila (miniatura de 72px, nombre y descripción, flecha). Desde tablet: tarjeta vertical en 5 columnas con imagen 4:3; la descripción se oculta en tablet y vuelve en escritorio.
+- Imagen opcional desde `src/config/categorias.js` (por slug). Sin foto o si falla: la **silueta de alzado** del mueble (`CategorySilhouette`), en Tinta Suave sobre Fondo Frío, con su línea de piso; en hover pasa a Azul Acción.
+- Siluetas: dibujos de alzado sin perspectiva, lienzo 160×120 con el piso en y = 104, trazo de 2px que no escala. Peinadores se dibuja como tocador con espejo (sirve para salón y para casa).
+
+### Hero del inicio
+- Texto a la izquierda (título `display`, texto, "Ver catálogo" primario + "Agendar visita" dorado, dirección y horario de `config/empresa.js`). Sin etiqueta encima del título.
+- A la derecha (debajo en móvil), la **vitrina**: las cinco siluetas sobre una línea de piso, con la etiqueta `tag-showroom` "Showroom en San Diego". Cuando `company.showroom.photoUrl` tenga valor, la foto del showroom la reemplaza.
+
+### Estado de error
+- `BaseErrorState`: bloque blanco con borde, ícono de alerta en Error, título que nombra lo que falló y botón secundario "Reintentar".
 
 ### Tarjeta de producto
 - Superficie blanca, borde 1px, radio `md`, sin sombra. Toda la tarjeta enlaza a `/producto/:id` (enlace estirado sobre el nombre).
@@ -340,7 +356,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - La misma tarjeta se reconoce en todas sus escalas: miniatura del drawer, tarjeta de grilla y ficha.
 
 ### Botones
-- **Primario** (Azul Acción): "Solicitar cotización", "Agregar al presupuesto".
+- **Primario** (Azul Acción): "Solicitar cotización", "Agregar a la cotización".
 - **Visita** (Dorado Showroom, texto Tinta): "Agendar visita".
 - **WhatsApp** (verde WhatsApp, con ícono): "Enviar por WhatsApp".
 - **Secundario** (blanco, borde y texto Azul Acción): acciones de apoyo.
@@ -353,6 +369,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 
 **Do**
 - Mostrar el precio como "Precio referencial" o "Desde $X".
+- Decir siempre "cotización", nunca "presupuesto", en textos de la interfaz.
 - Sacar categorías y tipos de espacio de la API.
 - Usar el mismo movimiento en todo el sitio (~200ms, `ease-out`) y respetar `prefers-reduced-motion` (cambio instantáneo).
 - Manejar en cada vista los estados cargando, error y vacío.

@@ -158,7 +158,7 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           <BaseIconButton :icon="Heart" label="Ver favoritos" variant="inverse" to="/favoritos" :badge="favoritesCount" />
           <BaseIconButton
             :icon="ShoppingCart"
-            label="Ver presupuesto"
+            label="Ver cotización"
             variant="inverse"
             to="/carrito"
             :badge="cartCount"

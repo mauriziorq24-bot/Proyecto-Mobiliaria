@@ -20,11 +20,11 @@ const year = new Date().getFullYear()
 
 // Franja superior con los colores de las muestras de tipo de espacio.
 const stripe = [
-  'bg-swatch-gerencial',
-  'bg-swatch-operativo',
-  'bg-swatch-reserve-3',
-  'bg-swatch-reserve-4',
-  'bg-swatch-reserve-5',
+  'bg-swatch-oficina',
+  'bg-swatch-hogar',
+  'bg-swatch-salon-belleza',
+  'bg-swatch-consultorio',
+  'bg-swatch-fallback',
 ]
 
 const heading = 'mb-4 text-label text-white/60 uppercase'

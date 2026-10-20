@@ -41,11 +41,11 @@
   --color-warning-bg: #fff4e0;
 
   /* Muestras por tipo de espacio */
-  --color-swatch-gerencial: #1f80e0;
-  --color-swatch-operativo: #2b2f36;
-  --color-swatch-reserve-3: #6e7783;
-  --color-swatch-reserve-4: #8a6a4b;
-  --color-swatch-reserve-5: #c9cfd7;
+  --color-swatch-oficina: #1566b8;
+  --color-swatch-salon-belleza: #2b2f36;
+  --color-swatch-consultorio: #c9cfd7;
+  --color-swatch-hogar: #8a6a4b;
+  --color-swatch-fallback: #6e7783;
 
   /* Escala tipográfica (corta: la jerarquía se gana con peso) */
   --text-display: clamp(1.75rem, 1.2rem + 2vw, 2.25rem);

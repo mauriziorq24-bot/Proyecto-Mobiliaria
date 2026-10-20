@@ -75,11 +75,11 @@ const colorGroups = [
   {
     title: 'Muestras por tipo de espacio',
     colors: [
-      { name: 'Gerencial', token: 'swatch-gerencial', hex: '#1F80E0', use: 'GERENCIAL' },
-      { name: 'Operativo', token: 'swatch-operativo', hex: '#2B2F36', use: 'OPERATIVO' },
-      { name: 'Gris Oxford', token: 'swatch-reserve-3', hex: '#6E7783', use: 'Reserva · tipo sin color' },
-      { name: 'Madera', token: 'swatch-reserve-4', hex: '#8A6A4B', use: 'Reserva' },
-      { name: 'Gris Claro', token: 'swatch-reserve-5', hex: '#C9CFD7', use: 'Reserva (texto Tinta)' },
+      { name: 'Azul Acción', token: 'swatch-oficina', hex: '#1566B8', use: 'OFICINA' },
+      { name: 'Madera', token: 'swatch-hogar', hex: '#8A6A4B', use: 'HOGAR' },
+      { name: 'Malla Negra', token: 'swatch-salon-belleza', hex: '#2B2F36', use: 'SALON_BELLEZA' },
+      { name: 'Gris Claro', token: 'swatch-consultorio', hex: '#C9CFD7', use: 'CONSULTORIO (texto Tinta)' },
+      { name: 'Gris Oxford', token: 'swatch-fallback', hex: '#6E7783', use: 'Tipo nuevo sin color' },
     ],
   },
 ]
@@ -317,7 +317,7 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
                 shadow-lg
               </div>
               <p class="mt-2.5 text-card-title">Sombra lg</p>
-              <p class="text-small text-ink-muted">Menús, drawer, barra de presupuesto</p>
+              <p class="text-small text-ink-muted">Menús, drawer, barra de cotización</p>
             </li>
           </ul>
         </section>
@@ -366,7 +366,7 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
             </BaseButton>
             <BaseButton>
               <template #icon-left><Plus /></template>
-              Agregar al presupuesto
+              Agregar a la cotización
             </BaseButton>
             <BaseButton variant="secondary">
               Ver catálogo
@@ -453,7 +453,7 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
                 :badge="favoritesCount"
                 @click="favoritesCount++"
               />
-              <BaseIconButton :icon="ShoppingCart" label="Ver presupuesto" variant="inverse" :badge="128" />
+              <BaseIconButton :icon="ShoppingCart" label="Ver cotización" variant="inverse" :badge="128" />
             </div>
           </div>
           <p class="mt-2 text-small text-ink-muted">
@@ -462,7 +462,7 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
           </p>
 
           <div class="mt-6 flex items-center gap-3">
-            <BaseIconButton :icon="Trash2" label="Quitar del presupuesto" variant="secondary" disabled />
+            <BaseIconButton :icon="Trash2" label="Quitar de la cotización" variant="secondary" disabled />
             <p class="text-small text-ink-muted"><code class="font-mono text-xs text-ink">disabled</code></p>
           </div>
         </section>
@@ -549,7 +549,7 @@ const gridProducts = computed(() => (gridState.value === 'empty' ? [] : mockProd
             <div class="md:col-span-3">
               <h3 class="text-card-title">Estados</h3>
               <div class="mt-3 flex flex-wrap items-center gap-2">
-                <BaseBadge variant="success"><Check />Agregado a tu presupuesto</BaseBadge>
+                <BaseBadge variant="success"><Check />Agregado a tu cotización</BaseBadge>
                 <BaseBadge variant="info">3 productos en tu lista</BaseBadge>
                 <BaseBadge variant="warning"><CircleAlert />Horario del showroom pendiente</BaseBadge>
                 <BaseBadge variant="error"><CircleAlert />No se pudo cargar el catálogo</BaseBadge>

@@ -4,7 +4,7 @@
 
 export const company = {
   name: 'Mobiliario de Oficina',
-  tagline: 'Mobiliario para equipar oficinas, con showroom en Carabobo.',
+  tagline: 'Mobiliario para oficinas, negocios y hogares, con showroom en Carabobo.',
 
   // Números en formato internacional sin espacios (para tel: y wa.me) y con formato para mostrarlos.
   phones: [
@@ -29,6 +29,8 @@ export const company = {
     address: 'San Diego, Edo. Carabobo, Venezuela',
     // Enlace a Google Maps con la ubicación exacta del showroom. Pendiente: hoy solo hay ciudad.
     mapsUrl: null,
+    // Foto del showroom para el inicio. Mientras sea null, el inicio muestra las siluetas de los muebles.
+    photoUrl: null,
     schedule: [
       { days: 'Lunes a viernes', hours: '8:30 a. m. – 5:00 p. m.' },
       { days: 'Sábados', hours: '8:30 a. m. – 1:30 p. m.' },
