@@ -83,7 +83,7 @@ Notas:
 - `peluqueria`, `silleria` y `bano` devuelven `[]` con o sin tilde, pero porque **ningún nombre** contiene esas palabras ("Sillería" es solo nombre de categoría), no por un problema de tildes. La `ñ` no se pudo probar: ningún nombre del seed la tiene.
 - Consecuencias para el frontend: conviene **recortar** el texto y **unir espacios repetidos** antes de enviarlo, y no mandar `buscar` si queda vacío. Buscar "sillería" o "lumbar" hoy no encuentra nada (ver pendiente 23).
 
-> **Decisión del frontend (20/10/2026) para la página de búsqueda:** `productoService` pide `GET /api/v1/productos?buscar=` una sola vez por cada texto buscado y filtra localmente por categoría, `tipoEspacio`, `enShowroom` y precio, y también ordena. Motivo: el catálogo es pequeño y no tiene paginación, así que filtrar en el navegador es más rápido y evita esperar otra vez el cold start de Render con cada cambio de filtro. Si el catálogo crece y el backend agrega paginación, el servicio pasará a enviar `tipoEspacio`, `enShowroom` y `categoria` a la API (y el orden y el precio, si se agregan), sin cambiar las vistas. Ver pendientes 2 y 22.
+> **Decisión del frontend (20/10/2026) para la página de búsqueda:** `?buscar=` existe pero **el frontend no lo usa**, porque solo busca en el `nombre` y como frase exacta (ver la tabla de arriba). `productoService` pide `GET /api/v1/productos` **sin parámetros, una sola vez** (la lista se reutiliza mientras se escribe y se cambian filtros), y en el navegador busca el texto palabra por palabra en `nombre`, `descripcion`, `material` y `categoriaNombre`, sin tildes ni mayúsculas; también filtra por categoría, `tipoEspacio`, `enShowroom` y precio, y ordena. Motivo: el catálogo es pequeño y no tiene paginación, así que filtrar en el navegador es más rápido y solo se espera el cold start de Render una vez. Si el catálogo crece y el backend agrega paginación, el servicio pasará a enviar el texto y los filtros a la API, sin cambiar las vistas. Ver pendientes 2, 22 y 26.
 
 ### `GET /api/v1/productos/{id}`
 Response 200: un `ProductoResponse`.
@@ -254,6 +254,7 @@ Cancela (elimina) una cita.
 23. **`buscar` solo mira el `nombre`.** Pedir que busque también en `descripcion`, `material` y el nombre de la categoría, y que cada palabra se busque por separado (hoy `silla malla` no encuentra la "Silla Ejecutiva Malla Transpirable").
 24. **Recortar el texto (`trim`) en el backend:** hoy `" silla "` devuelve `[]`. El frontend lo recortará igualmente.
 25. **Escapar `%` y `_`:** hoy funcionan como comodines de `LIKE` (`buscar=%` devuelve todo). No es grave con un catálogo público, pero el resultado es inesperado.
+26. **`?buscar=` no se usa hoy** (el frontend busca localmente; ver la decisión en `GET /api/v1/productos`). Si el catálogo crece y la búsqueda tiene que volver al servidor, `buscar` necesitaría antes los puntos 23, 24 y 25 (buscar en `nombre`, `descripcion`, `material` y categoría, palabra por palabra, con trim) para no perder resultados que hoy sí aparecen. Además, para los conteos de cada filtro ("Hogar (3)"), la API tendría que devolverlos junto con los resultados.
 
 ### CORS
 18. En desarrollo no hace falta: el frontend usa el proxy de Vite (ver `CLAUDE.md`). Solo falta confirmar CORS para el dominio de **producción** (`VITE_API_URL`).

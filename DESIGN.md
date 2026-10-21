@@ -433,7 +433,8 @@ Página para hacer una tarea: patrones conocidos (IKEA, Amazon), sin adornos. Ll
 
 **Decisiones (2026-10-20):**
 - **Sin campo de búsqueda propio:** se usa el del header (en móvil ya está fijo y muestra el texto buscado). La página repite el texto en el título y ofrece "Borrar búsqueda", que quita `q` y conserva los filtros.
-- **Relevancia:** el backend no da puntuación. Primero los productos con el texto en el nombre, luego los que lo tienen solo en la descripción; dentro de cada grupo, el orden de la API. Sin texto buscado, el orden de la API.
+- **Búsqueda local:** el texto se busca en el navegador, palabra por palabra y sin tildes, en nombre, descripción, material y categoría ("melamina", "semicuero" o "silla malla" encuentran). El catálogo se pide una sola vez (ver la decisión en `API.md`).
+- **Relevancia:** el backend no da puntuación. Primero los productos con todo el texto en el nombre, luego los que lo tienen en los otros campos; dentro de cada grupo, el orden de la API. Sin texto buscado, el orden de la API.
 - **Una opción por grupo:** una sola categoría y un solo ambiente a la vez (como el `tipoEspacio` único del backend); la URL lleva un valor por parámetro.
 
 ## Do's and Don'ts
