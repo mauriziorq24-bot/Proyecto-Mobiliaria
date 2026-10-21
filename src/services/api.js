@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isTokenExpired } from '../utils/jwt'
 
 // La URL base queda vacía en todos los entornos: axios usa rutas relativas
 // (/api/v1/...). En desarrollo las reenvía el proxy de Vite y en producción
@@ -32,6 +33,42 @@ function isHtmlResponse(response) {
   return contentType.includes('text/html')
 }
 
+// Sesión: api.js no importa el store ni el router (se crearía un ciclo
+// api → store → authService → api). main.js los conecta con configureAuth().
+// - onTokenExpired: el token venció antes de enviarse (basta con cerrar la sesión).
+// - onUnauthorized: el backend respondió 401 a una petición con token.
+let auth = {
+  getToken: () => null,
+  onTokenExpired: () => {},
+  onUnauthorized: () => {},
+}
+
+export function configureAuth(handlers) {
+  auth = { ...auth, ...handlers }
+}
+
+// Las rutas de /auth/v1 no usan la sesión: su 401 significa "usuario o correo ya
+// registrado" (API.md), no "sesión vencida".
+function isAuthEndpoint(config) {
+  return config?.url?.startsWith('/auth/') ?? false
+}
+
+api.interceptors.request.use((config) => {
+  const token = auth.getToken()
+  if (!token || isAuthEndpoint(config)) return config
+
+  // Un token vencido no se envía: el backend respondería 500 incluso en GET públicos
+  // (pendiente 21-bis de API.md). Se cierra la sesión y la petición sale sin token;
+  // si era un endpoint protegido, el backend responderá 403 y la vista lo manejará.
+  if (isTokenExpired(token)) {
+    auth.onTokenExpired()
+    return config
+  }
+
+  config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 api.interceptors.response.use(
   (response) => {
     if (isHtmlResponse(response)) {
@@ -43,6 +80,13 @@ api.interceptors.response.use(
     // Las páginas de error de Render (502, 503…) también son HTML.
     if (isHtmlResponse(error.response)) {
       return Promise.reject(backendNotJsonError())
+    }
+    // 401 = sesión vencida, pero solo si la petición llevaba token: el backend también
+    // da 401 en GET públicos con un id no numérico (pendiente 21 de API.md) y eso
+    // no debe echar a nadie de su sesión.
+    const sentToken = Boolean(error.config?.headers?.Authorization)
+    if (error.response?.status === 401 && sentToken && !isAuthEndpoint(error.config)) {
+      auth.onUnauthorized()
     }
     return Promise.reject(error)
   },
