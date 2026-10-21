@@ -84,7 +84,19 @@ function onKeydown(event) {
 </script>
 
 <template>
-  <div role="region" aria-roledescription="galería" :aria-label="`Fotos de ${nombre}`" @keydown="onKeydown">
+  <!--
+    En escritorio la foto 4:5 sería más alta que la pantalla. Se limita el ANCHO (no la altura):
+    así la proporción se mantiene y la foto + miniaturas caben en la ventana junto a la información.
+    (100svh − 12rem) es el alto disponible tras el header y las miniaturas; × 4/5 lo pasa a ancho.
+    max(20rem, …) evita que se encoja demasiado en ventanas muy bajas.
+  -->
+  <div
+    role="region"
+    aria-roledescription="galería"
+    :aria-label="`Fotos de ${nombre}`"
+    class="w-full lg:mx-auto lg:max-w-[max(20rem,calc((100svh-12rem)*4/5))]"
+    @keydown="onKeydown"
+  >
     <div class="relative">
       <!--
         El carril: una fila de fotos, cada una del 100% del ancho, con scroll horizontal.
@@ -95,7 +107,7 @@ function onKeydown(event) {
       <div
         ref="track"
         :tabindex="isMultiple ? 0 : undefined"
-        class="flex aspect-square overflow-hidden rounded-md border border-line bg-surface"
+        class="flex aspect-[4/5] overflow-hidden rounded-md border border-line bg-surface"
         :class="
           isMultiple &&
           'snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
@@ -109,7 +121,7 @@ function onKeydown(event) {
           :role="isMultiple ? 'group' : undefined"
           :aria-label="isMultiple ? `${index + 1} de ${slides.length}` : undefined"
         >
-          <!-- object-contain: en la ficha se ve el mueble completo, sin recortes -->
+          <!-- 4:5 como las fotos reales; si alguna trae otra proporción, object-cover la recorta centrada sin deformarla -->
           <img
             :src="srcFor(index)"
             :alt="altFor(index)"
@@ -117,9 +129,9 @@ function onKeydown(event) {
             :fetchpriority="index === 0 ? 'high' : undefined"
             decoding="async"
             width="1080"
-            height="1080"
+            height="1350"
             draggable="false"
-            class="size-full object-contain select-none"
+            class="size-full object-cover object-center select-none"
             @error="onImageError(index)"
           />
         </div>
@@ -156,7 +168,7 @@ function onKeydown(event) {
           type="button"
           :aria-label="`Ver foto ${index + 1} de ${slides.length}`"
           :aria-current="index === activeIndex ? 'true' : undefined"
-          class="block size-[72px] overflow-hidden rounded-md border bg-surface transition-[border-color,opacity] duration-200 ease-out"
+          class="block aspect-[4/5] w-[72px] overflow-hidden rounded-md border bg-surface transition-[border-color,opacity] duration-200 ease-out"
           :class="
             index === activeIndex
               ? 'border-brand-deep ring-1 ring-brand-deep'
@@ -170,8 +182,8 @@ function onKeydown(event) {
             loading="lazy"
             decoding="async"
             width="72"
-            height="72"
-            class="size-full object-contain"
+            height="90"
+            class="size-full object-cover object-center"
             @error="onImageError(index)"
           />
         </button>

@@ -49,15 +49,19 @@ function onImageError() {
   <article
     class="group relative flex h-full flex-col overflow-hidden rounded-md border border-line bg-surface transition-colors duration-200 ease-out hover:border-ink/25 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-brand"
   >
-    <div class="relative aspect-square overflow-hidden bg-ground">
+    <!--
+      4:5 vertical: la proporción de las fotos de Instagram (1080 × 1350), así se ven completas.
+      Si una foto trae otra proporción, object-cover la recorta centrada en vez de deformarla.
+    -->
+    <div class="relative aspect-[4/5] overflow-hidden bg-ground">
       <img
         :src="imageSrc"
         :alt="producto.nombre"
         loading="lazy"
         decoding="async"
-        width="800"
-        height="800"
-        class="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+        width="1080"
+        height="1350"
+        class="size-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03]"
         @error="onImageError"
       />
       <BaseBadge v-if="producto.enShowroom" variant="showroom" class="absolute top-2 right-2">

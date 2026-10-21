@@ -353,9 +353,17 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 ### Estado de error
 - `BaseErrorState`: bloque blanco con borde, ícono de alerta en Error, título que nombra lo que falló y botón secundario "Reintentar".
 
+### Imágenes de producto (estándar 4:5)
+- Las fotos de producto vienen de Instagram en **1080 × 1350 px**: proporción vertical **4:5**. Es el estándar de imagen de producto en toda la tienda.
+- Tarjeta de producto, su skeleton, imagen principal de la ficha y miniaturas de la galería usan `aspect-[4/5]`.
+- Toda `<img>` de producto lleva `width="1080" height="1350"` (las miniaturas, `72 × 90`) para que el navegador reserve el espacio antes de cargar y no haya saltos de contenido.
+- Si una foto no es 4:5, `object-cover object-center`: se recorta centrada, nunca se deforma ni deja franjas.
+- En escritorio la galería de la ficha limita su ancho a `(100svh − 12rem) × 4/5` (mínimo 20rem) para que foto y miniaturas quepan en la pantalla junto a la información.
+- Otras superficies (tarjeta de categoría 1:1 / 4:3, hero) pueden tener su propia proporción; si muestran una foto de producto, la recortan con `object-cover` centrado.
+
 ### Tarjeta de producto
 - Superficie blanca, borde 1px, radio `md`, sin sombra. Toda la tarjeta enlaza a `/producto/:id` (enlace estirado sobre el nombre).
-- Foto cuadrada (1:1, `object-cover`, `loading="lazy"`) con `tag-showroom` "EN SHOWROOM" arriba a la derecha si `enShowroom`. Sin foto o si falla: placeholder `/placeholder-producto.svg`.
+- Foto vertical 4:5 (`object-cover`, `loading="lazy"`) con `tag-showroom` "EN SHOWROOM" arriba a la derecha si `enShowroom`. Sin foto o si falla: placeholder `/placeholder-producto.svg`.
 - La tarjeta **no** lleva el material: en la API es una frase larga y no cabe; se muestra completo en la ficha del producto.
 - Categoría (`small`, Tinta Suave, 1 línea), nombre (`card-title`, máximo 2 líneas con espacio reservado para que los precios de una fila queden alineados), "Precio referencial" (`small`, Tinta Suave) y el precio (`price`). Sin precio: "Consultar precio".
 - Botón de favorito a la derecha del precio: ícono de 20px con área táctil de 44px.

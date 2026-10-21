@@ -4,7 +4,7 @@
     Es decorativo (aria-hidden); el aviso "Cargando" lo da ProductGrid una sola vez.
   -->
   <div class="flex h-full flex-col overflow-hidden rounded-md border border-line bg-surface" aria-hidden="true">
-    <div class="aspect-square animate-pulse bg-ground" />
+    <div class="aspect-[4/5] animate-pulse bg-ground" />
 
     <div class="flex flex-1 flex-col p-3 md:p-4">
       <!-- Cada barra tiene la altura de la línea de texto que reemplaza -->

@@ -40,7 +40,7 @@ const showImage = computed(() => Boolean(props.imagenUrl) && !imageFailed.value)
         alt=""
         loading="lazy"
         decoding="async"
-        class="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+        class="size-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03]"
         @error="imageFailed = true"
       />
       <div

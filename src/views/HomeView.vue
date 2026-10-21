@@ -119,7 +119,7 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
           v-if="company.showroom.photoUrl"
           :src="company.showroom.photoUrl"
           alt="Showroom de Mobiliario de Oficina en San Diego, Carabobo"
-          class="aspect-[2/1] w-full object-cover md:aspect-[5/2] lg:aspect-[16/9]"
+          class="aspect-[2/1] w-full object-cover object-center md:aspect-[5/2] lg:aspect-[16/9]"
         />
         <div v-else class="relative aspect-[2/1] md:aspect-[5/2] lg:aspect-[16/9]" aria-hidden="true">
           <!-- El piso: una franja más clara con su borde como línea de suelo -->

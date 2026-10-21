@@ -144,7 +144,10 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
           <div class="h-3 w-32 animate-pulse rounded-sm bg-line" />
         </div>
         <div class="mt-4 lg:mt-6 lg:grid lg:grid-cols-12 lg:gap-12">
-          <div class="aspect-square animate-pulse rounded-md bg-line/60 lg:col-span-7" />
+          <!-- Mismo tamaño que ProductGallery: 4:5 y con el ancho limitado en escritorio -->
+          <div
+            class="aspect-[4/5] w-full animate-pulse rounded-md bg-line/60 lg:col-span-7 lg:mx-auto lg:max-w-[max(20rem,calc((100svh-12rem)*4/5))]"
+          />
           <div class="mt-6 lg:col-span-5 lg:mt-0">
             <div class="h-3.5 w-24 animate-pulse rounded-sm bg-line" />
             <div class="mt-3 h-7 w-full animate-pulse rounded-sm bg-line md:h-8" />
