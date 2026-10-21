@@ -45,7 +45,7 @@ export const TIPOS_ASESORIA = {
   },
   COTIZACION_GENERAL: {
     etiqueta: 'Cotización',
-    descripcion: 'Te ayudamos a armar un presupuesto con los muebles que necesitas.',
+    descripcion: 'Te ayudamos a armar una cotización con los muebles que necesitas.',
   },
   PROYECTO_CORPORATIVO: {
     etiqueta: 'Proyecto corporativo',

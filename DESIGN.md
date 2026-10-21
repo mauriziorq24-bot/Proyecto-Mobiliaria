@@ -365,6 +365,17 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Campos:** login, "Usuario o correo" + "Contraseña" con "¿Olvidaste tu contraseña? Escríbenos por WhatsApp" debajo (no hay recuperación de contraseña en el backend). Registro, "Nombre de usuario" + "Correo" + "Contraseña" (mínimo 8 caracteres). Botón para mostrar la contraseña en lugar de "Repetir contraseña".
 - **Errores:** se validan al enviar y después al salir de cada campo. Login fallido: un solo aviso, "Usuario o contraseña incorrectos.". Usuario o correo repetido: error en su campo (con "Ingresar con ese correo" si es el correo). Fallos de red o servidor: aviso sobre el botón.
 
+### Agendar visita (`/agendar-cita`) — decidido el 2026-10-21
+- **Exige sesión** (`meta.requiereSesion`) mientras `POST /api/v1/citas` pida token (pendiente 10-quater de `API.md`). Sin barra de cotización.
+- **Estructura:** título + una línea. Escritorio: formulario a la izquierda (tarjeta blanca con secciones separadas por línea) y el resumen "Tu visita" a la derecha, fijo (sticky). Móvil: una columna; el resumen va al final, justo antes del envío. **Un solo botón** "Agendar visita" (`button-visit`, dorado), dentro del resumen. El resumen dice "Elige un día" / "Elige una hora" mientras falten.
+- **Tipo de asesoría:** radios nativos en un `fieldset` con `legend`, con forma de tarjeta (nombre + descripción). Elegida: Tinte Azul, borde Azul Acción y check. "Visita al showroom" va primera, preseleccionada y con el punto dorado. En móvil, la descripción ocupa una línea salvo en la elegida.
+- **Día:** tira horizontal de tarjetas (día de la semana + número), con los días con atención de los próximos `diasAnticipacionCita` días (30, en `config/empresa.js`); sin domingos. El nombre del mes aparece donde empieza cada mes y queda pegado a la izquierda al deslizar. Radios nativos ocultos: se recorre con las flechas. En escritorio, botones anterior/siguiente junto al título "Día y hora".
+- **Hora:** botones con `aria-pressed`, agrupados en "Mañana" y "Tarde". Cambiar de día borra la hora.
+- **Datos:** nombre, empresa o negocio (opcional), teléfono venezolano, correo y notas (opcional). Se validan al enviar y después al salir de cada campo; el foco va al primer error.
+- **Prellenado:** borrador recuperado > datos de la cuenta (hoy solo el correo, si el usuario tiene forma de correo) > `?producto=ID`, que muestra el producto en el resumen y escribe "Me interesa: …" en las notas si están vacías. Un producto que no existe se ignora.
+- **Sesión vencida:** lo escrito se guarda en `sessionStorage`, se lleva al login con `?redirect=` y al volver se recupera con el aviso "Recuperamos lo que habías escrito" (Tinte Azul). Si el horario ya pasó, se pide elegir otro.
+- **Confirmación:** reemplaza al formulario. Ícono de Éxito, "Tu visita quedó agendada", el código de la cita grande con "Copiar", "Agregar a mi calendario" (.ics) y la dirección y el horario del showroom.
+
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.
 - Un solo aviso a la vez. En la Fase 7 lo puede usar "Agregado a tu cotización".

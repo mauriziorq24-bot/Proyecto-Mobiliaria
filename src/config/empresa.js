@@ -49,5 +49,8 @@ export const company = {
     // Cuánto dura una cita. El backend aún no lo define (pendiente 11-ter de API.md):
     // el último turno ofrecido es la hora de cierre menos esta duración.
     duracionCitaMinutos: 60,
+    // Con cuánta anticipación se puede agendar: se ofrecen los días con atención dentro de
+    // los próximos N días, contando hoy (src/utils/fecha.js › diasDisponibles).
+    diasAnticipacionCita: 30,
   },
 }

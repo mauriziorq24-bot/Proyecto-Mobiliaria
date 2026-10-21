@@ -15,9 +15,6 @@ export const ZONA_HORARIA = 'America/Caracas'
 // Cada cuántos minutos se ofrece un turno.
 const INTERVALO_MINUTOS = 30
 
-// Cuántos días con turnos libres se ofrecen hacia adelante (unas cuatro semanas).
-const DIAS_A_OFRECER = 24
-
 const FECHA_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 const HORA_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 
@@ -104,16 +101,15 @@ export function horariosDelDia(fecha, ahora = ahoraEnCaracas()) {
   return turnos
 }
 
-// Próximos días con al menos un turno libre, empezando por hoy: ['2026-10-21', '2026-10-22', …].
-// Salta domingos y, si hoy ya no quedan turnos, también hoy.
-export function diasDisponibles(cantidad = DIAS_A_OFRECER, ahora = ahoraEnCaracas()) {
-  const dias = []
-  // Tope de vueltas por si el horario quedara vacío (no habría ningún día que ofrecer).
-  for (let i = 0; dias.length < cantidad && i < cantidad * 2; i++) {
+// Días con al menos un turno libre dentro de los próximos `dias` días, contando hoy:
+// ['2026-10-21', '2026-10-22', …]. Salta domingos y, si hoy ya no quedan turnos, también hoy.
+export function diasDisponibles(dias = company.showroom.diasAnticipacionCita, ahora = ahoraEnCaracas()) {
+  const disponibles = []
+  for (let i = 0; i < dias; i++) {
     const fecha = sumarDias(ahora.fecha, i)
-    if (horariosDelDia(fecha, ahora).length) dias.push(fecha)
+    if (horariosDelDia(fecha, ahora).length) disponibles.push(fecha)
   }
-  return dias
+  return disponibles
 }
 
 // Comprobación final antes de enviar: el formulario pudo quedar abierto y el turno ya pasó.
@@ -159,4 +155,25 @@ const formatoHora = new Intl.DateTimeFormat('es-VE', { timeZone: 'UTC', hour: 'n
 export function formatearFechaHora(fecha, hora) {
   const date = fechaUtc(fecha, hora)
   return `${formatoDiaSemana.format(date)} ${formatoDiaMes.format(date)}, ${formatoHora.format(date)}`
+}
+
+// Las partes de un día para la tira de días del formulario de citas:
+// '2026-10-23' → { diaSemana: 'vie', dia: 23, mes: 'octubre', claveMes: '2026-10', completo: 'viernes 23 de octubre' }
+const formatoDiaSemanaCorto = new Intl.DateTimeFormat('es-VE', { timeZone: 'UTC', weekday: 'short' })
+const formatoMes = new Intl.DateTimeFormat('es-VE', { timeZone: 'UTC', month: 'long' })
+
+export function describirDia(fecha) {
+  const date = fechaUtc(fecha)
+  return {
+    diaSemana: formatoDiaSemanaCorto.format(date).replace('.', ''), // algunos navegadores dan "vie."
+    dia: date.getUTCDate(),
+    mes: formatoMes.format(date),
+    claveMes: fecha.slice(0, 7),
+    completo: `${formatoDiaSemana.format(date)} ${formatoDiaMes.format(date)}`,
+  }
+}
+
+// '14:30' → '2:30 p. m.' (la fecha da igual: solo se usa la hora)
+export function formatearHora(hora) {
+  return formatoHora.format(fechaUtc('2000-01-01', hora))
 }
