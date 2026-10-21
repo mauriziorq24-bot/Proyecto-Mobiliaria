@@ -99,11 +99,11 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
 
       <!-- Código: lo más importante de la pantalla, es la única forma de cambiar o cancelar la cita -->
       <div class="mt-6 rounded-md border border-line bg-ground p-4 sm:p-5">
-        <p id="cita-codigo-label" class="text-label text-ink-muted uppercase">Código de tu cita</p>
+        <!-- El texto de arriba presenta el código: un <p> no admite aria-labelledby (ARIA 1.2) -->
+        <p class="text-label text-ink-muted uppercase">Código de tu cita</p>
         <div class="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <p
             ref="code"
-            aria-labelledby="cita-codigo-label"
             class="text-display font-extrabold tracking-wide text-ink tabular-nums select-all"
           >
             {{ cita.codigoCita }}

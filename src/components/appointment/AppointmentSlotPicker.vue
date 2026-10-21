@@ -22,8 +22,8 @@ const emit = defineEmits(['update:fecha', 'update:hora', 'leave'])
 // Ids propios: el selector puede estar en más de una página, y los radios necesitan un name único.
 const uid = useId()
 const radioName = `dia-${uid}`
+const horaName = `hora-${uid}`
 const fechaMessageId = `${uid}-fecha-message`
-const horaLabelId = `${uid}-hora-label`
 const horaMessageId = `${uid}-hora-message`
 
 // La tira se agrupa por mes para poner el nombre ("Noviembre") donde cambia.
@@ -83,16 +83,20 @@ function scrollStrip(direction) {
 }
 
 // La vista lleva el foco al primer error: estos métodos le dicen dónde está cada grupo.
+// En un grupo de radios, el foco va al elegido (o al primero si no hay ninguno).
+function focusRadio(name) {
+  const radios = [...(root.value?.querySelectorAll(`input[name="${name}"]`) ?? [])]
+  const radio = radios.find((r) => r.checked) ?? radios[0]
+  radio?.focus()
+  return Boolean(radio)
+}
+
 function focusDay() {
-  const radios = [...(root.value?.querySelectorAll(`input[name="${radioName}"]`) ?? [])]
-  ;(radios.find((radio) => radio.checked) ?? radios[0])?.focus()
+  focusRadio(radioName)
 }
 
 function focusHour() {
-  const botones = [...(root.value?.querySelectorAll('[data-hora]') ?? [])]
-  const boton = botones.find((b) => b.getAttribute('aria-pressed') === 'true') ?? botones[0]
-  if (boton) boton.focus()
-  else focusDay()
+  if (!focusRadio(horaName)) focusDay()
 }
 
 defineExpose({ focusDay, focusHour })
@@ -159,14 +163,15 @@ onBeforeUnmount(() => stripObserver?.disconnect())
             {{ mes.nombre }}
           </p>
           <div class="flex gap-2">
+            <!-- min-h/min-w (no medidas fijas): con letra grande del sistema la tarjeta crece -->
             <label
               v-for="dia in mes.dias"
               :key="dia.fecha"
-              class="relative flex h-[76px] w-16 shrink-0 cursor-pointer flex-col items-center justify-center rounded-md border transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
+              class="relative flex min-h-[76px] min-w-16 shrink-0 cursor-pointer flex-col items-center justify-center rounded-md border px-1 py-2 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
               :class="
                 fecha === dia.fecha
                   ? 'border-brand-deep bg-brand-tint text-brand-deep'
-                  : 'border-line bg-surface text-ink hover:border-line-strong'
+                  : 'border-line-strong bg-surface text-ink hover:border-ink-muted'
               "
             >
               <input
@@ -174,6 +179,7 @@ onBeforeUnmount(() => stripObserver?.disconnect())
                 :name="radioName"
                 :value="dia.fecha"
                 :checked="fecha === dia.fecha"
+                :aria-invalid="errorFecha ? 'true' : undefined"
                 class="sr-only"
                 @change="handleDayChange(dia.fecha, $event)"
               />
@@ -199,37 +205,48 @@ onBeforeUnmount(() => stripObserver?.disconnect())
       </div>
     </fieldset>
 
-    <!-- Hora: botones con aria-pressed -->
-    <div
-      role="group"
-      :aria-labelledby="horaLabelId"
+    <!-- Hora: radios nativos escondidos, igual que los días (una sola hora; las flechas recorren
+         Mañana y Tarde porque comparten name). -->
+    <fieldset
+      class="mt-6 min-w-0"
       :aria-describedby="errorHora ? horaMessageId : undefined"
-      class="mt-6"
       @focusout="handleFocusout('hora', $event)"
     >
-      <p :id="horaLabelId" class="mb-1.5 text-small font-semibold text-ink">Hora</p>
+      <legend class="mb-1.5 text-small font-semibold text-ink">Hora</legend>
       <p v-if="!fecha" class="text-small text-ink-muted">Elige un día para ver las horas disponibles.</p>
       <div v-else class="flex flex-col gap-4">
         <div v-for="franja in franjas" :key="franja.nombre" role="group" :aria-label="franja.nombre">
           <p class="mb-2 text-small text-ink-muted" aria-hidden="true">{{ franja.nombre }}</p>
-          <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 xl:grid-cols-5">
-            <button
+          <!-- Columnas de al menos 6.5rem: "10:30 a. m." siempre cabe, y con letra grande caben menos -->
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-2">
+            <label
               v-for="opcion in franja.horas"
               :key="opcion"
-              type="button"
-              :data-hora="opcion"
-              :aria-pressed="hora === opcion"
-              class="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-small font-semibold whitespace-nowrap tabular-nums transition-colors"
+              class="relative inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md border px-2 py-1 text-small font-semibold whitespace-nowrap tabular-nums transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
               :class="
                 hora === opcion
                   ? 'border-brand-deep bg-brand-tint text-brand-deep'
-                  : 'border-line bg-surface text-ink hover:border-line-strong'
+                  : 'border-line-strong bg-surface text-ink hover:border-ink-muted'
               "
-              @click="emit('update:hora', opcion)"
             >
-              <Check v-if="hora === opcion" class="size-3.5 shrink-0" :stroke-width="3" aria-hidden="true" />
+              <input
+                type="radio"
+                :name="horaName"
+                :value="opcion"
+                :checked="hora === opcion"
+                :aria-invalid="errorHora ? 'true' : undefined"
+                class="sr-only"
+                @change="emit('update:hora', opcion)"
+              />
               {{ formatearHora(opcion) }}
-            </button>
+              <!-- En la esquina, como en los días: no le quita ancho a la hora -->
+              <Check
+                v-if="hora === opcion"
+                class="absolute top-1 right-1 size-3"
+                :stroke-width="3"
+                aria-hidden="true"
+              />
+            </label>
           </div>
         </div>
       </div>
@@ -240,6 +257,6 @@ onBeforeUnmount(() => stripObserver?.disconnect())
           {{ errorHora }}
         </p>
       </div>
-    </div>
+    </fieldset>
   </div>
 </template>

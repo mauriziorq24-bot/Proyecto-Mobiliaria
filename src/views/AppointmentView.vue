@@ -319,7 +319,7 @@ onBeforeUnmount(() => clearInterval(relojTimer))
               :class="
                 form.tipoAsesoria === opcion.valor
                   ? 'border-brand-deep bg-brand-tint'
-                  : 'border-line bg-surface hover:border-line-strong'
+                  : 'border-line-strong bg-surface hover:border-ink-muted'
               "
             >
               <input
@@ -438,8 +438,9 @@ onBeforeUnmount(() => clearInterval(relojTimer))
         </section>
       </div>
 
-      <!-- Resumen + el único botón de envío. En escritorio queda fijo al hacer scroll. -->
-      <aside aria-labelledby="cita-resumen-title" class="lg:sticky lg:top-24">
+      <!-- Resumen + el único botón de envío. En escritorio queda fijo al hacer scroll,
+           salvo en pantallas bajas (short): ahí el botón quedaría fuera de la vista. -->
+      <aside aria-labelledby="cita-resumen-title" class="lg:sticky lg:top-24 lg:short:static">
         <div class="rounded-md border border-line bg-surface p-5 sm:p-6">
           <h2 id="cita-resumen-title" class="text-title text-ink">Tu visita</h2>
 

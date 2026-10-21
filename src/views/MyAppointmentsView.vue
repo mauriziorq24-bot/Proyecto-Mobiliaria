@@ -414,7 +414,7 @@ onBeforeUnmount(() => {
             <!-- La fecha como en la tira de días del formulario: se reconoce de un vistazo -->
             <div class="flex min-w-0 flex-1 items-start gap-4">
               <div
-                class="flex h-[76px] w-16 shrink-0 flex-col items-center justify-center rounded-md border border-line bg-ground text-ink"
+                class="flex min-h-[76px] min-w-16 shrink-0 flex-col px-1 py-2 items-center justify-center rounded-md border border-line bg-ground text-ink"
                 aria-hidden="true"
               >
                 <span class="text-small capitalize">{{ cita.dia.diaSemana }}</span>
