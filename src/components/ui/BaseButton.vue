@@ -8,10 +8,11 @@ import { RouterLink } from 'vue-router'
 const props = defineProps({
   // primary: acción principal · secondary: apoyo · ghost: acción discreta
   // visit: "Agendar visita" (dorado showroom) · whatsapp: "Enviar por WhatsApp"
+  // danger: confirmar algo que no se puede deshacer ("Sí, cancelar visita")
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'ghost', 'visit', 'whatsapp'].includes(value),
+    validator: (value) => ['primary', 'secondary', 'ghost', 'visit', 'whatsapp', 'danger'].includes(value),
   },
   size: {
     type: String,
@@ -72,6 +73,7 @@ const variantClasses = {
   ghost: 'bg-transparent text-brand-deep hover:bg-brand-tint',
   visit: 'bg-showroom-gold text-ink hover:bg-showroom-gold-deep',
   whatsapp: 'bg-whatsapp text-white hover:bg-whatsapp-deep',
+  danger: 'bg-error text-white hover:bg-error-deep',
 }
 
 // En "sm" el botón mide 36px, pero el área táctil se amplía a 44px con un ::before invisible.

@@ -28,6 +28,8 @@ const routes = [
       if (!buscarCitaReciente(to.query.codigo)) return { name: 'appointment', replace: true }
     },
   },
+  // Reprogramar o cancelar las citas guardadas en este navegador. Exige sesión: PUT y DELETE piden token.
+  { path: '/mi-cita', name: 'my-appointments', component: () => import('../views/MyAppointmentsView.vue'), meta: { title: 'Mis visitas', requiereSesion: true } },
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true } },
   { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true } },
   { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi perfil', requiereSesion: true } },

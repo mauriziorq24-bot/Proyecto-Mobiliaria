@@ -36,18 +36,32 @@ export function leerCitasGuardadas() {
   return guardadas.length ? guardadas : enMemoria
 }
 
-// cita: { codigoCita, nombreCliente, empresa, telefono, email, fechaHora, tipoAsesoria, notas },
-// los mismos campos (y el mismo formato) que se enviaron al backend.
-export function guardarCita(cita) {
-  const nueva = { ...cita, guardadaEn: Date.now() }
-  // Si el código ya estaba (no debería), se reemplaza en vez de duplicarse.
-  const lista = [nueva, ...leerCitasGuardadas().filter((c) => c.codigoCita !== cita.codigoCita)]
+function escribir(lista) {
   enMemoria = lista
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lista))
   } catch {
     // Sin almacenamiento disponible: queda solo la copia en memoria.
   }
+}
+
+// cita: { codigoCita, nombreCliente, empresa, telefono, email, fechaHora, tipoAsesoria, notas },
+// los mismos campos (y el mismo formato) que se enviaron al backend.
+export function guardarCita(cita) {
+  const nueva = { ...cita, guardadaEn: Date.now() }
+  // Si el código ya estaba (no debería), se reemplaza en vez de duplicarse.
+  escribir([nueva, ...leerCitasGuardadas().filter((c) => c.codigoCita !== cita.codigoCita)])
+}
+
+// Tras reprogramar con PUT: se guardan los datos nuevos (p. ej. { fechaHora }) en la misma cita.
+// guardadaEn no cambia: sigue diciendo cuándo se creó.
+export function actualizarCitaGuardada(codigoCita, cambios) {
+  escribir(leerCitasGuardadas().map((c) => (c.codigoCita === codigoCita ? { ...c, ...cambios } : c)))
+}
+
+// Tras cancelarla, o si el backend dice que ya no existe.
+export function quitarCitaGuardada(codigoCita) {
+  escribir(leerCitasGuardadas().filter((c) => c.codigoCita !== codigoCita))
 }
 
 export function buscarCitaGuardada(codigoCita) {

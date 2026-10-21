@@ -377,6 +377,16 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Confirmación (`/agendar-cita/confirmacion?codigo=…`):** página propia; se llega con `replace` al crear la cita. Ícono de Éxito, "Tu visita quedó agendada", el código de la cita grande con "Copiar código" ("Copiado" anunciado por `role="status"`; si el portapapeles falla, el código queda seleccionado y se dice cómo copiarlo), resumen (asesoría, día, hora, lugar), `button-whatsapp` "Avisar por WhatsApp" (mensaje con código, tipo, fecha y hora; **el único WhatsApp destacado** de la pantalla) y "Agregar a mi calendario" (.ics, secundario). Debajo, "¿Necesitas cambiarla o cancelarla?": botón secundario a `/mi-cita` y el enlace de texto "o escríbenos por WhatsApp" con el código ya escrito.
 - **Citas guardadas:** cada cita creada se guarda en `localStorage` (`src/utils/citasGuardadas.js`) con todo su `CitaRequest` y el código, para reprogramarla con PUT. La confirmación lee de ahí: recargarla no crea otra cita. Sin una cita de las últimas 24 h con ese código, la ruta lleva a `/agendar-cita`.
 
+### Mis visitas (`/mi-cita`) — decidido el 2026-10-21
+- **Exige sesión:** `PUT` y `DELETE` de citas piden token. Enlace "Mis visitas" (ícono `CalendarDays`) en el menú de cuenta y en el menú lateral, bajo "Mi perfil".
+- **Fuente de datos:** las citas guardadas en este navegador (`citasGuardadas.js`); se actualiza si otra pestaña las cambia. Aviso fijo en Tinte Azul: "Aquí aparecen solo las citas agendadas desde este navegador. Para otras, escríbenos por WhatsApp con tu código." Cuando exista un `GET` de citas (pendientes 16 y 17 de `API.md`), se piden al backend.
+- **Próximas visitas:** tarjetas blancas planas, de la más cercana a la más lejana. A la izquierda, la fecha como en la tira de días (día de la semana + número, sobre Fondo Frío); al lado, el día completo, la hora, el tipo (con el punto dorado si es visita al showroom) y el código. Acciones: "Reprogramar" (secundario) y "Cancelar visita" (ghost). Sin próximas: "No tienes visitas próximas" + `button-visit` "Agendar visita".
+- **Reprogramar:** se abre dentro de la tarjeta (una a la vez), con el mismo selector de día y hora del formulario (`AppointmentSlotPicker`), "Ahora: …" y "Nuevo horario: …". "Guardar nuevo horario" (primario) y "No cambiar". Envía `PUT` con el `CitaRequest` guardado y la nueva fecha; el mismo horario que ya tiene da error en el campo. Al guardar: aviso breve "Listo: tu visita quedó para el …" y el foco al título de la tarjeta.
+- **Cancelar:** diálogo de confirmación (`BaseConfirmDialog`: abajo en móvil, centrado desde `sm`) con "¿Cancelar tu visita del jueves 20 de noviembre?", tipo, hora y código. "No, mantenerla" (secundario, con el foco inicial) y "Sí, cancelar visita" (botón `danger`, Error con texto blanco). Al confirmar: la tarjeta sale de la lista, aviso breve "Cancelamos tu visita del …" y el foco al título "Próximas visitas". Un fallo de red deja el diálogo abierto con el error.
+- **Cita que ya no existe** (`404`; hoy el backend da `500`, pendiente 12-bis): se quita de la lista y aparece un aviso (fondo Aviso) con el día y el código, y "¿Crees que es un error? Escríbenos por WhatsApp".
+- **Sesión vencida** al enviar: se cierra la sesión y se lleva al login con `?redirect=/mi-cita`.
+- **Visitas anteriores:** las que ya empezaron (hora de Caracas), en una lista compacta debajo, de la más reciente a la más vieja, sin acciones.
+
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.
 - Un solo aviso a la vez. En la Fase 7 lo puede usar "Agregado a tu cotización".
@@ -407,6 +417,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Visita** (Dorado Showroom, texto Tinta): "Agendar visita".
 - **WhatsApp** (verde WhatsApp, con ícono): "Enviar por WhatsApp".
 - **Secundario** (blanco, borde y texto Azul Acción): acciones de apoyo.
+- **Peligro** (`danger`, Error #C62F2F con texto blanco, 5.1:1; hover #A82626): solo para confirmar algo que no se puede deshacer, dentro de un diálogo ("Sí, cancelar visita").
 - Altura mínima 44px para toque; foco visible con anillo Azul Silla de 2px y 2px de separación.
 
 ### Agregar a la cotización

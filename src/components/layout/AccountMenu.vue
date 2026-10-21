@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronDown, LogOut, User, UserRound } from 'lucide-vue-next'
+import { CalendarDays, ChevronDown, LogOut, User, UserRound } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useLogout } from '../../composables/useLogout'
@@ -170,6 +170,12 @@ const menuItem =
             <RouterLink to="/perfil" role="menuitem" tabindex="-1" :class="menuItem">
               <UserRound :stroke-width="1.75" aria-hidden="true" />
               Mi perfil
+            </RouterLink>
+          </li>
+          <li role="none">
+            <RouterLink to="/mi-cita" role="menuitem" tabindex="-1" :class="menuItem">
+              <CalendarDays :stroke-width="1.75" aria-hidden="true" />
+              Mis visitas
             </RouterLink>
           </li>
           <li role="none">

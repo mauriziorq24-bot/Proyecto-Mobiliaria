@@ -39,3 +39,13 @@ export function citaAgendadaUrl({ codigoCita, tipo, cuando }) {
 export function cambiarCitaUrl({ codigoCita, cuando }) {
   return whatsappUrl(`Hola, quiero cambiar o cancelar mi cita ${codigoCita} (${cuando}).`)
 }
+
+// /mi-cita: para una cita que no aparece en este navegador. La persona completa el código.
+export function consultarCitaUrl() {
+  return whatsappUrl('Hola, quiero cambiar o cancelar mi cita. Mi código es: ')
+}
+
+// /mi-cita: el backend dijo que la cita ya no existe.
+export function citaNoEncontradaUrl({ codigoCita, cuando }) {
+  return whatsappUrl(`Hola, quise cambiar mi cita ${codigoCita} (${cuando}) desde la web y dice que ya no existe.`)
+}

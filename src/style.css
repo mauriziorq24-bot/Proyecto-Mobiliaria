@@ -48,6 +48,7 @@
   --color-success: #1e7f4f;
   --color-success-bg: #e7f5ee;
   --color-error: #c62f2f;
+  --color-error-deep: #a82626; /* hover del botón "danger" (cancelar una cita) */
   --color-error-bg: #fdecec;
   --color-warning: #9a5b00;
   --color-warning-bg: #fff4e0;

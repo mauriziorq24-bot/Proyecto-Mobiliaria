@@ -1,14 +1,8 @@
 <script setup>
-import {
-  CalendarCheck,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  CircleAlert,
-  Info,
-} from 'lucide-vue-next'
+import { CalendarCheck, Check, Info } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AppointmentSlotPicker from '../components/appointment/AppointmentSlotPicker.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
@@ -63,26 +57,7 @@ let relojTimer = null
 
 const dias = computed(() => diasDisponibles(undefined, ahora.value))
 const horas = computed(() => (form.fecha ? horariosDelDia(form.fecha, ahora.value) : []))
-
-// La tira se agrupa por mes para poner el nombre ("Noviembre") donde cambia.
-const meses = computed(() => {
-  const grupos = []
-  for (const fecha of dias.value) {
-    const dia = { fecha, ...describirDia(fecha) }
-    const ultimo = grupos.at(-1)
-    if (ultimo?.clave === dia.claveMes) ultimo.dias.push(dia)
-    else grupos.push({ clave: dia.claveMes, nombre: dia.mes, dias: [dia] })
-  }
-  return grupos
-})
-
-// Las horas en dos bloques para leerlas más rápido.
-const franjas = computed(() =>
-  [
-    { nombre: 'Mañana', horas: horas.value.filter((hora) => hora < '12:00') },
-    { nombre: 'Tarde', horas: horas.value.filter((hora) => hora >= '12:00') },
-  ].filter((franja) => franja.horas.length),
-)
+const slotPicker = useTemplateRef('slotPicker')
 
 // --- Validación (igual que en el registro) ---
 // Cada regla devuelve el mensaje de error, o '' si el campo está bien. El orden es el de la página:
@@ -127,39 +102,25 @@ function handleBlur(field) {
   if (attempted.value) validateField(field)
 }
 
-// Día y hora son grupos de botones: su "blur" es cuando el foco sale del grupo entero,
-// no cuando pasa de un día a otro con las flechas.
-function handleGroupFocusout(field, event) {
-  if (!event.currentTarget.contains(event.relatedTarget)) handleBlur(field)
-}
-
 function focusField(field) {
-  if (field === 'fecha') {
-    const radios = document.querySelectorAll('input[name="cita-fecha"]')
-    ;([...radios].find((radio) => radio.checked) ?? radios[0])?.focus()
-    return
-  }
-  if (field === 'hora') {
-    const botones = document.querySelectorAll('[data-hora]')
-    const boton = [...botones].find((b) => b.getAttribute('aria-pressed') === 'true') ?? botones[0]
-    if (boton) boton.focus()
-    else focusField('fecha')
-    return
-  }
-  document.getElementById(`cita-${field}`)?.focus()
+  if (field === 'fecha') slotPicker.value?.focusDay()
+  else if (field === 'hora') slotPicker.value?.focusHour()
+  else document.getElementById(`cita-${field}`)?.focus()
 }
 
-// Cambiar de día borra la hora: la de otro día podría no existir en este.
-function handleDayChange(event) {
-  form.hora = ''
-  errors.hora = ''
+// El selector borra la hora al cambiar de día (llega hora = ''): ahí se limpia también su error.
+function selectDay(fecha) {
+  form.fecha = fecha
   if (attempted.value) validateField('fecha')
-  event.target.closest('label')?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: scrollBehavior() })
 }
 
 function selectHora(hora) {
   form.hora = hora
-  if (attempted.value) validateField('hora')
+  if (hora) {
+    if (attempted.value) validateField('hora')
+  } else {
+    errors.hora = ''
+  }
 }
 
 // Si pasa el tiempo y el día o la hora elegidos dejan de existir, se quitan y se avisa.
@@ -176,28 +137,6 @@ watch(horas, (lista) => {
     errors.hora = 'La hora que elegiste ya pasó. Elige otra.'
   }
 })
-
-// --- Tira de días: botones anterior/siguiente (escritorio) ---
-const strip = useTemplateRef('strip')
-const canScrollPrev = ref(false)
-const canScrollNext = ref(false)
-let stripObserver = null
-
-function scrollBehavior() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-}
-
-function updateStripEdges() {
-  const el = strip.value
-  if (!el) return
-  canScrollPrev.value = el.scrollLeft > 1
-  canScrollNext.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
-}
-
-function scrollStrip(direction) {
-  const el = strip.value
-  el?.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: scrollBehavior() })
-}
 
 // --- Prellenado ---
 // 1) Un borrador guardado al vencer la sesión (lo más reciente que escribió la persona).
@@ -337,15 +276,9 @@ const resumen = computed(() => ({
 
 onMounted(() => {
   relojTimer = setInterval(() => (ahora.value = ahoraEnCaracas()), 60_000)
-  updateStripEdges()
-  stripObserver = new ResizeObserver(updateStripEdges)
-  if (strip.value) stripObserver.observe(strip.value)
 })
 
-onBeforeUnmount(() => {
-  clearInterval(relojTimer)
-  stripObserver?.disconnect()
-})
+onBeforeUnmount(() => clearInterval(relojTimer))
 </script>
 
 <template>
@@ -428,138 +361,22 @@ onBeforeUnmount(() => {
         </div>
 
         <section aria-labelledby="cita-horario-title" class="min-w-0 py-8">
-          <div class="flex items-center justify-between gap-4">
-            <h2 id="cita-horario-title" class="text-title text-ink">Día y hora</h2>
-
-            <!-- Anterior/siguiente para quien usa mouse; en táctil se desliza y con teclado, flechas -->
-            <div v-if="dias.length" class="hidden gap-1 md:flex">
-              <button
-                type="button"
-                class="inline-flex size-9 items-center justify-center rounded-md border border-line bg-surface text-ink transition-colors hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Ver días anteriores"
-                :disabled="!canScrollPrev"
-                @click="scrollStrip(-1)"
-              >
-                <ChevronLeft class="size-[18px]" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                class="inline-flex size-9 items-center justify-center rounded-md border border-line bg-surface text-ink transition-colors hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Ver días siguientes"
-                :disabled="!canScrollNext"
-                @click="scrollStrip(1)"
-              >
-                <ChevronRight class="size-[18px]" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Día: radios nativos escondidos dentro de cada tarjeta. Las flechas recorren los días. -->
-          <fieldset
-            class="mt-4 min-w-0"
-            :aria-describedby="errors.fecha ? 'cita-fecha-message' : undefined"
-            @focusout="handleGroupFocusout('fecha', $event)"
+          <AppointmentSlotPicker
+            ref="slotPicker"
+            :fecha="form.fecha"
+            :hora="form.hora"
+            :dias="dias"
+            :horas="horas"
+            :error-fecha="errors.fecha"
+            :error-hora="errors.hora"
+            @update:fecha="selectDay"
+            @update:hora="selectHora"
+            @leave="handleBlur"
           >
-            <legend class="mb-1.5 text-small font-semibold text-ink">Día</legend>
-
-            <p v-if="!dias.length" class="text-small text-ink-muted">
-              No hay días disponibles en este momento. Escríbenos por WhatsApp y te ayudamos.
-            </p>
-
-            <div
-              v-else
-              ref="strip"
-              class="thin-scrollbar -mx-4 mt-2 flex gap-5 overflow-x-auto px-4 pt-1 pb-3 sm:-mx-1 sm:px-1"
-              @scroll.passive="updateStripEdges"
-            >
-              <div v-for="mes in meses" :key="mes.clave" class="flex shrink-0 flex-col gap-2">
-                <!-- El nombre del mes se queda pegado a la izquierda mientras se ven sus días -->
-                <p class="sticky left-0 w-max text-label text-ink-muted uppercase" aria-hidden="true">
-                  {{ mes.nombre }}
-                </p>
-                <div class="flex gap-2">
-                  <label
-                    v-for="dia in mes.dias"
-                    :key="dia.fecha"
-                    class="relative flex h-[76px] w-16 shrink-0 cursor-pointer flex-col items-center justify-center rounded-md border transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
-                    :class="
-                      form.fecha === dia.fecha
-                        ? 'border-brand-deep bg-brand-tint text-brand-deep'
-                        : 'border-line bg-surface text-ink hover:border-line-strong'
-                    "
-                  >
-                    <input
-                      v-model="form.fecha"
-                      type="radio"
-                      name="cita-fecha"
-                      :value="dia.fecha"
-                      class="sr-only"
-                      @change="handleDayChange"
-                    />
-                    <span class="text-small capitalize" aria-hidden="true">{{ dia.diaSemana }}</span>
-                    <span class="text-title font-bold tabular-nums" aria-hidden="true">{{ dia.dia }}</span>
-                    <span class="sr-only">{{ dia.completo }}</span>
-                    <Check
-                      v-if="form.fecha === dia.fecha"
-                      class="absolute top-1.5 right-1.5 size-3"
-                      :stroke-width="3"
-                      aria-hidden="true"
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div aria-live="polite">
-              <p v-if="errors.fecha" id="cita-fecha-message" class="mt-1.5 flex items-start gap-1.5 text-small text-error">
-                <CircleAlert class="mt-px size-4 shrink-0" aria-hidden="true" />
-                {{ errors.fecha }}
-              </p>
-            </div>
-          </fieldset>
-
-          <!-- Hora: botones con aria-pressed -->
-          <div
-            role="group"
-            aria-labelledby="cita-hora-label"
-            :aria-describedby="errors.hora ? 'cita-hora-message' : undefined"
-            class="mt-6"
-            @focusout="handleGroupFocusout('hora', $event)"
-          >
-            <p id="cita-hora-label" class="mb-1.5 text-small font-semibold text-ink">Hora</p>
-            <p v-if="!form.fecha" class="text-small text-ink-muted">Elige un día para ver las horas disponibles.</p>
-            <div v-else class="flex flex-col gap-4">
-              <div v-for="franja in franjas" :key="franja.nombre" role="group" :aria-label="franja.nombre">
-                <p class="mb-2 text-small text-ink-muted" aria-hidden="true">{{ franja.nombre }}</p>
-                <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 xl:grid-cols-5">
-                  <button
-                    v-for="hora in franja.horas"
-                    :key="hora"
-                    type="button"
-                    :data-hora="hora"
-                    :aria-pressed="form.hora === hora"
-                    class="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-small font-semibold whitespace-nowrap tabular-nums transition-colors"
-                    :class="
-                      form.hora === hora
-                        ? 'border-brand-deep bg-brand-tint text-brand-deep'
-                        : 'border-line bg-surface text-ink hover:border-line-strong'
-                    "
-                    @click="selectHora(hora)"
-                  >
-                    <Check v-if="form.hora === hora" class="size-3.5 shrink-0" :stroke-width="3" aria-hidden="true" />
-                    {{ formatearHora(hora) }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div aria-live="polite">
-              <p v-if="errors.hora" id="cita-hora-message" class="mt-1.5 flex items-start gap-1.5 text-small text-error">
-                <CircleAlert class="mt-px size-4 shrink-0" aria-hidden="true" />
-                {{ errors.hora }}
-              </p>
-            </div>
-          </div>
+            <template #title>
+              <h2 id="cita-horario-title" class="text-title text-ink">Día y hora</h2>
+            </template>
+          </AppointmentSlotPicker>
         </section>
 
         <section aria-labelledby="cita-datos-title" class="flex min-w-0 flex-col gap-4 pt-8 sm:pb-8">
