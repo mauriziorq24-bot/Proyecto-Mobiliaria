@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render.
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
 Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -9,7 +9,7 @@ Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.ht
 
 - **URL base:** `https://backendmobiliariodeoficina.onrender.com` en producción (Render), `http://localhost:8080` en local. Sin `/api`, porque hay dos prefijos: `/auth/v1` y `/api/v1`.
 - **Cold start:** Render gratuito duerme el servidor tras un rato sin uso; la primera petición puede tardar hasta ~1 minuto. El frontend espera hasta 60 s (timeout de axios).
-- **Autenticación:** JWT. Login, registro y Google devuelven `{ "token": "..." }`. Se envía como `Authorization: Bearer <token>`.
+- **Autenticación:** JWT. Login, registro y Google devuelven `{ "token": "..." }` (login y Google con `200`, **registro con `201`**). Se envía como `Authorization: Bearer <token>`. El JWT solo contiene `sub` (username), `iss` y `exp` (~1 h); ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
 - **Formato:** JSON. Nombres de campos en **español y camelCase** (`nombre`, `precioReferencialUsd`).
 - **Paginación:** no hay. `GET /api/v1/productos` devuelve el arreglo completo.
 
@@ -29,17 +29,27 @@ El backend tendrá un seed que carga:
 ```json
 // Request
 { "username": "string", "password": "string", "email": "string" }
-// Response 200
+// Response 201 Created  (⚠️ es 201, no 200)
 { "token": "string" }
 ```
+Registra al usuario y **devuelve el token ya iniciado** (no hace falta llamar a login después). Comportamiento real probado el 21/10/2026 (ver [tabla completa](#comportamiento-real-de-auth-probado-el-21102026)):
+- Éxito → `201`.
+- `username` o `email` repetido → **`401`** con cuerpo `text/plain` `Credenciales invalidas El nombre de usuario ya está en uso.` / `... El correo electrónico ya está registrado.` (debería ser `409` con JSON; ver pendiente 14-bis).
+- Falta `email` (o body vacío) → **`500`**. Los tres campos son obligatorios; el frontend debe validarlos antes de enviar.
+- **No valida formato de email ni longitud de contraseña:** `email: "noesemail"` y `password: "1"` se aceptan con `201`. Toda validación de formato/fuerza es responsabilidad del frontend por ahora.
 
 ### `POST /auth/v1/login`
 ```json
-// Request (⚠️ pide también email — ver pendientes)
-{ "username": "string", "password": "string", "email": "string" }
+// Request — basta un identificador (username O email) + password; el campo email NO es obligatorio
+{ "username": "string", "password": "string" }
 // Response 200
 { "token": "string" }
 ```
+Comportamiento real probado el 21/10/2026 (resuelve el pendiente 6):
+- **Se entra con `username` o con `email`**, y el identificador puede ir indistintamente en el campo `username` o en `email`. Funcionan los tres: `{username,password}`, `{email,password}` y `{username:"<correo>",password}`. **El frontend puede mandar solo `{ username, password }`** (donde `username` es lo que escriba el usuario, sea su nombre o su correo). No hace falta mandar los dos campos como decía antes este contrato.
+- El `username` es **insensible a mayúsculas** (`PRUEBA_FRONT_2110` entra igual).
+- Si se manda un `email` junto al `username`, **se ignora** (entra aunque el email no coincida).
+- **Contraseña incorrecta, usuario inexistente, o faltar la contraseña / body vacío → todos dan `403 Forbidden`** con JSON `{ "timestamp", "status":403, "error":"Forbidden", "path" }` (sin campo `message`). El frontend no puede distinguir "usuario no existe" de "contraseña mala" (está bien por seguridad): mostrar un único mensaje "Usuario o contraseña incorrectos".
 
 ### `POST /auth/v1/google`
 ```json
@@ -48,6 +58,69 @@ El backend tendrá un seed que carga:
 // Response 200: JWT propio del backend
 { "token": "string" }
 ```
+
+---
+
+## Comportamiento real de auth (probado el 21/10/2026)
+
+Probado con `curl` contra Render (solo lectura, sin tocar código). Usuario de prueba: `prueba_front_2110`.
+
+### Registro y duplicados
+
+| Caso | Código | Content-Type | Cuerpo |
+|---|---|---|---|
+| Registro válido | **`201`** | `application/json` | `{ "token": "..." }` |
+| `username` repetido | **`401`** | `text/plain` | `Credenciales invalidas El nombre de usuario ya está en uso.` |
+| `email` repetido (otro username) | **`401`** | `text/plain` | `Credenciales invalidas El correo electrónico ya está registrado.` |
+| Falta `email` / body `{}` | **`500`** | `application/json` | error por defecto de Spring |
+| `email` con formato inválido | **`201`** (lo acepta) | `application/json` | `{ "token": "..." }` |
+| `password` de 1 carácter | **`201`** (lo acepta) | `application/json` | `{ "token": "..." }` |
+
+### Login
+
+| Caso | Código | Cuerpo |
+|---|---|---|
+| `username` + `password` | **`200`** | `{ "token": "..." }` |
+| `email` + `password` | **`200`** | `{ "token": "..." }` |
+| correo en el campo `username` + `password` | **`200`** | `{ "token": "..." }` |
+| `username` + `password` + `email` ajeno | **`200`** (ignora el email) | `{ "token": "..." }` |
+| `username` en mayúsculas | **`200`** (no distingue mayúsculas) | `{ "token": "..." }` |
+| password incorrecta | **`403`** | `{ "status":403, "error":"Forbidden", ... }` (sin `message`) |
+| usuario inexistente | **`403`** | ídem |
+| solo `username` (sin password) / body `{}` | **`403`** | ídem |
+
+### El JWT que devuelve el backend
+
+Header: `{ "alg": "HS384" }`. Payload (base64, decodificable en el navegador):
+
+```json
+{ "sub": "prueba_front_2110", "iss": "mobiliariodeoficina-api", "exp": 1792560940 }
+```
+
+- **Solo trae `sub` (el username), `iss` y `exp`.** No trae `email` ni `rol`. → El frontend **no puede saber el rol ni el email** desde el token; necesita el pendiente 5 (`GET /auth/v1/me`). Si se usa el `sub`, es el nombre de usuario.
+- **`exp` dura ~1 hora** (probado: `exp - now ≈ 3595 s`). Tras una hora el token caduca y el backend empezará a rechazar; el frontend debe manejar esa expiración (ver más abajo el ⚠️ del `500`).
+
+**Qué es un JWT y por qué el frontend puede leerlo pero no modificarlo.** Un JWT (JSON Web Token) son tres partes separadas por puntos: `header.payload.firma`. El header y el payload son **solo JSON codificado en base64url** — no están cifrados, por eso el navegador (o cualquiera) puede decodificarlos y leer `sub`/`exp`. La tercera parte es una **firma**: el backend la calcula con el algoritmo `HS384` usando una **clave secreta que solo él conoce**. En cada petición el backend recalcula la firma del `header.payload` que recibe y la compara con la que viene; si no coincide, rechaza el token. Por eso, aunque el frontend podría cambiar el payload (p. ej. poner `"rol":"ADMIN"`), **no puede generar la firma correcta sin la clave secreta**, y el backend lo detectaría. Conclusión práctica: el frontend trata el contenido del JWT como **informativo** (mostrar el nombre, saber cuándo caduca), pero **la autorización real siempre la decide el backend**; nunca confiar en el token para dar o quitar permisos en el cliente.
+
+### Qué endpoints exigen token
+
+| Endpoint | Sin token | Con token (usuario normal) |
+|---|---|---|
+| `GET /api/v1/productos` (y `?enShowroom`, `?tipoEspacio`, `?buscar`) | **`200` (público)** | `200` |
+| `GET /api/v1/productos/{id}` | **`200` (público)** | `200` |
+| `GET /api/v1/categorias` | **`200` (público)** | `200` |
+| `POST`/`PUT /api/v1/productos` | `403` | **`403`** (un usuario normal tampoco puede: requiere rol admin — pendiente 8) |
+| `POST /api/v1/categorias` | `403` | **`403`** (ídem — pendiente 15) |
+| `POST /api/v1/citas` | `403` | **sí** (con token pasa auth; `400` si el JSON va mal) |
+| `DELETE /api/v1/citas/{codigoCita}` | `403` | `500` con un código inexistente |
+
+- **Las lecturas de catálogo (productos y categorías) son públicas:** la home, el catálogo y la ficha **no necesitan que el usuario esté logueado**.
+- **⚠️ Agendar cita exige estar logueado.** `POST /api/v1/citas` da `403` sin token y pasa la autenticación con un token válido de usuario normal. Esto **contradice la idea de "agendar cita" como formulario público** (ver `CLAUDE.md`): o el usuario debe iniciar sesión antes de agendar, o hay que pedir al backend que `POST /api/v1/citas` sea público (ver pendiente 17-bis). Confirmar con el compañero.
+- **Las escrituras de catálogo (`POST`/`PUT` productos, `POST` categorías) dan `403` incluso con un token válido de usuario normal:** parecen requerir rol admin, que el JWT actual no incluye (pendientes 8 y 15).
+- **⚠️ Un token inválido o mal formado en un `GET` público da `500`, no `401`.** Mandar `Authorization: Bearer abc.def.ghi` a `GET /api/v1/productos` devuelve `500 Internal Server Error`. Esto es un problema para el frontend: el interceptor de axios espera que "token malo/vencido" sea `401` (para cerrar sesión y mandar al login, ver `CLAUDE.md`). Hoy un token vencido podría manifestarse como `500` en vez de `401` (ver pendiente 21-bis). Mientras tanto, conviene **no mandar el header `Authorization` en las peticiones públicas** si no hay sesión, y tratar el `500` con prudencia.
+- `GET /api/v1/categorias/{id}` responde `405 Method Not Allowed` (ese path existe en el spec solo para otros métodos, no para `GET`).
+
+> Nota de limpieza: estas pruebas crearon en la base de datos de Render los usuarios `prueba_front_2110`, `prueba_front_2110b`, `prueba_front_2110d` y `prueba_front_2110e`. Si el compañero quiere, puede borrarlos del seed/BD.
 
 ---
 
@@ -224,14 +297,17 @@ Cancela (elimina) una cita.
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).
 
 ### Necesarios para el login
-5. **`GET /auth/v1/me`** que devuelva los datos del usuario (`id`, `username`, `email`, `rol`). Sin esto, el frontend solo puede leer lo que venga dentro del JWT.
-6. **Login:** ¿se entra con `username` o con `email`? Lo normal es uno de los dos más `password`, no ambos.
+5. **`GET /auth/v1/me`** que devuelva los datos del usuario (`id`, `username`, `email`, `rol`). Sin esto, el frontend solo puede leer lo que venga dentro del JWT. **Confirmado el 21/10/2026:** no existe (`/auth/v1/me` y `/api/v1/usuarios/me` dan `404`), y el JWT **solo trae `sub` (username), `iss` y `exp`** — ni email ni rol. Es necesario para mostrar datos del usuario y para saber si es admin.
+6. ~~**Login:** ¿se entra con `username` o con `email`?~~ ✅ **Resuelto (21/10/2026):** se entra con **cualquiera de los dos** (y da igual en qué campo vaya). El frontend manda solo `{ username, password }` y el `email` **no es obligatorio**. Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
 7. **Google:** el frontend necesita el **Google Client ID** (el mismo que valida el backend).
 8. **Roles:** ¿hay usuarios ADMIN? `POST`/`PUT /api/v1/productos` deberían requerir token de admin (para categorías, ver el punto 15).
 
 ### Para manejar errores bien
-9. Documentar respuestas de error: códigos (`400`, `401`, `403`, `404`, `409` usuario ya existe) y su forma, idealmente `{ "message": "..." }`.
-10. Qué endpoints son públicos y cuáles requieren token.
+9. Documentar respuestas de error: códigos (`400`, `401`, `403`, `404`, `409` usuario ya existe) y su forma, idealmente `{ "message": "..." }`. **Probado el 21/10/2026:** login fallido da `403` sin `message`; registro duplicado da `401 text/plain`; registro sin `email` da `500`. Falta normalizarlos (ver 14-bis) y devolver `{ "message": "..." }` en JSON para poder mostrar mensajes claros.
+10. ~~Qué endpoints son públicos y cuáles requieren token.~~ ✅ **Probado el 21/10/2026** (ver [tabla](#qué-endpoints-exigen-token)): `GET` de productos y categorías son **públicos**; `POST`/`PUT` de productos y `POST` de categorías dan `403` (requieren admin); `POST`/`DELETE` de citas **exigen token**.
+10-bis. **Registro duplicado debería ser `409` con JSON**, no `401 text/plain` (un `401` confunde al interceptor de axios, que lo interpretaría como "sesión vencida"). Y **registro sin `email` debería ser `400`**, no `500`.
+10-ter. **Validar en el backend el formato de `email` y la fuerza de la `password`** en el registro (hoy acepta `"noesemail"` y contraseñas de 1 carácter).
+10-quater. **¿Agendar cita es público o requiere login?** Hoy `POST /api/v1/citas` exige token (`403` sin él). Si la idea es un formulario público (ver `CLAUDE.md`), pedir que sea público; si no, el frontend obligará a iniciar sesión antes de agendar. **Decidir con el compañero.**
 11. Lista completa de valores de `tipoAsesoria`.
 12. Forma exacta de la respuesta de `POST /api/v1/citas`, y **confirmar que devuelve el `codigoCita`** (sin él, el cliente no puede modificar ni cancelar su cita).
 13. **`tipoEspacio`: confirmar si es valor único o lista.** Si es lista, cambia la forma del producto (`"tipoEspacio": ["OFICINA", "HOGAR"]`) y cómo funciona el filtro `?tipoEspacio=`.
@@ -246,6 +322,7 @@ Cancela (elimina) una cita.
 19. **Imágenes rotas en el seed:** 3 URLs de Unsplash responden `404`: producto **2** (`photo-1497215848147-...`), **10** (`photo-1633534125867-...`) y **12** (`photo-1595514535310-...`). El frontend muestra el placeholder en su lugar, pero hay que cambiarlas. Además, los productos 8 y 9 usan la misma foto. Lo definitivo son las fotos reales de Instagram guardadas en `/uploads/productos/` (pendiente 4).
 20. **Un `id` inexistente devuelve `500` en vez de `404`.** `ProductoService.obtenerPorId` lanza una `RuntimeException` genérica; debería lanzar una excepción que termine en `404` (p. ej. `ResponseStatusException(HttpStatus.NOT_FOUND, ...)` o un `@ControllerAdvice`), con cuerpo `{ "message": "Producto no encontrado" }` (pendiente 9). **Seguridad:** la respuesta de error incluye el stack trace (`trace`); desactivarlo con `server.error.include-stacktrace=never`.
 21. **Un `id` no numérico devuelve `401` "Credenciales invalidas"** en un endpoint público. Parece que el manejo de errores de Spring Security convierte cualquier excepción en `401`; debería ser `400`. Es grave para el frontend: un `401` significa "sesión vencida", y el interceptor de axios cerrará la sesión y llevará al login (ver `CLAUDE.md`).
+21-bis. **Un token inválido/vencido en un `GET` público devuelve `500`, no `401`** (probado 21/10/2026: `Authorization: Bearer abc.def.ghi` en `GET /api/v1/productos` → `500`). El interceptor de axios espera `401` para cerrar sesión; con `500` no lo hará. Pedir que un token mal formado o vencido devuelva `401`. Mientras tanto, el frontend **no debe mandar `Authorization` en peticiones públicas si no hay sesión**.
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
