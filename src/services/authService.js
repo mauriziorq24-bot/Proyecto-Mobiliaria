@@ -37,3 +37,25 @@ export async function loginConGoogle(googleIdToken) {
   const { data } = await api.post('/auth/v1/google', { token: googleIdToken })
   return data.token
 }
+
+// Login fallido: contraseña incorrecta, usuario inexistente o campos vacíos dan todos 403
+// sin mensaje (API.md). No se puede saber cuál fue, y está bien: un solo mensaje para todos.
+export function isInvalidCredentials(error) {
+  return error?.response?.status === 403
+}
+
+// Registro con un usuario o correo que ya existe. Devuelve 'username', 'email' o null.
+// TODO: cuando el backend devuelva 409 con JSON (pendiente 10-bis de API.md), leer el campo
+// del cuerpo en vez de buscar palabras en el texto. Hoy responde 401 en texto plano:
+//   "Credenciales invalidas El nombre de usuario ya está en uso."
+//   "Credenciales invalidas El correo electrónico ya está registrado."
+// Es la única función que depende de esos textos: si cambian, solo se toca aquí.
+export function getRegisterConflict(error) {
+  const { status, data } = error?.response ?? {}
+  if (status !== 401 && status !== 409) return null
+
+  const text = typeof data === 'string' ? data.toLowerCase() : ''
+  if (text.includes('correo')) return 'email'
+  if (text.includes('usuario')) return 'username'
+  return null
+}

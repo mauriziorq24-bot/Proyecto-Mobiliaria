@@ -352,6 +352,16 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - Texto a la izquierda (título `display`, texto, "Ver catálogo" primario + "Agendar visita" dorado, dirección y horario de `config/empresa.js`). Sin etiqueta encima del título.
 - A la derecha (debajo en móvil), la **vitrina**: las cinco siluetas sobre una línea de piso, con la etiqueta `tag-showroom` "Showroom en San Diego". Cuando `company.showroom.photoUrl` tenga valor, la foto del showroom la reemplaza.
 
+### Login y registro (`/login`, `/registro`) — textos decididos el 2026-10-21
+- **Aviso "sin cuenta":** "No necesitas cuenta para cotizar ni para escribirnos por WhatsApp." No menciona las visitas mientras `POST /api/v1/citas` exija token (pendiente 10-quater de `API.md`); si se vuelven públicas, se agregan al aviso.
+- **Para qué sirve la cuenta:** solo lo que es cierto hoy: "Con una cuenta puedes agendar visitas a nuestro showroom." Sin "ver tus citas" ni beneficios futuros. Se amplía cuando existan:
+  - "Tus datos se completan solos al pedir una cotización" (Fase 7).
+  - "Revisa tus citas" (si el backend agrega un `GET` de las citas del usuario).
+- **Estructura** (`AuthLayout`, común a las dos): header y footer normales, sin barra de cotización. Columna centrada (`max-w-md`); en móvil los campos van sobre el Fondo Frío y desde `sm`, en una tarjeta blanca plana con borde de 1px. Orden: título (`headline`) → frase de beneficio → "Continuar con Google" → separador ("o con tu usuario o correo" / "o con tu correo") → formulario → "¿Primera vez aquí? Crea tu cuenta" / "¿Ya tienes cuenta? Ingresa" (conserva `?redirect=`) → aviso "sin cuenta" en Tinte Azul con "Ver catálogo". Nada dorado.
+- **Google:** botón oficial de Google Identity Services, que se carga solo en estas pantallas. Sin `VITE_GOOGLE_CLIENT_ID` se ocultan el botón y el separador; si el script no carga, también. Botón simulado solo con mocks y en `npm run dev`.
+- **Campos:** login, "Usuario o correo" + "Contraseña" con "¿Olvidaste tu contraseña? Escríbenos por WhatsApp" debajo (no hay recuperación de contraseña en el backend). Registro, "Nombre de usuario" + "Correo" + "Contraseña" (mínimo 8 caracteres). Botón para mostrar la contraseña en lugar de "Repetir contraseña".
+- **Errores:** se validan al enviar y después al salir de cada campo. Login fallido: un solo aviso, "Usuario o contraseña incorrectos.". Usuario o correo repetido: error en su campo (con "Ingresar con ese correo" si es el correo). Fallos de red o servidor: aviso sobre el botón.
+
 ### Estado de error
 - `BaseErrorState`: bloque blanco con borde, ícono de alerta en Error, título que nombra lo que falló y botón secundario "Reintentar".
 

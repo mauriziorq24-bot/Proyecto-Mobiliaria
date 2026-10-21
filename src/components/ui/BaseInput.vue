@@ -70,12 +70,18 @@ function handleInput(event) {
         class="h-[46px] w-full rounded-md border bg-surface px-3.5 text-base text-ink transition-[border-color,box-shadow] duration-200 ease-out placeholder:text-ink-muted focus:outline-none focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-ground disabled:text-ink-muted"
         :class="[
           $slots.leading && 'pl-10',
+          $slots.trailing && 'pr-12',
           hasError
             ? 'border-error focus:ring-2 focus:ring-error/25'
             : 'border-line hover:border-ink-muted/50 focus:border-brand focus:ring-2 focus:ring-brand/25',
         ]"
         @input="handleInput"
       />
+
+      <!-- Slot "trailing": un botón dentro del campo, a la derecha (p. ej. mostrar la contraseña) -->
+      <span v-if="$slots.trailing" class="absolute inset-y-0 right-0 flex items-center">
+        <slot name="trailing" />
+      </span>
     </div>
 
     <p

@@ -20,3 +20,10 @@ export function loadErrorMessage(error, subject = 'esta sección') {
   if (isNetworkError(error)) return 'Revisa tu conexión e inténtalo de nuevo.'
   return `Tuvimos un problema al cargar ${subject}. Inténtalo en unos minutos.`
 }
+
+// Lo mismo para un envío (ingresar, crear la cuenta…). "action" dice qué no se pudo hacer.
+// Los errores esperados (contraseña incorrecta, usuario repetido) los maneja cada vista antes.
+export function submitErrorMessage(error, action = 'completar la operación') {
+  if (isNetworkError(error)) return 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
+  return `Tuvimos un problema al ${action}. Inténtalo en unos minutos.`
+}
