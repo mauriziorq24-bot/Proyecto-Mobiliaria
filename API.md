@@ -299,7 +299,11 @@ Cancela (elimina) una cita.
 ### Necesarios para el login
 5. **`GET /auth/v1/me`** que devuelva los datos del usuario (`id`, `username`, `email`, `rol`). Sin esto, el frontend solo puede leer lo que venga dentro del JWT. **Confirmado el 21/10/2026:** no existe (`/auth/v1/me` y `/api/v1/usuarios/me` dan `404`), y el JWT **solo trae `sub` (username), `iss` y `exp`** — ni email ni rol. Es necesario para mostrar datos del usuario y para saber si es admin.
 6. ~~**Login:** ¿se entra con `username` o con `email`?~~ ✅ **Resuelto (21/10/2026):** se entra con **cualquiera de los dos** (y da igual en qué campo vaya). El frontend manda solo `{ username, password }` y el `email` **no es obligatorio**. Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
-7. **Google:** el frontend necesita el **Google Client ID** (el mismo que valida el backend).
+7. **Google:** el frontend ya está listo (Google Identity Services → `POST /auth/v1/google` → se guarda el JWT del backend), pero el botón queda oculto hasta tener el Client ID. Falta:
+   - [ ] **Client ID** de Google Cloud Console (ID de cliente OAuth 2.0, tipo "Aplicación web"). Debe ser **el mismo** con el que el backend valida el ID token en `/auth/v1/google`. Ponerlo en `VITE_GOOGLE_CLIENT_ID` del `.env` local.
+   - [ ] **Orígenes de JavaScript autorizados** en ese Client ID: `http://localhost:5173` **y** `http://localhost` (Google pide los dos para desarrollo local), más el dominio de Vercel (`https://<proyecto>.vercel.app` y el dominio propio si se agrega). Las URL de *preview* de Vercel cambian en cada despliegue y no funcionarán salvo que se agreguen. No hacen falta URI de redirección: el botón usa ventana emergente.
+   - [ ] **Variable `VITE_GOOGLE_CLIENT_ID` en Vercel** (Settings › Environment Variables) y volver a desplegar: Vite la lee al compilar, no en tiempo de ejecución.
+   - [ ] Probar una vez contra Render que `/auth/v1/google` responde `200 { token }` con un ID token real (aún no se ha probado).
 8. **Roles:** ¿hay usuarios ADMIN? `POST`/`PUT /api/v1/productos` deberían requerir token de admin (para categorías, ver el punto 15).
 
 ### Para manejar errores bien
