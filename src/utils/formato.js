@@ -35,3 +35,35 @@ export const OPCIONES_TIPO_ESPACIO = Object.entries(ETIQUETAS_TIPO_ESPACIO).map(
 export function etiquetaTipoEspacio(valor) {
   return ETIQUETAS_TIPO_ESPACIO[valor] ?? valor ?? ''
 }
+
+// Valores de tipoAsesoria confirmados por el backend (API.md) → texto para la UI.
+// El orden es el de las opciones del formulario de citas.
+export const TIPOS_ASESORIA = {
+  VISITA_SHOWROOM: {
+    etiqueta: 'Visita al showroom',
+    descripcion: 'Ven a ver y probar los muebles en persona.',
+  },
+  COTIZACION_GENERAL: {
+    etiqueta: 'Cotización',
+    descripcion: 'Te ayudamos a armar un presupuesto con los muebles que necesitas.',
+  },
+  PROYECTO_CORPORATIVO: {
+    etiqueta: 'Proyecto corporativo',
+    descripcion: 'Para equipar una oficina completa o varias áreas de tu empresa.',
+  },
+  DISENO_DE_ESPACIOS: {
+    etiqueta: 'Diseño de espacios',
+    descripcion: 'Te orientamos sobre la distribución y los muebles que mejor encajan en tu espacio.',
+  },
+  RETIRO_DE_COMPRA: {
+    etiqueta: 'Retiro de compra',
+    descripcion: 'Elige el momento para retirar en el showroom un pedido que ya compraste.',
+  },
+}
+
+// Lista para pintar opciones: [{ valor: 'VISITA_SHOWROOM', etiqueta, descripcion }, ...]
+export const OPCIONES_TIPO_ASESORIA = Object.entries(TIPOS_ASESORIA).map(([valor, tipo]) => ({ valor, ...tipo }))
+
+export function etiquetaTipoAsesoria(valor) {
+  return TIPOS_ASESORIA[valor]?.etiqueta ?? valor ?? ''
+}

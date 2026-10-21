@@ -35,5 +35,19 @@ export const company = {
       { days: 'Lunes a viernes', hours: '8:30 a. m. – 5:00 p. m.' },
       { days: 'Sábados', hours: '8:30 a. m. – 1:30 p. m.' },
     ],
+    // El mismo horario, en datos, para calcular los turnos de las citas (src/utils/fecha.js).
+    // Si cambia, actualizar también `schedule`. La clave es el día ISO: 1 = lunes … 7 = domingo.
+    // Un día que no aparece (el domingo) no tiene atención. Horas en 24 h, hora de Caracas.
+    openingHours: {
+      1: { open: '08:30', close: '17:00' },
+      2: { open: '08:30', close: '17:00' },
+      3: { open: '08:30', close: '17:00' },
+      4: { open: '08:30', close: '17:00' },
+      5: { open: '08:30', close: '17:00' },
+      6: { open: '08:30', close: '13:30' },
+    },
+    // Cuánto dura una cita. El backend aún no lo define (pendiente 11-ter de API.md):
+    // el último turno ofrecido es la hora de cierre menos esta duración.
+    duracionCitaMinutos: 60,
   },
 }
