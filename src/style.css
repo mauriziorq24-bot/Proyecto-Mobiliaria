@@ -125,6 +125,15 @@
   }
 }
 
+/*
+  Barra de desplazamiento fina en paneles con scroll propio (filtros de /buscar):
+  la gris del navegador por defecto no pertenece al sistema. Usa el color Línea.
+*/
+@utility thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
 /* Small sube a 14px y Price a 18px desde tablet, como indica DESIGN.md */
 @media (min-width: 768px) {
   :root {

@@ -3,19 +3,26 @@ import { PackageSearch } from 'lucide-vue-next'
 import ProductCard from './ProductCard.vue'
 import ProductCardSkeleton from './ProductCardSkeleton.vue'
 
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   productos: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   // Cuántas tarjetas de carga mostrar: 8 llena dos filas en escritorio.
   skeletonCount: { type: Number, default: 8 },
   // ids marcados como favoritos (solo visual hasta que exista el store).
   favoritos: { type: Array, default: () => [] },
+  // Junto a una barra lateral (página de búsqueda) el escritorio usa 3 columnas en vez de 4.
+  withSidebar: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['toggle-favorito'])
 
 // 2 columnas en móvil, 3 en tablet, 4 en escritorio (DESIGN.md).
-const gridClasses = 'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-6'
+const gridClasses = computed(() => [
+  'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:gap-6',
+  props.withSidebar ? 'lg:grid-cols-3' : 'lg:grid-cols-4',
+])
 </script>
 
 <template>

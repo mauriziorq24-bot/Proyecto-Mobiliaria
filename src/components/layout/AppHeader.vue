@@ -4,6 +4,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo.png'
 import { useCategorias } from '../../composables/useCategorias'
+import { useDebounce } from '../../composables/useDebounce'
 import { company } from '../../config/empresa'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
@@ -36,23 +37,59 @@ watch(
 )
 
 // --- Buscador ---
+// "  silla   malla " → "silla malla": la misma limpieza que hace useFiltrosUrl con ?q=.
+function cleanQuery(text) {
+  return text.trim().replace(/\s+/g, ' ')
+}
+
 // Si ya estamos en /buscar?q=..., el campo muestra lo que se buscó.
+// Solo se reescribe si de verdad cambió: si no, al escribir "silla " (con el espacio
+// para seguir con "malla") la URL limpia queda "silla" y el campo se comería el espacio.
 const query = ref('')
 watch(
   () => route.query.q,
   (q) => {
-    query.value = typeof q === 'string' ? q : ''
+    const fromUrl = typeof q === 'string' ? q : ''
+    if (cleanQuery(query.value) !== cleanQuery(fromUrl)) query.value = fromUrl
   },
   { immediate: true },
 )
 
+const onSearchPage = () => route.name === 'search'
+
+// En /buscar los resultados se actualizan mientras se escribe: 300 ms después de la
+// última tecla se cambia ?q= con replace (no llena el historial) y se conservan los filtros.
+function replaceSearchQuery(text) {
+  const q = cleanQuery(text)
+  if (q === (route.query.q ?? '')) return
+  router.replace({ query: { ...route.query, q: q || undefined } })
+}
+
+const debouncedQuery = useDebounce(query, 300)
+watch(debouncedQuery, (text) => {
+  if (onSearchPage()) replaceSearchQuery(text)
+})
+
 function submitSearch(event) {
-  const q = query.value.trim()
-  if (!q) return
-  router.push({ name: 'search', query: { q } })
+  if (onSearchPage()) {
+    // En /buscar, Enter aplica el texto al momento, sin esperar el debounce ni perder los filtros.
+    replaceSearchQuery(query.value)
+  } else {
+    const q = cleanQuery(query.value)
+    if (!q) return
+    // Desde otra página es una búsqueda nueva: push, para que "Atrás" vuelva a donde estaba.
+    router.push({ name: 'search', query: { q } })
+  }
   // En el teléfono, quitar el foco cierra el teclado y deja ver los resultados.
   event.target.querySelector('input')?.blur()
 }
+
+// --- Altura de la franja fija ---
+// La barra "Filtros" de /buscar y su barra lateral se pegan justo debajo del header.
+// La altura cambia entre móvil (buscador en su propia fila) y escritorio, así que se mide
+// y se publica como variable CSS para usarla con top-(--header-h).
+const stickyBar = ref(null)
+let resizeObserver = null
 
 // --- Sombra al hacer scroll (La regla de lo que flota) ---
 const scrolled = ref(false)
@@ -95,12 +132,17 @@ watch(
 )
 
 onMounted(() => {
+  resizeObserver = new ResizeObserver(([entry]) => {
+    document.documentElement.style.setProperty('--header-h', `${entry.borderBoxSize[0].blockSize}px`)
+  })
+  resizeObserver.observe(stickyBar.value)
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('keydown', onKeydown)
 })
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('keydown', onKeydown)
@@ -110,9 +152,13 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 </script>
 
 <template>
-  <header>
+  <!-- display: contents: el <header> no genera caja propia. Un elemento sticky solo se queda
+       fijo dentro de su contenedor; si el contenedor fuera el <header> (que mide lo mismo que
+       su contenido), la franja azul se iría con la página. Así su contenedor es todo el layout. -->
+  <header class="contents">
     <!-- Franja azul: fija arriba. En móvil incluye el buscador en una segunda fila. -->
     <div
+      ref="stickyBar"
       class="sticky top-0 z-40 bg-brand transition-shadow duration-200 ease-out"
       :class="scrolled && 'shadow-sm'"
     >

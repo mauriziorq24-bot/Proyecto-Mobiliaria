@@ -3,13 +3,13 @@ import { setPageTitle } from '../utils/pageTitle'
 import HomeView from '../views/HomeView.vue'
 
 // meta.title: título de la pestaña. Sin él (inicio) se muestra solo la marca;
-// categoría y producto lo fijan desde su vista, porque el nombre llega con la API.
+// categoría, producto y búsqueda lo fijan desde su vista: dependen de la API o de la URL.
 const routes = [
   { path: '/', name: 'home', component: HomeView },
   // Las demás vistas se cargan bajo demanda (lazy loading): solo se descargan al visitarlas.
   { path: '/categoria/:slug', name: 'category', component: () => import('../views/CategoryView.vue') },
   { path: '/producto/:id', name: 'product', component: () => import('../views/ProductView.vue') },
-  { path: '/buscar', name: 'search', component: () => import('../views/SearchView.vue'), meta: { title: 'Buscar' } },
+  { path: '/buscar', name: 'search', component: () => import('../views/SearchView.vue') },
   { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { title: 'Mi cotización' } },
   { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { title: 'Favoritos' } },
   { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita' } },
@@ -27,7 +27,12 @@ const router = createRouter({
   routes,
   // Al cambiar de página (también de un producto a otro relacionado), volver arriba.
   // Con "Atrás"/"Adelante" del navegador, savedPosition trae dónde estaba la persona: se respeta.
-  scrollBehavior: (to, from, savedPosition) => savedPosition ?? { top: 0 },
+  // Si solo cambia la query (un filtro de /buscar, el texto buscado) es la misma página: no se mueve.
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) return savedPosition
+    if (to.path === from.path) return false
+    return { top: 0 }
+  },
 })
 
 // Título de la pestaña: las rutas con meta.title lo fijan aquí. Las que dependen de datos (categoría, producto)
