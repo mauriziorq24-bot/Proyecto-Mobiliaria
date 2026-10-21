@@ -1,5 +1,5 @@
 <script setup>
-import { ArrowDown, ArrowRight, CalendarCheck, MessageCircle } from 'lucide-vue-next'
+import { ArrowRight, CalendarCheck, MessageCircle } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ShowroomInfo from '../components/layout/ShowroomInfo.vue'
@@ -24,7 +24,7 @@ import { obtenerProductos } from '../services/productoService'
 // Cuando exista company.showroom.photoUrl, la foto del showroom las reemplaza.
 const VITRINE_SLUGS = ['escritorios', 'silleria', 'comedores', 'peinadores', 'camillas']
 
-// "Ver catálogo" y "Explorar categorías" bajan a la sección de categorías.
+// "Explorar categorías" baja a la sección de categorías ("Ver catálogo" va a /buscar).
 // Con movimiento reducido el salto es instantáneo. El foco pasa al título de la sección
 // para que quien navega con teclado o lector de pantalla siga desde ahí.
 const categoriasTitle = ref(null)
@@ -97,9 +97,9 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
         </p>
 
         <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-          <BaseButton href="#categorias" class="max-sm:w-full" @click="scrollToCategorias">
+          <BaseButton :to="{ name: 'search' }" class="max-sm:w-full">
             Ver catálogo
-            <template #icon-right><ArrowDown /></template>
+            <template #icon-right><ArrowRight /></template>
           </BaseButton>
           <BaseButton variant="visit" to="/agendar-cita" class="max-sm:w-full">
             <template #icon-left><CalendarCheck /></template>

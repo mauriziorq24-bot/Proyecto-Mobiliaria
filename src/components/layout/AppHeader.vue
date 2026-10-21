@@ -42,12 +42,13 @@ function cleanQuery(text) {
   return text.trim().replace(/\s+/g, ' ')
 }
 
-// Si ya estamos en /buscar?q=..., el campo muestra lo que se buscó.
+// Si ya estamos en /buscar?q=..., el campo muestra lo que se buscó; en otras páginas queda vacío
+// (aunque su URL traiga un ?q= que no es una búsqueda).
 // Solo se reescribe si de verdad cambió: si no, al escribir "silla " (con el espacio
 // para seguir con "malla") la URL limpia queda "silla" y el campo se comería el espacio.
 const query = ref('')
 watch(
-  () => route.query.q,
+  () => (route.name === 'search' ? route.query.q : ''),
   (q) => {
     const fromUrl = typeof q === 'string' ? q : ''
     if (cleanQuery(query.value) !== cleanQuery(fromUrl)) query.value = fromUrl
@@ -75,10 +76,10 @@ function submitSearch(event) {
     // En /buscar, Enter aplica el texto al momento, sin esperar el debounce ni perder los filtros.
     replaceSearchQuery(query.value)
   } else {
-    const q = cleanQuery(query.value)
-    if (!q) return
     // Desde otra página es una búsqueda nueva: push, para que "Atrás" vuelva a donde estaba.
-    router.push({ name: 'search', query: { q } })
+    // Con el campo vacío va a /buscar sin ?q=, que muestra todo el catálogo.
+    const q = cleanQuery(query.value)
+    router.push({ name: 'search', query: q ? { q } : {} })
   }
   // En el teléfono, quitar el foco cierra el teclado y deja ver los resultados.
   event.target.querySelector('input')?.blur()
