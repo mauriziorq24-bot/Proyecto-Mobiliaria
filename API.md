@@ -64,6 +64,8 @@ Query params (todos opcionales):
 
 Response 200: arreglo de `ProductoResponse`.
 
+> **Decisión del frontend (20/10/2026) para la página de búsqueda:** `productoService` pide `GET /api/v1/productos?buscar=` una sola vez por cada texto buscado y filtra localmente por categoría, `tipoEspacio`, `enShowroom` y precio, y también ordena. Motivo: el catálogo es pequeño y no tiene paginación, así que filtrar en el navegador es más rápido y evita esperar otra vez el cold start de Render con cada cambio de filtro. Si el catálogo crece y el backend agrega paginación, el servicio pasará a enviar `tipoEspacio`, `enShowroom` y `categoria` a la API (y el orden y el precio, si se agregan), sin cambiar las vistas. Ver pendientes 2 y 22.
+
 ### `GET /api/v1/productos/{id}`
 Response 200: un `ProductoResponse`.
 
@@ -225,6 +227,9 @@ Cancela (elimina) una cita.
 19. **Imágenes rotas en el seed:** 3 URLs de Unsplash responden `404`: producto **2** (`photo-1497215848147-...`), **10** (`photo-1633534125867-...`) y **12** (`photo-1595514535310-...`). El frontend muestra el placeholder en su lugar, pero hay que cambiarlas. Además, los productos 8 y 9 usan la misma foto. Lo definitivo son las fotos reales de Instagram guardadas en `/uploads/productos/` (pendiente 4).
 20. **Un `id` inexistente devuelve `500` en vez de `404`.** `ProductoService.obtenerPorId` lanza una `RuntimeException` genérica; debería lanzar una excepción que termine en `404` (p. ej. `ResponseStatusException(HttpStatus.NOT_FOUND, ...)` o un `@ControllerAdvice`), con cuerpo `{ "message": "Producto no encontrado" }` (pendiente 9). **Seguridad:** la respuesta de error incluye el stack trace (`trace`); desactivarlo con `server.error.include-stacktrace=never`.
 21. **Un `id` no numérico devuelve `401` "Credenciales invalidas"** en un endpoint público. Parece que el manejo de errores de Spring Security convierte cualquier excepción en `401`; debería ser `400`. Es grave para el frontend: un `401` significa "sesión vencida", y el interceptor de axios cerrará la sesión y llevará al login (ver `CLAUDE.md`).
+
+### Para cuando crezca el catálogo
+22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
 
 ### CORS
 18. En desarrollo no hace falta: el frontend usa el proxy de Vite (ver `CLAUDE.md`). Solo falta confirmar CORS para el dominio de **producción** (`VITE_API_URL`).

@@ -171,7 +171,7 @@ components:
 
 # Design System: Mobiliario de Oficina
 
-> Dirección aprobada el 2026-10-18 («Muestrario de tapicería», con la barra de cotización móvil incorporada). Actualizado el 2026-10-20: muestras con los cuatro `tipoEspacio` de la API, sin cantidad de productos, y "cotización" en lugar de "presupuesto" en toda la interfaz. Es un documento **previo a la implementación**: cuando exista el código, se vuelve a generar desde el código real (`/impeccable document`) para que no se separe de lo construido.
+> Dirección aprobada el 2026-10-18 («Muestrario de tapicería», con la barra de cotización móvil incorporada). Actualizado el 2026-10-20: muestras con los cuatro `tipoEspacio` de la API, sin cantidad de productos, y "cotización" en lugar de "presupuesto" en toda la interfaz. También el 2026-10-20: se agrega la página de búsqueda (`/buscar`). Es un documento **previo a la implementación**: cuando exista el código, se vuelve a generar desde el código real (`/impeccable document`) para que no se separe de lo construido.
 
 ## Overview
 
@@ -259,6 +259,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - **Ritmo:** base de 4px — 4, 8, 12, 16, 24, 32, 48, 64. Más espacio encima de un título que debajo.
 - **Contenedor:** ancho máximo 1280px; margen lateral 16px (móvil), 24px (tablet ≥768px), 32px (escritorio ≥1024px).
 - **Grilla de productos:** 2 columnas en móvil, 3 en tablet, 4 en escritorio; separación 12px → 16px → 24px. Se reacomoda por columnas completas, nunca tarjetas a medio ancho.
+  - Excepción: en la página de búsqueda, con la barra lateral de filtros, la grilla de escritorio tiene 3 columnas.
 
 ### Header — escritorio (≥1024px)
 ```
@@ -385,6 +386,55 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 
 ### Buscador
 - Blanco, radio `md`, 46px, ícono de lupa, placeholder "Buscar sillas, escritorios, mesas…".
+
+### Página de búsqueda (`/buscar`, `SearchView`)
+Página para hacer una tarea: patrones conocidos (IKEA, Amazon), sin adornos. Llegan desde el buscador del header (`?q=`), desde "Ver todos los de [ambiente]" en el inicio (`?tipoEspacio=`) y desde "En showroom" del header (`?enShowroom=true`).
+
+**Encabezado** (franja blanca, como en Categoría): título "Resultados para «silla»" (sin texto: "Todos los productos") y el conteo "12 productos" con `aria-live="polite"` y cifras tabulares.
+
+**Filtros**, en este orden:
+1. **Categoría:** "Todas" + las de `GET /api/v1/categorias`.
+2. **Ambiente:** los `tipoEspacio` con su ícono y nombre de `config/tiposEspacio.js`. La tira de muestras grande **no** se usa aquí (solo en el inicio y en Categoría).
+3. **Solo en showroom:** interruptor con el punto Dorado Showroom; es lo único dorado de la página.
+4. **Precio referencial (USD):** dos campos, "Desde" y "Hasta", con `inputmode="numeric"`; de placeholder, el mínimo y el máximo del catálogo. No aceptan negativos. Si "Desde" es mayor que "Hasta", aparece un mensaje en Error bajo los campos (`aria-describedby`) y no se filtra. Con un filtro de precio activo, los productos sin precio quedan fuera.
+- Cada opción muestra cuántos productos tiene ("Hogar (3)"), contando con los demás filtros ya aplicados.
+- Opción elegida: fondo Tinte Azul, borde Azul Acción y un check (no solo color).
+
+**Orden:** Relevancia (por defecto), Precio: menor a mayor, Precio: mayor a menor, Nombre A–Z (`localeCompare('es')`). Ordenando por precio, los productos sin precio van al final. El orden no es un filtro: no cuenta en "Filtros (N)" ni lleva chip.
+
+**Chips activos:** uno por filtro ("Sillería", "Ambiente: Hogar", "En showroom", "$100 – $400"), en Tinte Azul con borde Azul Acción y una X con área táctil de 44px y etiqueta "Quitar filtro Hogar". Al final, "Limpiar filtros", que quita los filtros pero **conserva el texto buscado**.
+
+**Escritorio (≥1024px):**
+- Barra lateral fija de ~256px con los filtros; se aplican **al momento**, porque la grilla está a la vista.
+- Encima de la grilla: chips activos + "Limpiar filtros" a la izquierda, "Ordenar por" a la derecha.
+- Grilla de 3 columnas (ver Layout).
+
+**Móvil y tablet (<1024px):**
+- Barra fija bajo el encabezado con "Filtros (N)" y "Ordenar". N cuenta solo filtros (ni orden ni texto buscado).
+- Chips activos debajo, en fila con scroll horizontal, con "Limpiar filtros" al final.
+- **Panel inferior** (`<dialog>` nativo, radio `lg`, sombra `lg`, máximo ~85% de la altura): cabecera con "Filtros", "Limpiar" y cerrar; los mismos grupos con scroll; abajo, fijo, "Ver X resultados".
+  - Trabaja sobre un **borrador**: el botón cuenta en vivo los resultados que quedarían; si son 0, dice "Sin resultados" y queda deshabilitado.
+  - "Limpiar" solo limpia el borrador. Cerrar con la X, Esc o tocando el fondo descarta el borrador.
+  - Los campos de precio también se aplican con el botón, como los demás filtros.
+  - Mientras está abierto se oculta la barra de cotización; respeta `env(safe-area-inset-bottom)`.
+  - Sube en ~200ms `ease-out`; con `prefers-reduced-motion`, aparece sin animación.
+
+**Estados:**
+- Cargando: skeletons en la grilla; los conteos de filtros esperan. La carga pasa por `useAsync` (aviso de cold start).
+- Error: `BaseErrorState` "No pudimos cargar los productos" + "Reintentar".
+- Sin resultados para el texto: "No encontramos «xyz»", sugerencias (revisar la escritura, probar "silla" o "escritorio", ver todo el catálogo) y el bloque de WhatsApp.
+- Sin resultados por los filtros: los chips activos, la sugerencia concreta del filtro que más resultados recupera ("Si quitas «Solo en showroom» verás 4 productos", con botón que lo quita), "Limpiar filtros" y el bloque de WhatsApp.
+- Bloque de WhatsApp: "¿No encuentras lo que buscas? Escríbenos por WhatsApp" con `button-whatsapp` y mensaje ya escrito con lo buscado ("Hola, busqué «…» en la web y no lo encontré").
+
+**URL:**
+- Parámetros: `q`, `categoria` (slug), `tipoEspacio`, `enShowroom=true`, `precioMin`, `precioMax`, `orden` (`precio-asc` | `precio-desc` | `nombre`). Los valores por defecto no se escriben.
+- Los cambios de filtro usan `router.replace` (no llenan el historial); una búsqueda nueva desde el header usa `push`.
+- Valores inválidos (slug o tipo que no existe, precio no numérico o negativo) se ignoran y se limpian de la URL con `replace`; no generan chips.
+
+**Decisiones (2026-10-20):**
+- **Sin campo de búsqueda propio:** se usa el del header (en móvil ya está fijo y muestra el texto buscado). La página repite el texto en el título y ofrece "Borrar búsqueda", que quita `q` y conserva los filtros.
+- **Relevancia:** el backend no da puntuación. Primero los productos con el texto en el nombre, luego los que lo tienen solo en la descripción; dentro de cada grupo, el orden de la API. Sin texto buscado, el orden de la API.
+- **Una opción por grupo:** una sola categoría y un solo ambiente a la vez (como el `tipoEspacio` único del backend); la URL lleva un valor por parámetro.
 
 ## Do's and Don'ts
 
