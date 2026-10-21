@@ -210,7 +210,7 @@ const selectClass =
         <button
           v-if="texto"
           type="button"
-          class="relative inline-flex items-center gap-1 text-small font-semibold text-brand-deep before:absolute before:-inset-x-1 before:-inset-y-3 hover:underline"
+          class="relative inline-flex items-center gap-1 text-small font-semibold text-brand-deep before:absolute before:-inset-x-1 before:-inset-y-3.5 hover:underline"
           @click="borrarBusqueda"
         >
           <X class="size-4" aria-hidden="true" />
@@ -220,12 +220,15 @@ const selectClass =
     </div>
   </section>
 
-  <!-- Móvil y tablet: barra fija bajo el header con "Filtros (N)" y "Ordenar" -->
-  <div class="sticky top-[var(--header-h,0px)] z-30 border-b border-line bg-surface lg:hidden">
-    <div class="container-page flex items-center gap-2 py-2.5">
+  <!-- Móvil y tablet: barra fija bajo el header con "Filtros (N)" y "Ordenar".
+       En pantallas bajas deja de ser fija, como el header (variante `short` de style.css).
+       basis-40 (10rem): si los dos botones no caben lado a lado (letra grande, zoom), se apilan
+       en vez de achicarse hasta cortar el texto. -->
+  <div class="sticky top-[var(--header-h,0px)] z-30 border-b border-line bg-surface short:static lg:hidden">
+    <div class="container-page flex flex-wrap items-center gap-2 py-2.5">
       <BaseButton
         variant="secondary"
-        class="flex-1 px-3"
+        class="grow basis-40 px-3"
         aria-haspopup="dialog"
         :aria-expanded="sheetOpen"
         @click="abrirFiltros"
@@ -233,7 +236,7 @@ const selectClass =
         <template #icon-left><SlidersHorizontal /></template>
         Filtros<span v-if="chips.length" class="-ml-1 tabular-nums">({{ chips.length }})</span>
       </BaseButton>
-      <div class="relative flex-1">
+      <div class="relative grow basis-40">
         <label for="orden-movil" class="sr-only">Ordenar por</label>
         <ArrowUpDown
           class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted"

@@ -19,7 +19,7 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
     v-if="chips.length"
     aria-label="Filtros activos"
     class="flex items-center gap-2"
-    :class="scroll ? ['-mx-4 overflow-x-auto px-4 py-1', hideScrollbar] : 'flex-wrap'"
+    :class="scroll ? ['-mx-4 overflow-x-auto px-4 py-1 md:-mx-6 md:px-6', hideScrollbar] : 'flex-wrap'"
   >
     <li v-for="chip in chips" :key="chip.clave" class="shrink-0">
       <span

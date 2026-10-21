@@ -89,8 +89,17 @@ function submitSearch(event) {
 // La barra "Filtros" de /buscar y su barra lateral se pegan justo debajo del header.
 // La altura cambia entre móvil (buscador en su propia fila) y escritorio, así que se mide
 // y se publica como variable CSS para usarla con top-(--header-h).
+// En pantallas bajas (variante `short` de style.css) la franja deja de ser fija:
+// entonces no tapa nada y la variable vale 0.
+const SHORT_VIEWPORT = '(max-height: 32em)'
 const stickyBar = ref(null)
 let resizeObserver = null
+let shortViewport = null
+
+function publishHeaderHeight() {
+  const height = shortViewport.matches ? 0 : stickyBar.value.offsetHeight
+  document.documentElement.style.setProperty('--header-h', `${height}px`)
+}
 
 // --- Sombra al hacer scroll (La regla de lo que flota) ---
 const scrolled = ref(false)
@@ -133,9 +142,9 @@ watch(
 )
 
 onMounted(() => {
-  resizeObserver = new ResizeObserver(([entry]) => {
-    document.documentElement.style.setProperty('--header-h', `${entry.borderBoxSize[0].blockSize}px`)
-  })
+  shortViewport = window.matchMedia(SHORT_VIEWPORT)
+  shortViewport.addEventListener('change', publishHeaderHeight)
+  resizeObserver = new ResizeObserver(publishHeaderHeight)
   resizeObserver.observe(stickyBar.value)
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
@@ -144,6 +153,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
+  shortViewport?.removeEventListener('change', publishHeaderHeight)
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('keydown', onKeydown)
@@ -157,10 +167,10 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
        fijo dentro de su contenedor; si el contenedor fuera el <header> (que mide lo mismo que
        su contenido), la franja azul se iría con la página. Así su contenedor es todo el layout. -->
   <header class="contents">
-    <!-- Franja azul: fija arriba. En móvil incluye el buscador en una segunda fila. -->
+    <!-- Franja azul: fija arriba (salvo en pantallas bajas). En móvil incluye el buscador en una segunda fila. -->
     <div
       ref="stickyBar"
-      class="sticky top-0 z-40 bg-brand transition-shadow duration-200 ease-out"
+      class="sticky top-0 z-40 bg-brand transition-shadow duration-200 ease-out short:static"
       :class="scrolled && 'shadow-sm'"
     >
       <div

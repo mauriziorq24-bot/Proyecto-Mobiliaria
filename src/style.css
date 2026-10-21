@@ -10,6 +10,15 @@
   "static" hace que TODAS las variables existan en :root aunque ninguna clase las use
   (por ejemplo los colores de muestras, que se leerán con var() desde un mapa en JS).
 */
+/*
+  short: pantalla baja en proporción al texto (zoom al 200%, letra grande del sistema,
+  teléfono acostado). En una media query, 1em es el tamaño de letra que eligió la persona,
+  así que 32em son 512px con letra normal y más con letra grande.
+  Ahí lo fijo (header, barra de filtros) deja de serlo: si no, tapa la mitad de la pantalla.
+  Si cambias el valor, cambia también SHORT_VIEWPORT en AppHeader.vue.
+*/
+@custom-variant short (@media (max-height: 32em));
+
 @theme static {
   /* Fuente única: Figtree (se carga en index.html) */
   --font-sans: "Figtree", system-ui, sans-serif;

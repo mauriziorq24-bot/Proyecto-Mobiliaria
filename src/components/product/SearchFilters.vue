@@ -51,6 +51,14 @@ function sinProductos(opcion, elegida) {
   return opcion.conteo === 0 && !elegida
 }
 
+// Fondo, borde y color de texto de cada fila. Sin productos, el texto pasa a Tinta Suave
+// (en vez de bajar la opacidad): el "(0)" explica por qué no se puede elegir y tiene que leerse.
+function optionState(opcion, elegida) {
+  if (elegida) return 'border-brand-deep bg-brand-tint text-brand-deep'
+  if (sinProductos(opcion, elegida)) return 'cursor-not-allowed border-transparent text-ink-muted'
+  return 'border-transparent text-ink hover:bg-ground'
+}
+
 const conteoShowroom = computed(() => props.conteos?.enShowroom)
 const showroomDisabled = computed(() => conteoShowroom.value === 0 && !props.filtros.enShowroom)
 
@@ -67,15 +75,7 @@ const optionRow = [
       <legend class="mb-2 text-label text-ink-muted uppercase">{{ grupo.titulo }}</legend>
       <ul class="flex flex-col gap-1">
         <li v-for="opcion in grupo.opciones" :key="opcion.valor ?? 'todas'">
-          <label
-            :class="[
-              optionRow,
-              filtros[grupo.clave] === opcion.valor
-                ? 'border-brand-deep bg-brand-tint text-brand-deep'
-                : 'border-transparent text-ink hover:bg-ground',
-              sinProductos(opcion, filtros[grupo.clave] === opcion.valor) && 'cursor-not-allowed opacity-45 hover:bg-transparent',
-            ]"
-          >
+          <label :class="[optionRow, optionState(opcion, filtros[grupo.clave] === opcion.valor)]">
             <input
               type="radio"
               class="sr-only"
@@ -88,12 +88,17 @@ const optionRow = [
             <span
               v-if="opcion.icon"
               class="grid size-6 shrink-0 place-items-center rounded-sm"
-              :class="opcion.swatchClass"
+              :class="[opcion.swatchClass, sinProductos(opcion, filtros[grupo.clave] === opcion.valor) && 'opacity-45']"
               aria-hidden="true"
             >
               <component :is="opcion.icon" class="size-3.5" :stroke-width="2" />
             </span>
-            <span class="min-w-0 flex-1 font-semibold">{{ opcion.etiqueta }}</span>
+            <span
+              class="min-w-0 flex-1"
+              :class="sinProductos(opcion, filtros[grupo.clave] === opcion.valor) ? 'font-medium' : 'font-semibold'"
+            >
+              {{ opcion.etiqueta }}
+            </span>
             <span v-if="opcion.conteo != null" class="text-small text-ink-muted tabular-nums">
               ({{ countFormat.format(opcion.conteo) }})
             </span>
@@ -116,21 +121,22 @@ const optionRow = [
         role="switch"
         :aria-checked="filtros.enShowroom"
         :disabled="showroomDisabled"
-        class="flex min-h-11 w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-45"
-        :class="
-          filtros.enShowroom
-            ? 'border-brand-deep bg-brand-tint text-brand-deep'
-            : 'border-line text-ink enabled:hover:bg-ground'
-        "
+        class="group flex min-h-11 w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors duration-200 ease-out disabled:cursor-not-allowed"
+        :class="[
+          filtros.enShowroom && 'border-brand-deep bg-brand-tint text-brand-deep',
+          !filtros.enShowroom && (showroomDisabled ? 'border-line text-ink-muted' : 'border-line text-ink hover:bg-ground'),
+        ]"
         @click="emit('change', { enShowroom: !filtros.enShowroom })"
       >
-        <span class="size-2.5 shrink-0 rounded-full bg-showroom-gold" aria-hidden="true" />
-        <span class="min-w-0 flex-1 font-semibold whitespace-nowrap">Solo en showroom</span>
+        <span class="size-2.5 shrink-0 rounded-full bg-showroom-gold group-disabled:opacity-45" aria-hidden="true" />
+        <span class="min-w-0 flex-1 whitespace-nowrap" :class="showroomDisabled ? 'font-medium' : 'font-semibold'">
+          Solo en showroom
+        </span>
         <span v-if="conteoShowroom != null" class="text-small text-ink-muted tabular-nums">
           ({{ countFormat.format(conteoShowroom) }})
         </span>
         <span
-          class="relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ease-out"
+          class="relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ease-out group-disabled:opacity-45"
           :class="filtros.enShowroom ? 'bg-brand-deep' : 'bg-line'"
           aria-hidden="true"
         >

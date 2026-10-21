@@ -276,6 +276,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - El carrito muestra cantidad y total referencial; abre un drawer lateral.
 - Categorías desde `GET /api/v1/categorias`; "Todas" abre un panel con la lista completa. Activa: subrayado Azul Silla de 2px.
 - Al hacer scroll la fila blanca se oculta; la azul queda fija con sombra `sm`.
+- **Pantallas bajas** (alto menor a 32em: zoom al 200%, letra grande del sistema, teléfono acostado): la franja azul y la barra "Filtros / Ordenar" de `/buscar` dejan de ser fijas y se van con la página, para no tapar la mitad de la pantalla (WCAG 1.4.10). Se usa la variante `short:` de `style.css`; al medir en `em`, el umbral crece con la letra que eligió la persona.
   - **Pendiente (fase de pulido):** ocultar la fila de categorías según la dirección del scroll. Hoy la franja azul es fija y toma la sombra `sm`, y la fila blanca simplemente se desplaza con la página.
 
 ### Header — móvil (<768px)
@@ -410,7 +411,7 @@ Página para hacer una tarea: patrones conocidos (IKEA, Amazon), sin adornos. Ll
 - Grilla de 3 columnas (ver Layout).
 
 **Móvil y tablet (<1024px):**
-- Barra fija bajo el encabezado con "Filtros (N)" y "Ordenar". N cuenta solo filtros (ni orden ni texto buscado).
+- Barra fija bajo el encabezado con "Filtros (N)" y "Ordenar". N cuenta solo filtros (ni orden ni texto buscado). Si los dos no caben lado a lado (letra grande), se apilan; en pantallas bajas la barra deja de ser fija (ver Header).
 - Chips activos debajo, en fila con scroll horizontal, con "Limpiar filtros" al final.
 - **Panel inferior** (`<dialog>` nativo, radio `lg`, sombra `lg`, máximo ~85% de la altura): cabecera con "Filtros", "Limpiar" y cerrar; los mismos grupos con scroll; abajo, fijo, "Ver X resultados".
   - Trabaja sobre un **borrador**: el botón cuenta en vivo los resultados que quedarían; si son 0, dice "Sin resultados" y queda deshabilitado.
