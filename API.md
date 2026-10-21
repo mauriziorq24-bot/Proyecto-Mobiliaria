@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026).
 Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -112,7 +112,7 @@ Header: `{ "alg": "HS384" }`. Payload (base64, decodificable en el navegador):
 | `POST`/`PUT /api/v1/productos` | `403` | **`403`** (un usuario normal tampoco puede: requiere rol admin — pendiente 8) |
 | `POST /api/v1/categorias` | `403` | **`403`** (ídem — pendiente 15) |
 | `POST /api/v1/citas` | `403` | **sí** (con token pasa auth; `400` si el JSON va mal) |
-| `DELETE /api/v1/citas/{codigoCita}` | `403` | `500` con un código inexistente |
+| `PUT`/`DELETE /api/v1/citas/{codigoCita}` | `403` | `200` con un código existente; `500` con uno inexistente (ver [citas](#comportamiento-real-de-citas-probado-el-21102026)) |
 
 - **Las lecturas de catálogo (productos y categorías) son públicas:** la home, el catálogo y la ficha **no necesitan que el usuario esté logueado**.
 - **⚠️ Agendar cita exige estar logueado.** `POST /api/v1/citas` da `403` sin token y pasa la autenticación con un token válido de usuario normal. Esto **contradice la idea de "agendar cita" como formulario público** (ver `CLAUDE.md`): o el usuario debe iniciar sesión antes de agendar, o hay que pedir al backend que `POST /api/v1/citas` sea público (ver pendiente 17-bis). Confirmar con el compañero.
@@ -120,7 +120,7 @@ Header: `{ "alg": "HS384" }`. Payload (base64, decodificable en el navegador):
 - **⚠️ Un token inválido o mal formado en un `GET` público da `500`, no `401`.** Mandar `Authorization: Bearer abc.def.ghi` a `GET /api/v1/productos` devuelve `500 Internal Server Error`. Esto es un problema para el frontend: el interceptor de axios espera que "token malo/vencido" sea `401` (para cerrar sesión y mandar al login, ver `CLAUDE.md`). Hoy un token vencido podría manifestarse como `500` en vez de `401` (ver pendiente 21-bis). Mientras tanto, conviene **no mandar el header `Authorization` en las peticiones públicas** si no hay sesión, y tratar el `500` con prudencia.
 - `GET /api/v1/categorias/{id}` responde `405 Method Not Allowed` (ese path existe en el spec solo para otros métodos, no para `GET`).
 
-> Nota de limpieza: estas pruebas crearon en la base de datos de Render los usuarios `prueba_front_2110`, `prueba_front_2110b`, `prueba_front_2110d` y `prueba_front_2110e`. Si el compañero quiere, puede borrarlos del seed/BD.
+> Nota de limpieza: estas pruebas crearon en la base de datos de Render los usuarios `prueba_front_2110`, `prueba_front_2110b`, `prueba_front_2110d` y `prueba_front_2110e`, y las pruebas de citas crearon `prueba_citas_2110` (correo `prueba_citas_2110@example.com`). Si el compañero quiere, puede borrarlos del seed/BD. Las citas de prueba ya se borraron.
 
 ---
 
@@ -271,18 +271,66 @@ Agendar una visita o asesoría.
   "tipoAsesoria": "string",
   "notas": "string"
 }
-// Response 200: objeto clave-valor (forma exacta por confirmar)
-{ "mensaje": "string" }
+// Response 201 Created  (⚠️ es 201, no 200 como dice el Swagger)
+{ "codigoCita": "CITA-728BF4", "mensaje": "Cita agendada con éxito" }
 ```
-`fechaHora` en formato ISO 8601 (`new Date().toISOString()`).
+- **Exige token** (`403` sin él).
+- **Obligatorios** (según el spec): `nombreCliente`, `telefono`, `email`, `fechaHora`, `tipoAsesoria`. `empresa` y `notas` son opcionales.
+- **`codigoCita`:** `CITA-` + 6 caracteres hexadecimales en mayúsculas (p. ej. `CITA-C531B1`). Parecen aleatorios, no secuenciales. **El frontend debe mostrarlo y guardarlo**: es la única forma de modificar o cancelar la cita después (no hay `GET`).
+- **`tipoAsesoria`:** es un enum de Java (`TipoAsesoria`) que **no aparece en el Swagger** (sale como `string`). El único valor encontrado es **`VISITA_SHOWROOM`** (también lo acepta en minúsculas). Se probaron sin éxito `PRESENCIAL`, `VIRTUAL`, `SHOWROOM`, `ASESORIA_VIRTUAL`, `ASESORIA_PRESENCIAL`, `VISITA_TECNICA`, `VISITA_DOMICILIO`, `VISITA_OFICINA`, `VIDEOLLAMADA`, `ONLINE`, `LLAMADA`, `COTIZACION`, `MEDICION`, entre otros. Lista completa: pendiente 11.
+- **`fechaHora`: enviar hora local de Venezuela sin zona** (`"2026-11-20T14:30:00"`). **No usar `toISOString()`** (ver [Zonas horarias](#zonas-horarias-en-fechahora)).
 
 ### `PUT /api/v1/citas/{codigoCita}`
-Modifica una cita. Body: `CitaRequest` (el mismo de `POST`).
+Modifica una cita. Body: `CitaRequest` (el mismo de `POST`). Respuesta: `200 { "mensaje": "Cita modificada con éxito" }` (no devuelve la cita).
 
 ### `DELETE /api/v1/citas/{codigoCita}`
-Cancela (elimina) una cita.
+Cancela (elimina) una cita. Respuesta: `200 { "mensaje": "Cita eliminada con éxito" }`.
 
-> Para usar `PUT` y `DELETE` el cliente necesita su `codigoCita` (ver pendientes: confirmar que `POST` lo devuelve y definir la seguridad).
+### Comportamiento real de citas (probado el 21/10/2026)
+
+Probado con `curl` contra Render con el usuario `prueba_citas_2110`. **Las 5 citas creadas se borraron al terminar** (un segundo `DELETE` dio `500`: ya no existen).
+
+**`POST /api/v1/citas`**
+
+| # | Caso | Código | Cuerpo |
+|---|---|---|---|
+| 1 | Válida, `fechaHora: "2026-11-20T14:30:00"` (sin `Z`) | **`201`** | `{ "codigoCita": "CITA-728BF4", "mensaje": "Cita agendada con éxito" }` |
+| 2 | Igual, pero `"2026-11-20T14:30:00Z"` (con `Z`) | **`201`** | `{ "codigoCita": "CITA-C531B1", ... }` (la acepta) |
+| 2b | `"2026-11-20T14:30:00-04:00"` (offset de Venezuela) | **`400`** | error por defecto de Spring, sin `message` |
+| 3 | `tipoAsesoria: "XYZ"` | **`401`** `text/plain` | `Credenciales invalidas No enum constant java27.backend.mobiliariodeoficina.models.TipoAsesoria.XYZ` — **no lista los valores válidos** |
+| 4 | Fecha pasada (`2020-01-15T10:00:00`) | **`400`** | sin `message` (no dice por qué) |
+| 5a | Domingo (`2026-11-22T11:00:00`) | **`201`** (la acepta) | `{ "codigoCita": ... }` |
+| 5b | Jueves a las 22:00 | **`201`** (la acepta) | `{ "codigoCita": ... }` |
+| 5c | `fechaHora` mal formada (`"20-11-2026"`) | **`400`** | sin `message` |
+| 5d | Falta `telefono` | **`400`** | sin `message` |
+| 6 | Sin token | **`403`** | `{ "status":403, "error":"Forbidden", ... }` |
+| — | Misma franja dos veces (prueba 1 y 2: 20/11 14:30) | **`201`** las dos | no detecta citas solapadas |
+
+**`PUT` / `DELETE /api/v1/citas/{codigoCita}`**
+
+| # | Caso | Código |
+|---|---|---|
+| 7 | `DELETE /api/v1/citas/CODIGO-INVENTADO` con token | **`500`** (no `404`). Igual con `CITA-000000` |
+| 8 | `DELETE` de una cita propia **sin token** | **`403`**: la rechaza, no la borra |
+| — | `DELETE` de una cita propia con token | `200 { "mensaje": "Cita eliminada con éxito" }` |
+| — | `PUT` sin token | `403` |
+| — | `PUT` con token | `200 { "mensaje": "Cita modificada con éxito" }` |
+| — | `PUT` con código inexistente | `500` |
+| — | `GET /api/v1/citas/{codigoCita}` | `403` (no existe; pendiente 16) |
+
+**Validaciones del backend, resumen:**
+- ✅ Campos obligatorios, formato de fecha y **fecha en el pasado** → `400` (pero sin mensaje: el frontend no puede saber cuál falló).
+- ❌ **No valida horario de atención** (acepta domingos y 22:00) ni **citas solapadas** en la misma franja. Hoy el frontend es la única barrera: debe ofrecer solo días y horas hábiles.
+- ❌ `tipoAsesoria` inválido da **`401` "Credenciales invalidas"**: el interceptor de axios lo tomaría como sesión vencida y cerraría la sesión (mismo problema que el pendiente 21). El frontend debe mandar **solo** valores conocidos.
+- ❌ Código inexistente en `PUT`/`DELETE` da `500` en vez de `404`.
+
+**Seguridad de `PUT`/`DELETE`:** ambos **exigen token** (`403` sin él), así que un visitante anónimo no puede tocar citas aunque conozca el código. **No se probó si un usuario puede modificar o borrar la cita de *otro* usuario** (haría falta una segunda cuenta). Si el backend solo comprueba "hay token válido" y no "esta cita es tuya", cualquier usuario registrado que adivine o vea un `codigoCita` (16,7 millones de combinaciones) podría cambiarla o borrarla. Ver pendiente 17.
+
+### Zonas horarias en `fechaHora`
+
+El backend acepta `14:30:00` y `14:30:00Z`, pero **rechaza `14:30:00-04:00`**. Eso indica (por inferencia, no confirmado) que en Java el campo es un **`LocalDateTime`**: una fecha y hora **sin zona horaria**. Jackson tolera la `Z` final y la descarta; un offset distinto no lo sabe interpretar.
+
+Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las **10:30 en Caracas (UTC−4)** se enviaría como `"…T14:30:00.000Z"`, y el backend probablemente guardaría **14:30**, con 4 horas de diferencia. Por eso el frontend **envía la hora local tal cual, sin `Z`** (`"2026-11-20T10:30:00"`), construyendo el string a mano desde el selector de fecha y hora, sin pasar por `toISOString()`. Pendiente de confirmar con el compañero (pendiente 11-bis).
 
 ---
 
@@ -312,15 +360,22 @@ Cancela (elimina) una cita.
 10-bis. **Registro duplicado debería ser `409` con JSON**, no `401 text/plain` (un `401` confunde al interceptor de axios, que lo interpretaría como "sesión vencida"). Y **registro sin `email` debería ser `400`**, no `500`.
 10-ter. **Validar en el backend el formato de `email` y la fuerza de la `password`** en el registro (hoy acepta `"noesemail"` y contraseñas de 1 carácter). El frontend ya exige formato de correo y **mínimo 8 caracteres** (21/10/2026); el backend debería aplicar la misma regla, porque la validación del navegador se puede saltar.
 10-quater. **¿Agendar cita es público o requiere login?** Hoy `POST /api/v1/citas` exige token (`403` sin él). Si la idea es un formulario público (ver `CLAUDE.md`), pedir que sea público; si no, el frontend obligará a iniciar sesión antes de agendar. **Decidir con el compañero.** **Pendiente de hablar con el backend (21/10/2026):** mientras siga exigiendo token, las pantallas de login y registro dicen solo "No necesitas cuenta para cotizar ni para escribirnos por WhatsApp". Si las citas se vuelven públicas, hay que actualizar ese texto para incluir las visitas (ver "Login y registro" en `DESIGN.md`).
-11. Lista completa de valores de `tipoAsesoria`.
-12. Forma exacta de la respuesta de `POST /api/v1/citas`, y **confirmar que devuelve el `codigoCita`** (sin él, el cliente no puede modificar ni cancelar su cita).
+11. **Lista completa de valores de `tipoAsesoria`.** Solo se conoce `VISITA_SHOWROOM` (probado el 21/10/2026). Pedir que el enum se exponga en el Swagger (`@Schema(allowableValues=...)` o tipando el campo como enum) o un `GET /api/v1/citas/tipos`. Y que un valor inválido dé **`400` con la lista de valores válidos**, no `401` "Credenciales invalidas".
+11-bis. **Zona horaria de `fechaHora`** (ver [Zonas horarias](#zonas-horarias-en-fechahora)). Preguntar al compañero:
+   - ¿El campo es `LocalDateTime`, `OffsetDateTime`/`ZonedDateTime` o `Instant`? ¿Y la columna de la BD es `timestamp` o `timestamptz`?
+   - ¿Qué significa la hora guardada: **hora de Caracas** o UTC? Propuesta: hora local de Venezuela sin zona, y el frontend manda `"2026-11-20T10:30:00"`.
+   - Si llega con `Z`, ¿la convierte a hora de Caracas o descarta la `Z`? Hoy parece descartarla, y eso movería las citas 4 horas si alguien envía UTC.
+   - La validación de "fecha en el pasado": ¿compara contra la hora de Caracas o contra la del servidor? Render corre en **UTC**: si compara un `LocalDateTime` con `LocalDateTime.now()` en UTC, durante 4 horas al día aceptará o rechazará citas de forma incorrecta. Recomendar `ZoneId.of("America/Caracas")` o `-Duser.timezone=America/Caracas`.
+11-ter. **Validar horario de atención y citas solapadas en el backend:** hoy acepta domingos, 22:00 y dos citas en la misma franja. ¿Cuál es el horario real del showroom? ¿Cuánto dura una cita?
+12. ~~Forma exacta de la respuesta de `POST /api/v1/citas` y confirmar que devuelve el `codigoCita`.~~ ✅ **Resuelto (21/10/2026):** `201 { "codigoCita": "CITA-XXXXXX", "mensaje": "Cita agendada con éxito" }`. El Swagger dice `200`, pero responde `201`.
+12-bis. **Errores de citas:** `400` sin `message` (no se sabe qué campo falló) y `500` con un código inexistente en `PUT`/`DELETE` (debería ser `404`). Ver pendiente 9.
 13. **`tipoEspacio`: confirmar si es valor único o lista.** Si es lista, cambia la forma del producto (`"tipoEspacio": ["OFICINA", "HOGAR"]`) y cómo funciona el filtro `?tipoEspacio=`.
 
 ### Categorías y citas
 14. **Categoría repetida:** ¿qué pasa con `POST /api/v1/categorias` si ya existe ese nombre (o ese slug)? Lo ideal es un `409` con mensaje, y no un `500` o un duplicado.
 15. **`POST /api/v1/categorias` debe requerir token de admin.**
 16. **`GET /api/v1/citas/{codigoCita}`:** agregarlo, para que el cliente pueda consultar su cita antes de modificarla o cancelarla.
-17. **Seguridad de `PUT` y `DELETE /api/v1/citas/{codigoCita}`:** definir quién puede usarlos (¿basta con conocer el `codigoCita`?, ¿se pide también el email?, ¿requiere token?). Si el código es adivinable (p. ej. secuencial), cualquiera podría cambiar o borrar citas ajenas.
+17. **Seguridad de `PUT` y `DELETE /api/v1/citas/{codigoCita}`:** **probado el 21/10/2026**: ambos **exigen token** (`403` sin él) y el código es aleatorio (`CITA-` + 6 hex), no secuencial. **Falta confirmar** que el backend comprueba que la cita **pertenece al usuario del token**. Si no lo hace, cualquier usuario registrado con un `codigoCita` ajeno podría modificarla o borrarla. Preguntar al compañero. También convendría un `GET /api/v1/citas/mias` para que el usuario vea sus citas sin tener que guardar el código.
 
 ### Detectados al probar la ficha de producto (20/10/2026)
 19. **Imágenes rotas en el seed:** 3 URLs de Unsplash responden `404`: producto **2** (`photo-1497215848147-...`), **10** (`photo-1633534125867-...`) y **12** (`photo-1595514535310-...`). El frontend muestra el placeholder en su lugar, pero hay que cambiarlas. Además, los productos 8 y 9 usan la misma foto. Lo definitivo son las fotos reales de Instagram guardadas en `/uploads/productos/` (pendiente 4).
