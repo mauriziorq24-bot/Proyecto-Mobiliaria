@@ -64,6 +64,25 @@ Query params (todos opcionales):
 
 Response 200: arreglo de `ProductoResponse`.
 
+#### Cómo se comporta `buscar` (probado con curl contra Render el 20/10/2026)
+
+Busca el texto como **una sola subcadena** dentro del **`nombre`** del producto (equivale a un `LIKE '%texto%'`). Siempre responde `200`, aunque no haya resultados (`[]`).
+
+| Pregunta | Resultado | Pruebas |
+|---|---|---|
+| ¿Ignora mayúsculas? | **Sí** | `silla`, `SILLA`, `Silla`, `sIlLa` → los mismos 3 (ids 4, 5, 6) |
+| ¿Ignora tildes? | **Sí, en ambos sentidos** | `estacion` y `ESTACIÓN` → id 2 ("Estación…"); `ergonomica` → id 5; `barberia` → id 11; `sílla` y `cámilla` (con tilde de más) también encuentran |
+| ¿En qué campos busca? | **Solo en `nombre`** | Solo en descripción (`lumbar`, `cerradura`) → `[]`. Solo en material (`aluminio`, `cromada`, `nogal`) → `[]`. Nombre de categoría (`Sillería`, `Peinadores`, `Camillas`) → `[]`. `tipoEspacio` (`OFICINA`, `HOGAR`) y dimensiones (`1.85m`) → `[]` |
+| ¿Palabras parciales? | **Sí, en cualquier posición** | `sill` → 4, 5, 6; `escrit` → 1, 3; `amilla` → 13, 14, 15; `ll` → 6 productos |
+| ¿Varias palabras? | **Solo si van seguidas y en ese orden** | `silla ejecutiva` → id 4; `silla malla` y `malla silla` → `[]` (no busca palabra por palabra) |
+| `buscar=` vacío o solo espacios | **Devuelve todo el catálogo** (15) | `buscar=`, `buscar=%20`, `buscar=%20%20%20` → igual que sin el parámetro |
+| ¿Recorta espacios (trim)? | **No** | `%20silla%20` → `[]` (ningún nombre tiene " silla "); `silla%20%20ejecutiva` (dos espacios) → `[]`; `%20ejecutiva` → id 4 porque el nombre sí contiene " Ejecutiva" |
+| Caracteres `%` y `_` | **Funcionan como comodines de SQL** (no se escapan) | `%` y `_` → los 15; `s_lla` → 4, 5, 6; `s%a` → 9 productos |
+
+Notas:
+- `peluqueria`, `silleria` y `bano` devuelven `[]` con o sin tilde, pero porque **ningún nombre** contiene esas palabras ("Sillería" es solo nombre de categoría), no por un problema de tildes. La `ñ` no se pudo probar: ningún nombre del seed la tiene.
+- Consecuencias para el frontend: conviene **recortar** el texto y **unir espacios repetidos** antes de enviarlo, y no mandar `buscar` si queda vacío. Buscar "sillería" o "lumbar" hoy no encuentra nada (ver pendiente 23).
+
 > **Decisión del frontend (20/10/2026) para la página de búsqueda:** `productoService` pide `GET /api/v1/productos?buscar=` una sola vez por cada texto buscado y filtra localmente por categoría, `tipoEspacio`, `enShowroom` y precio, y también ordena. Motivo: el catálogo es pequeño y no tiene paginación, así que filtrar en el navegador es más rápido y evita esperar otra vez el cold start de Render con cada cambio de filtro. Si el catálogo crece y el backend agrega paginación, el servicio pasará a enviar `tipoEspacio`, `enShowroom` y `categoria` a la API (y el orden y el precio, si se agregan), sin cambiar las vistas. Ver pendientes 2 y 22.
 
 ### `GET /api/v1/productos/{id}`
@@ -230,6 +249,11 @@ Cancela (elimina) una cita.
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
+
+### Detectados al probar `buscar` (20/10/2026)
+23. **`buscar` solo mira el `nombre`.** Pedir que busque también en `descripcion`, `material` y el nombre de la categoría, y que cada palabra se busque por separado (hoy `silla malla` no encuentra la "Silla Ejecutiva Malla Transpirable").
+24. **Recortar el texto (`trim`) en el backend:** hoy `" silla "` devuelve `[]`. El frontend lo recortará igualmente.
+25. **Escapar `%` y `_`:** hoy funcionan como comodines de `LIKE` (`buscar=%` devuelve todo). No es grave con un catálogo público, pero el resultado es inesperado.
 
 ### CORS
 18. En desarrollo no hace falta: el frontend usa el proxy de Vite (ver `CLAUDE.md`). Solo falta confirmar CORS para el dominio de **producción** (`VITE_API_URL`).
