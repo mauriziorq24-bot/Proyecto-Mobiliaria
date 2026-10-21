@@ -12,13 +12,9 @@ export default defineConfig(({ mode }) => {
   // Misma configuración para /auth y /api.
   const backendProxy = {
     target: proxyTarget,
-    // Reescribe el header Host al del backend (necesario para ngrok).
+    // Reescribe el header Host al del backend: Render decide a qué servicio
+    // mandar la petición según ese header.
     changeOrigin: true,
-    // ngrok gratuito muestra una página HTML de advertencia salvo que la
-    // petición traiga este header.
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-    },
   }
 
   return {

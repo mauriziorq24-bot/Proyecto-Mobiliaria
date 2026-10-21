@@ -8,13 +8,13 @@ import { BACKEND_NOT_JSON } from './api'
 // pero sin error.response.
 export function isNetworkError(error) {
   if (!error || error.response) return false
-  if (error.code === BACKEND_NOT_JSON) return false // sí hubo respuesta, pero de ngrok y no del backend
+  if (error.code === BACKEND_NOT_JSON) return false // sí hubo respuesta, pero HTML y no JSON del backend
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return true
   return Boolean(error.request) || ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code)
 }
 
 // Texto que acompaña al título del error. "subject" dice qué no cargó: "este producto",
-// "las categorías"… Cualquier fallo que no sea de red (5xx, la página de ngrok o algo
+// "las categorías"… Cualquier fallo que no sea de red (5xx, una página HTML o algo
 // inesperado) es un problema nuestro, no de la persona: se le pide volver en unos minutos.
 export function loadErrorMessage(error, subject = 'esta sección') {
   if (isNetworkError(error)) return 'Revisa tu conexión e inténtalo de nuevo.'

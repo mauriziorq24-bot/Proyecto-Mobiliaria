@@ -1,4 +1,18 @@
-import { ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
+
+// Pasado este tiempo, una carga se considera "lenta": lo normal es que el servidor
+// de Render esté dormido y arrancando (cold start), que puede tardar hasta un minuto.
+const SLOW_AFTER_MS = 5000
+
+// Cuántas cargas lentas hay en curso en toda la app. Vive fuera de la función para que
+// lo compartan todas las vistas: así se muestra un solo aviso aunque la portada esté
+// esperando categorías y productos a la vez.
+const slowCount = ref(0)
+
+// Lo lee ServerWakeNotice (en AppLayout) para mostrar "Estamos despertando el servidor…".
+export function useServerWaking() {
+  return computed(() => slowCount.value > 0)
+}
 
 // Envuelve una función que devuelve una promesa (p. ej. una llamada a un servicio)
 // y expone su estado: data, loading y error, más execute/retry para (re)lanzarla.
@@ -27,6 +41,16 @@ export function useAsync(asyncFn, { immediate = true } = {}) {
     lastArgs = args
     loading.value = true
     error.value = null
+
+    // Cada llamada lleva su propio temporizador. Si a los 5 s sigue sin responder, suma
+    // al contador global; al terminar (bien, mal o por el timeout de 60 s de api.js) resta.
+    // Una llamada vieja también cuenta mientras siga pendiente: es una petición real esperando.
+    let countedAsSlow = false
+    const slowTimer = setTimeout(() => {
+      countedAsSlow = true
+      slowCount.value++
+    }, SLOW_AFTER_MS)
+
     try {
       const result = await asyncFn(...args)
       if (call === lastCall) data.value = result
@@ -34,6 +58,8 @@ export function useAsync(asyncFn, { immediate = true } = {}) {
     } catch (err) {
       if (call === lastCall) error.value = err
     } finally {
+      clearTimeout(slowTimer)
+      if (countedAsSlow) slowCount.value--
       if (call === lastCall) loading.value = false
     }
   }

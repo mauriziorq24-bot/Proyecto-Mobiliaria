@@ -1,39 +1,31 @@
-import { readonly, ref } from 'vue'
+import { computed } from 'vue'
 import { getCategorias } from '../services/categoriaService'
+import { useAsync } from './useAsync'
 
 // El estado vive fuera de la función: así el header y el footer comparten
 // la misma lista y la petición se hace una sola vez, aunque ambos llamen a useCategorias().
-const categorias = ref([])
-const loading = ref(false)
-const error = ref(null)
+// useAsync pone loading/error (y el aviso de servidor lento) igual que en el resto de vistas.
+const { data, loading, error, execute } = useAsync(getCategorias, { immediate: false })
+const categorias = computed(() => data.value ?? [])
 let request = null
 
-async function load() {
-  // Si ya hay una petición en curso, se reutiliza en vez de lanzar otra.
+function load() {
+  // Si ya hay una petición en curso (o ya cargó bien), se reutiliza en vez de lanzar otra.
   if (request) return request
 
-  loading.value = true
-  error.value = null
-  request = getCategorias()
-    .then((data) => {
-      categorias.value = data
-    })
-    .catch((err) => {
-      error.value = err
-      request = null // permite reintentar
-    })
-    .finally(() => {
-      loading.value = false
-    })
+  request = execute().then(() => {
+    if (error.value) request = null // permite reintentar
+  })
   return request
 }
 
 export function useCategorias() {
   load()
+  // computed ya es de solo lectura; loading y error se envuelven para que nadie los cambie desde fuera.
   return {
-    categorias: readonly(categorias),
-    loading: readonly(loading),
-    error: readonly(error),
+    categorias,
+    loading: computed(() => loading.value),
+    error: computed(() => error.value),
     retry: load,
   }
 }

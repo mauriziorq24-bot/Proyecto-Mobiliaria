@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://scorpion-tusk-phoenix.ngrok-free.dev/api/:path*"
+      "destination": "https://backendmobiliariodeoficina.onrender.com/api/:path*"
     },
     {
       "source": "/auth/:path*",
-      "destination": "https://scorpion-tusk-phoenix.ngrok-free.dev/auth/:path*"
+      "destination": "https://backendmobiliariodeoficina.onrender.com/auth/:path*"
     },
     {
       "source": "/(.*)",

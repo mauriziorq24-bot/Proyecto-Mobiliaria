@@ -1,11 +1,12 @@
 <script setup>
 import { ArrowLeft, ChevronRight, SearchX } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CategorySilhouette from '../components/product/CategorySilhouette.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
+import { useAsync } from '../composables/useAsync'
 import { useCategorias } from '../composables/useCategorias'
 import { obtenerProductos } from '../services/productoService'
 import { setPageTitle } from '../utils/pageTitle'
@@ -39,36 +40,30 @@ watch(
 )
 
 // --- Productos ---
-const productos = ref([])
-const productosLoading = ref(true)
-const productosError = ref(null)
-
 // Si el usuario pasa rápido de Sillería a Escritorios, la respuesta de Sillería puede
-// llegar después. Cada petición lleva un número y solo se usa la última.
-let lastRequest = 0
-async function loadProductos() {
-  const slug = route.params.slug
-  // Al salir hacia otra ruta (p. ej. un producto), el watch puede dispararse con slug
-  // undefined justo antes de que la vista se desmonte: no hay nada que cargar.
-  if (!slug) return
-
-  const request = ++lastRequest
-  productosLoading.value = true
-  productosError.value = null
-  try {
-    const data = await obtenerProductos({ categoriaSlug: slug })
-    if (request === lastRequest) productos.value = data
-  } catch (err) {
-    if (request === lastRequest) productosError.value = err
-  } finally {
-    if (request === lastRequest) productosLoading.value = false
-  }
-}
+// llegar después: useAsync se queda solo con la última. retry repite el último slug.
+const {
+  data: productosData,
+  loading: productosLoading,
+  error: productosError,
+  execute: loadProductos,
+  retry: retryProductos,
+} = useAsync((slug) => obtenerProductos({ categoriaSlug: slug }), { immediate: false })
+// immediate: false porque la primera carga la lanza el watch de abajo, en el mismo momento.
+const productos = computed(() => productosData.value ?? [])
 
 // Vue Router reutiliza esta misma instancia al ir de /categoria/silleria a /categoria/escritorios
 // (misma ruta, otro parámetro): no se vuelve a montar. Por eso se observa el parámetro;
 // immediate: true hace también la primera carga al entrar.
-watch(() => route.params.slug, loadProductos, { immediate: true })
+watch(
+  () => route.params.slug,
+  (slug) => {
+    // Al salir hacia otra ruta (p. ej. un producto), el watch puede dispararse con slug
+    // undefined justo antes de que la vista se desmonte: no hay nada que cargar.
+    if (slug) loadProductos(slug)
+  },
+  { immediate: true },
+)
 
 // "1 producto" / "12 productos", con el número formateado.
 const countFormat = new Intl.NumberFormat('es-VE')
@@ -178,7 +173,7 @@ const conteo = computed(() => {
         title="No pudimos cargar los productos"
         :error="productosError"
         subject="los productos"
-        @retry="loadProductos"
+        @retry="retryProductos"
       />
       <ProductGrid v-else :productos="productos" :loading="productosLoading">
         <template #empty>

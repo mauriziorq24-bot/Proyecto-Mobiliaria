@@ -11,6 +11,7 @@ import SpaceTypeSwatches from '../components/product/SpaceTypeSwatches.vue'
 import BaseBadge from '../components/ui/BaseBadge.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
+import { useAsync } from '../composables/useAsync'
 import { useCategorias } from '../composables/useCategorias'
 import { categoryImages } from '../config/categorias'
 import { company } from '../config/empresa'
@@ -46,27 +47,19 @@ const {
 // --- Compra por ambiente (productos en showroom) ---
 const MAX_PRODUCTOS = 4
 const tipoEspacio = ref(null)
-const productos = ref([])
-const productosLoading = ref(true)
-const productosError = ref(null)
-
-// Si el usuario cambia de ambiente rápido, la respuesta de un filtro viejo puede llegar
-// después de la nueva. Cada petición lleva un número y solo se usa la última.
-let lastRequest = 0
-async function loadProductos() {
-  const request = ++lastRequest
-  productosLoading.value = true
-  productosError.value = null
-  try {
-    const data = await obtenerProductos({ enShowroom: true, tipoEspacio: tipoEspacio.value ?? undefined })
-    if (request === lastRequest) productos.value = data.slice(0, MAX_PRODUCTOS)
-  } catch (err) {
-    if (request === lastRequest) productosError.value = err
-  } finally {
-    if (request === lastRequest) productosLoading.value = false
-  }
-}
-watch(tipoEspacio, loadProductos, { immediate: true })
+// useAsync descarta la respuesta de un filtro viejo si el usuario cambia de ambiente rápido.
+const {
+  data: productosData,
+  loading: productosLoading,
+  error: productosError,
+  execute: loadProductos,
+} = useAsync(
+  () => obtenerProductos({ enShowroom: true, tipoEspacio: tipoEspacio.value ?? undefined }),
+  { immediate: false },
+)
+const productos = computed(() => (productosData.value ?? []).slice(0, MAX_PRODUCTOS))
+// El watch pasa (nuevo, viejo) como argumentos: se ignoran, la función lee tipoEspacio directo.
+watch(tipoEspacio, () => loadProductos(), { immediate: true })
 
 const tipoActivo = computed(() => (tipoEspacio.value ? estiloTipoEspacio(tipoEspacio.value) : null))
 

@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import AppFooter from './AppFooter.vue'
 import AppHeader from './AppHeader.vue'
+import ServerWakeNotice from './ServerWakeNotice.vue'
 </script>
 
 <template>
@@ -22,5 +23,7 @@ import AppHeader from './AppHeader.vue'
     </main>
 
     <AppFooter />
+
+    <ServerWakeNotice />
   </div>
 </template>

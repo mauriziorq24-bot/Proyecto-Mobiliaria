@@ -5,18 +5,17 @@ import axios from 'axios'
 // los rewrites de vercel.json.
 const api = axios.create({
   baseURL: '',
-  // Sin límite, una petición colgada (p. ej. ngrok lento) dejaría la vista "cargando" para siempre.
-  // A los 15 s axios la corta y se muestra el error de conexión con "Reintentar".
-  timeout: 15000,
+  // Render gratuito apaga el servidor tras un rato sin uso y la primera petición
+  // puede tardar hasta un minuto mientras arranca (cold start). Se le da ese margen;
+  // pasado el minuto axios la corta y se muestra el error con "Reintentar".
+  // El aviso de "despertando el servidor" lo muestra useAsync a los 5 s.
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
-    // Evita la página de advertencia de ngrok gratuito. Vercel reenvía los
-    // headers del navegador, así que también funciona en producción.
-    'ngrok-skip-browser-warning': 'true',
   },
 })
 
-const HTML_RESPONSE_MESSAGE = 'El backend no respondió JSON: revisa que ngrok esté activo'
+const HTML_RESPONSE_MESSAGE = 'El backend no respondió JSON: revisa que el servidor de Render esté activo'
 // Código para reconocer ese error en errorMessages.js (no es un error de conexión de la persona).
 export const BACKEND_NOT_JSON = 'BACKEND_NOT_JSON'
 
@@ -26,7 +25,8 @@ function backendNotJsonError() {
   return error
 }
 
-// Si ngrok está caído o muestra su página de advertencia, llega HTML en vez de JSON.
+// Si la petición no llega al backend (p. ej. un rewrite mal configurado devuelve
+// index.html, o Render responde con su página de error), llega HTML en vez de JSON.
 function isHtmlResponse(response) {
   const contentType = response?.headers?.['content-type'] ?? ''
   return contentType.includes('text/html')
@@ -40,7 +40,7 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
-    // ngrok también responde con HTML cuando el túnel está apagado (p. ej. 404).
+    // Las páginas de error de Render (502, 503…) también son HTML.
     if (isHtmlResponse(error.response)) {
       return Promise.reject(backendNotJsonError())
     }

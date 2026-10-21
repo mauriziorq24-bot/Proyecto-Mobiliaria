@@ -1,13 +1,14 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok).
-Swagger UI: `http://localhost:8080/swagger-ui/index.html` · Spec JSON: `http://localhost:8080/v3/api-docs`
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render.
+Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
 
 ## Datos generales
 
-- **URL base:** `http://localhost:8080` (sin `/api`, porque hay dos prefijos: `/auth/v1` y `/api/v1`).
+- **URL base:** `https://backendmobiliariodeoficina.onrender.com` en producción (Render), `http://localhost:8080` en local. Sin `/api`, porque hay dos prefijos: `/auth/v1` y `/api/v1`.
+- **Cold start:** Render gratuito duerme el servidor tras un rato sin uso; la primera petición puede tardar hasta ~1 minuto. El frontend espera hasta 60 s (timeout de axios).
 - **Autenticación:** JWT. Login, registro y Google devuelven `{ "token": "..." }`. Se envía como `Authorization: Bearer <token>`.
 - **Formato:** JSON. Nombres de campos en **español y camelCase** (`nombre`, `precioReferencialUsd`).
 - **Paginación:** no hay. `GET /api/v1/productos` devuelve el arreglo completo.
