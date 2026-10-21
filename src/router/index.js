@@ -18,7 +18,7 @@ const routes = [
   { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita' } },
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true } },
   { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true } },
-  { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi cuenta', requiereSesion: true } },
+  { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi perfil', requiereSesion: true } },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
   { path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue'), meta: { title: 'Guía de estilo' } },
   // Cualquier ruta que no coincida con las anteriores muestra la página 404.

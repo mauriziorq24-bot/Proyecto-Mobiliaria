@@ -1,5 +1,5 @@
 <script setup>
-import { CalendarCheck, Heart, LayoutGrid, Menu, RotateCw, Search, ShoppingCart, User } from 'lucide-vue-next'
+import { CalendarCheck, Heart, LayoutGrid, Menu, RotateCw, Search, ShoppingCart } from 'lucide-vue-next'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo.png'
@@ -9,6 +9,7 @@ import { company } from '../../config/empresa'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
 import BaseInput from '../ui/BaseInput.vue'
+import AccountMenu from './AccountMenu.vue'
 import AppMobileMenu from './AppMobileMenu.vue'
 
 const route = useRoute()
@@ -212,7 +213,8 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             <template #icon-left><CalendarCheck /></template>
             Agendar visita
           </BaseButton>
-          <BaseIconButton :icon="User" label="Mi cuenta" variant="inverse" to="/login" class="max-lg:hidden" />
+          <!-- Cuenta: en móvil y tablet va en el menú lateral -->
+          <AccountMenu class="max-lg:hidden" />
           <BaseIconButton :icon="Heart" label="Ver favoritos" variant="inverse" to="/favoritos" :badge="favoritesCount" />
           <BaseIconButton
             :icon="ShoppingCart"

@@ -273,6 +273,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 ```
 - Logo: el PNG cuadrado (`src/assets/logo.png`) a 40px con radio `md`, junto al nombre en texto blanco (≥19px, 800).
 - Buscador ancho y centrado; "Agendar visita" con `button-visit`.
+- **Cuenta** (`AccountMenu`, decidido el 2026-10-21): sin sesión, ícono de usuario que lleva a `/login`. Con sesión, botón con la **inicial** en un círculo blanco con letra Azul Acción + chevron (el nombre en texto blanco pequeño sobre Azul Silla no llega a AA). Abre un menú (sombra `lg`, radio `lg`) con "Sesión iniciada como [usuario]", "Mi perfil" y "Cerrar sesión". Patrón *menu button*: flechas, Inicio/Fin, Escape devuelve el foco al botón, se cierra al hacer clic fuera, con Tab y al cambiar de página. Al cerrar sesión en una página que exige sesión, se vuelve al inicio.
 - El carrito muestra cantidad y total referencial; abre un drawer lateral.
 - Categorías desde `GET /api/v1/categorias`; "Todas" abre un panel con la lista completa. Activa: subrayado Azul Silla de 2px.
 - Al hacer scroll la fila blanca se oculta; la azul queda fija con sombra `sm`.
@@ -291,7 +292,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - "Agendar visita" es siempre el primer chip (`chip-visit`).
 - La fila de chips se oculta al bajar y reaparece al subir.
   - **Pendiente (fase de pulido):** hoy la fila de chips no es fija y se va con la página; falta que reaparezca al subir.
-- Menú ☰ (drawer): cuenta (ingresar / registrarse), todas las categorías, en showroom, agendar visita, contacto.
+- Menú ☰ (drawer, también en tablet): cuenta (sin sesión: "Ingresar" / "Crear cuenta"; con sesión: inicial y nombre, "Mi perfil", "Cerrar sesión"), todas las categorías, en showroom, agendar visita, contacto.
 
 ### Barra de cotización — móvil
 ```

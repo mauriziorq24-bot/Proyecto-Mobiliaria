@@ -1,7 +1,9 @@
 <script setup>
-import { CalendarCheck, ChevronRight, MessageCircle, Phone, X } from 'lucide-vue-next'
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { CalendarCheck, ChevronRight, LogOut, MessageCircle, Phone, UserRound, X } from 'lucide-vue-next'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useLogout } from '../../composables/useLogout'
+import { useAuthStore } from '../../stores/auth'
 import { whatsappUrl } from '../../utils/whatsapp'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
@@ -13,6 +15,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const auth = useAuthStore()
+const { logout } = useLogout()
+const username = computed(() => auth.usuario?.username ?? '')
+const initial = computed(() => username.value.charAt(0).toUpperCase())
+
+// Se cierra el menú primero: el foco vuelve al botón ☰ y la página queda a la vista.
+function handleLogout() {
+  emit('close')
+  logout()
+}
 
 const panel = ref(null)
 const closeButton = ref(null)
@@ -97,7 +110,40 @@ const linkRow =
         </div>
 
         <div class="flex-1 overflow-y-auto overscroll-contain px-3 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <div class="grid grid-cols-2 gap-2 px-2">
+          <!-- Cuenta: con sesión, nombre + "Mi perfil" y "Cerrar sesión"; sin sesión, ingresar o registrarse -->
+          <section v-if="auth.estaSesionIniciada" aria-labelledby="mobile-account-title">
+            <h3 id="mobile-account-title" class="sr-only">Mi cuenta</h3>
+            <div class="flex items-center gap-3 px-3 pb-2">
+              <span
+                class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-tint text-base font-bold text-brand-deep"
+                aria-hidden="true"
+              >
+                {{ initial }}
+              </span>
+              <p class="min-w-0">
+                <span class="block text-small text-ink-muted">Sesión iniciada como</span>
+                <span class="block truncate font-bold text-ink">{{ username }}</span>
+              </p>
+            </div>
+            <ul>
+              <li>
+                <RouterLink to="/perfil" :class="linkRow">
+                  <span class="inline-flex items-center gap-2.5">
+                    <UserRound class="size-[18px] text-ink-muted" aria-hidden="true" />
+                    Mi perfil
+                  </span>
+                  <ChevronRight class="size-[18px] text-ink-muted" aria-hidden="true" />
+                </RouterLink>
+              </li>
+              <li>
+                <button type="button" :class="linkRow" class="w-full justify-start gap-2.5" @click="handleLogout">
+                  <LogOut class="size-[18px] text-ink-muted" aria-hidden="true" />
+                  Cerrar sesión
+                </button>
+              </li>
+            </ul>
+          </section>
+          <div v-else class="grid grid-cols-2 gap-2 px-2">
             <BaseButton to="/login" block>Ingresar</BaseButton>
             <BaseButton to="/registro" variant="secondary" block>Crear cuenta</BaseButton>
           </div>
