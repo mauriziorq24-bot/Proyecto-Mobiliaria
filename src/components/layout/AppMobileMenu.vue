@@ -19,7 +19,7 @@ const emit = defineEmits(['close'])
 const auth = useAuthStore()
 const { logout } = useLogout()
 const username = computed(() => auth.usuario?.username ?? '')
-const initial = computed(() => username.value.charAt(0).toUpperCase())
+const initial = computed(() => [...username.value][0]?.toUpperCase() ?? '')
 
 // Se cierra el menú primero: el foco vuelve al botón ☰ y la página queda a la vista.
 function handleLogout() {
@@ -143,9 +143,11 @@ const linkRow =
               </li>
             </ul>
           </section>
-          <div v-else class="grid grid-cols-2 gap-2 px-2">
-            <BaseButton to="/login" block>Ingresar</BaseButton>
-            <BaseButton to="/registro" variant="secondary" block>Crear cuenta</BaseButton>
+          <!-- Lado a lado si caben; si no (pantalla angosta o letra grande), uno sobre otro.
+               min-w-fit: cada botón mide al menos su texto, y flex-wrap lo baja de fila. -->
+          <div v-else class="flex flex-wrap gap-2 px-2">
+            <BaseButton to="/login" class="min-w-fit flex-1">Ingresar</BaseButton>
+            <BaseButton to="/registro" variant="secondary" class="min-w-fit flex-1">Crear cuenta</BaseButton>
           </div>
 
           <div class="mt-3 px-2">

@@ -56,8 +56,13 @@ const linkAttrs = computed(() => {
 const emit = defineEmits(['click'])
 
 function handleClick(event) {
-  // Mientras carga o está deshabilitado, el padre no recibe el clic.
-  if (props.loading || props.disabled) return
+  // Mientras carga o está deshabilitado, el padre no recibe el clic. preventDefault frena además
+  // lo que el navegador haría por su cuenta: enviar el formulario (type="submit", también al
+  // pulsar Enter en un campo) o seguir el enlace.
+  if (props.loading || props.disabled) {
+    event.preventDefault()
+    return
+  }
   emit('click', event)
 }
 

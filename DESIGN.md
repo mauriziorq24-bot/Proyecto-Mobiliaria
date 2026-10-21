@@ -10,6 +10,7 @@ colors:
   ground: "#F3F5F8"
   surface: "#FFFFFF"
   line: "#DCE2EA"
+  line-strong: "#7D8796"
   ink: "#14171C"
   ink-muted: "#5B6573"
   footer-mesh: "#14171C"
@@ -207,6 +208,7 @@ Azul de marca comprometido sobre neutros fríos, con un dorado de showroom y est
 - **Fondo Frío** (#F3F5F8): fondo de página.
 - **Superficie** (#FFFFFF): tarjetas, buscador, barra de categorías, barra de cotización.
 - **Línea** (#DCE2EA): bordes y divisores, siempre de 1px.
+- **Línea de campo** (#7D8796): borde de los campos de formulario (`BaseInput`). Un control tiene que distinguirse de su fondo (WCAG 1.4.11): 3.6:1 sobre Superficie y 3.3:1 sobre Fondo Frío; Línea no llega (1.3:1).
 - **Tinta** (#14171C): títulos y texto.
 - **Tinta Suave** (#5B6573): "Precio referencial", metadatos, categorías inactivas.
 - **Malla Negra** (#14171C): fondo del footer.
@@ -331,7 +333,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 ## Shapes
 
 - **Radios:** `sm` 6px (chips, etiquetas), `md` 10px (botones, inputs, tarjetas, muestras, logo), `lg` 16px (drawer, modales), `full` (contadores).
-- **Líneas:** siempre 1px y color Línea. Un solo peso en todo el sitio.
+- **Líneas:** siempre 1px y color Línea (Línea de campo en los inputs). Un solo peso en todo el sitio.
 - **Muestra:** tarjeta de 120×136px (156px la elegida) con radio `md` arriba y 6px abajo, y un ojal circular de 11px a 30px del borde izquierdo y 18px del superior: es un agujero real (`mask-image`), fuera de la franja de 18px que se monta sobre la muestra anterior, así que por él se ve el fondo. Es más ancha que el boceto original (84px) para que "Consultorio" quepa a 14px en negrita.
 
 ## Components
@@ -362,6 +364,10 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Google:** botón oficial de Google Identity Services, que se carga solo en estas pantallas. Sin `VITE_GOOGLE_CLIENT_ID` se ocultan el botón y el separador; si el script no carga, también. Botón simulado solo con mocks y en `npm run dev`.
 - **Campos:** login, "Usuario o correo" + "Contraseña" con "¿Olvidaste tu contraseña? Escríbenos por WhatsApp" debajo (no hay recuperación de contraseña en el backend). Registro, "Nombre de usuario" + "Correo" + "Contraseña" (mínimo 8 caracteres). Botón para mostrar la contraseña en lugar de "Repetir contraseña".
 - **Errores:** se validan al enviar y después al salir de cada campo. Login fallido: un solo aviso, "Usuario o contraseña incorrectos.". Usuario o correo repetido: error en su campo (con "Ingresar con ese correo" si es el correo). Fallos de red o servidor: aviso sobre el botón.
+
+### Aviso breve (`AppToast`, `useToast`)
+- Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.
+- Un solo aviso a la vez. En la Fase 7 lo puede usar "Agregado a tu cotización".
 
 ### Estado de error
 - `BaseErrorState`: bloque blanco con borde, ícono de alerta en Error, título que nombra lo que falló y botón secundario "Reintentar".

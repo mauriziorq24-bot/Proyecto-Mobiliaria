@@ -53,6 +53,8 @@ export async function renderGoogleButton(element, onCredential) {
     })
     initialized = true
   }
+  // Al volver a dibujarlo (cambio de ancho) se quita el botón anterior.
+  element.replaceChildren()
   window.google.accounts.id.renderButton(element, {
     type: 'standard',
     theme: 'outline',

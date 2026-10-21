@@ -42,8 +42,8 @@ function handleInput(event) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1.5">
-    <label :for="inputId" class="text-small font-semibold text-ink" :class="hideLabel && 'sr-only'">
+  <div class="flex flex-col">
+    <label :for="inputId" class="mb-1.5 text-small font-semibold text-ink" :class="hideLabel && 'sr-only'">
       {{ label }}
       <span v-if="required" class="text-ink-muted" aria-hidden="true">*</span>
     </label>
@@ -71,9 +71,11 @@ function handleInput(event) {
         :class="[
           $slots.leading && 'pl-10',
           $slots.trailing && 'pr-12',
+          // Con error el borde ya es rojo: al enfocar, el anillo rojo sólido lo engrosa a 3px
+          // para que el foco se note (con 25% de opacidad casi no cambiaba).
           hasError
-            ? 'border-error focus:ring-2 focus:ring-error/25'
-            : 'border-line hover:border-ink-muted/50 focus:border-brand focus:ring-2 focus:ring-brand/25',
+            ? 'border-error focus:ring-2 focus:ring-error'
+            : 'border-line-strong hover:border-ink-muted focus:border-brand focus:ring-2 focus:ring-brand/25',
         ]"
         @input="handleInput"
       />
@@ -84,15 +86,18 @@ function handleInput(event) {
       </span>
     </div>
 
-    <p
-      v-if="message"
-      :id="messageId"
-      class="flex items-start gap-1.5 text-small"
-      :class="hasError ? 'text-error' : 'text-ink-muted'"
-      :aria-live="hasError ? 'polite' : undefined"
-    >
-      <CircleAlert v-if="hasError" class="mt-px size-4 shrink-0" aria-hidden="true" />
-      {{ message }}
-    </p>
+    <!-- La región aria-live está siempre en el DOM: los lectores de pantalla solo anuncian
+         cambios dentro de una región que ya existía. Vacía no ocupa espacio. -->
+    <div aria-live="polite">
+      <p
+        v-if="message"
+        :id="messageId"
+        class="mt-1.5 flex items-start gap-1.5 text-small"
+        :class="hasError ? 'text-error' : 'text-ink-muted'"
+      >
+        <CircleAlert v-if="hasError" class="mt-px size-4 shrink-0" aria-hidden="true" />
+        {{ message }}
+      </p>
+    </div>
   </div>
 </template>

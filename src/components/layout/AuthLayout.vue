@@ -36,6 +36,7 @@ const googleErrorMessage = computed(() =>
 )
 
 async function handleGoogleCredential(credential) {
+  if (google.loading.value) return
   await google.execute(credential)
   if (!google.error.value) goToRedirect()
 }
@@ -54,10 +55,14 @@ async function handleGoogleCredential(credential) {
       <div v-if="showGoogle" class="mt-6">
         <GoogleSignInButton @credential="handleGoogleCredential" @unavailable="googleUnavailable = true" />
 
-        <p v-if="google.loading.value" role="status" class="mt-3 text-center text-small text-ink-muted">
-          Ingresando con Google…
+        <!-- role="status" queda siempre en el DOM para que el lector de pantalla anuncie el texto
+             cuando aparece. Vacío no ocupa espacio. -->
+        <p role="status" class="text-center text-small text-ink-muted" :class="google.loading.value && 'mt-3'">
+          {{ google.loading.value ? 'Ingresando con Google…' : '' }}
         </p>
-        <BaseFormError v-else-if="googleErrorMessage" class="mt-3">{{ googleErrorMessage }}</BaseFormError>
+        <BaseFormError v-if="!google.loading.value && googleErrorMessage" class="mt-3">
+          {{ googleErrorMessage }}
+        </BaseFormError>
 
         <div class="my-6 flex items-center gap-3 text-small text-ink-muted">
           <span class="h-px flex-1 bg-line" aria-hidden="true" />
@@ -74,7 +79,7 @@ async function handleGoogleCredential(credential) {
         {{ switchPrompt }}
         <RouterLink
           :to="linkTo(switchTo)"
-          class="font-semibold text-brand-deep underline-offset-4 hover:underline focus-visible:underline"
+          class="font-semibold text-brand-deep underline underline-offset-4 hover:text-brand-deeper"
         >
           {{ switchLabel }}
         </RouterLink>

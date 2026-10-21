@@ -35,6 +35,9 @@
   --color-ground: #f3f5f8;
   --color-surface: #ffffff;
   --color-line: #dce2ea;
+  /* Borde de campos de formulario: un control tiene que distinguirse (WCAG 1.4.11, ≥3:1).
+     3.6:1 sobre Superficie y 3.3:1 sobre Fondo Frío. Línea sigue para tarjetas y divisores. */
+  --color-line-strong: #7d8796;
   --color-ink: #14171c;
   --color-ink-muted: #5b6573;
   --color-footer-mesh: #14171c;

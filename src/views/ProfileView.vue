@@ -13,7 +13,7 @@ const auth = useAuthStore()
 const { logout } = useLogout()
 
 const username = computed(() => auth.usuario?.username ?? '')
-const initial = computed(() => username.value.charAt(0).toUpperCase())
+const initial = computed(() => [...username.value][0]?.toUpperCase() ?? '')
 </script>
 
 <template>

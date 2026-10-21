@@ -78,6 +78,9 @@ const serverError = computed(() => {
 })
 
 async function handleSubmit() {
+  // Un segundo envío crearía la cuenta con la primera petición y recibiría "usuario ya en uso"
+  // con la segunda: la sesión quedaría iniciada con un error en pantalla.
+  if (loading.value) return
   attempted.value = true
   fields.forEach(validateField)
 

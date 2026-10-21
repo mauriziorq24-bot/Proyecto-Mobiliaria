@@ -56,6 +56,8 @@ const forgotPasswordUrl = computed(() => {
 })
 
 async function handleSubmit() {
+  // Con el servidor despertando la espera es larga: un segundo envío mandaría otra petición.
+  if (loading.value) return
   attempted.value = true
   fields.forEach(validateField)
 

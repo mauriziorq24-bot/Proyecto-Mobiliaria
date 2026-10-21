@@ -14,7 +14,8 @@ const route = useRoute()
 const { logout } = useLogout()
 
 const username = computed(() => auth.usuario?.username ?? '')
-const initial = computed(() => username.value.charAt(0).toUpperCase())
+// [...texto] separa por caracteres reales: charAt(0) partiría en dos un emoji o una letra fuera del rango básico.
+const initial = computed(() => [...username.value][0]?.toUpperCase() ?? '')
 
 const open = ref(false)
 const wrapper = ref(null)
@@ -129,7 +130,7 @@ const menuItem =
       :class="open && 'bg-white/15'"
       aria-haspopup="menu"
       :aria-expanded="open"
-      aria-controls="account-menu"
+      :aria-controls="open ? 'account-menu' : undefined"
       :aria-label="`Mi cuenta, ${username}`"
       :title="username"
       @click="toggle"
