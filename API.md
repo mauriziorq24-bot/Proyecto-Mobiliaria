@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026).
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026). Y el 21/10/2026, **respuestas del compañero** sobre citas: `fechaHora` en hora de Caracas, lista de `tipoAsesoria`, `400` para enum inválido y horario de atención (cierran los pendientes 11 y 11-bis).
 Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -277,8 +277,9 @@ Agendar una visita o asesoría.
 - **Exige token** (`403` sin él).
 - **Obligatorios** (según el spec): `nombreCliente`, `telefono`, `email`, `fechaHora`, `tipoAsesoria`. `empresa` y `notas` son opcionales.
 - **`codigoCita`:** `CITA-` + 6 caracteres hexadecimales en mayúsculas (p. ej. `CITA-C531B1`). Parecen aleatorios, no secuenciales. **El frontend debe mostrarlo y guardarlo**: es la única forma de modificar o cancelar la cita después (no hay `GET`).
-- **`tipoAsesoria`:** es un enum de Java (`TipoAsesoria`) que **no aparece en el Swagger** (sale como `string`). El único valor encontrado es **`VISITA_SHOWROOM`** (también lo acepta en minúsculas). Se probaron sin éxito `PRESENCIAL`, `VIRTUAL`, `SHOWROOM`, `ASESORIA_VIRTUAL`, `ASESORIA_PRESENCIAL`, `VISITA_TECNICA`, `VISITA_DOMICILIO`, `VISITA_OFICINA`, `VIDEOLLAMADA`, `ONLINE`, `LLAMADA`, `COTIZACION`, `MEDICION`, entre otros. Lista completa: pendiente 11.
-- **`fechaHora`: enviar hora local de Venezuela sin zona** (`"2026-11-20T14:30:00"`). **No usar `toISOString()`** (ver [Zonas horarias](#zonas-horarias-en-fechahora)).
+- **`tipoAsesoria`:** enum de Java (`TipoAsesoria`) que **no aparece en el Swagger** (sale como `string`). **Valores confirmados por el backend (21/10/2026):** `VISITA_SHOWROOM`, `COTIZACION_GENERAL`, `PROYECTO_CORPORATIVO`, `DISENO_DE_ESPACIOS`, `RETIRO_DE_COMPRA`. Un valor inválido da **`400`** (antes daba `401`). En el frontend, las etiquetas en español viven en un solo mapa de `src/utils/formato.js`.
+- **`fechaHora`: hora local de Caracas sin zona** (`"2026-11-20T14:30:00"`). **Confirmado (21/10/2026):** en Java es `LocalDateTime` y en la BD una columna `DATETIME`. **No usar `toISOString()`** (ver [Zonas horarias](#zonas-horarias-en-fechahora)).
+- **Horario de atención confirmado (21/10/2026):** lunes a viernes 8:30–17:00, sábados 8:30–13:30 (coincide con `src/config/empresa.js`).
 
 ### `PUT /api/v1/citas/{codigoCita}`
 Modifica una cita. Body: `CitaRequest` (el mismo de `POST`). Respuesta: `200 { "mensaje": "Cita modificada con éxito" }` (no devuelve la cita).
@@ -297,7 +298,7 @@ Probado con `curl` contra Render con el usuario `prueba_citas_2110`. **Las 5 cit
 | 1 | Válida, `fechaHora: "2026-11-20T14:30:00"` (sin `Z`) | **`201`** | `{ "codigoCita": "CITA-728BF4", "mensaje": "Cita agendada con éxito" }` |
 | 2 | Igual, pero `"2026-11-20T14:30:00Z"` (con `Z`) | **`201`** | `{ "codigoCita": "CITA-C531B1", ... }` (la acepta) |
 | 2b | `"2026-11-20T14:30:00-04:00"` (offset de Venezuela) | **`400`** | error por defecto de Spring, sin `message` |
-| 3 | `tipoAsesoria: "XYZ"` | **`401`** `text/plain` | `Credenciales invalidas No enum constant java27.backend.mobiliariodeoficina.models.TipoAsesoria.XYZ` — **no lista los valores válidos** |
+| 3 | `tipoAsesoria: "XYZ"` | ~~`401` `text/plain`~~ → **`400`** (corregido por el backend el 21/10/2026, según el compañero; no se volvió a probar con curl) | antes: `Credenciales invalidas No enum constant …TipoAsesoria.XYZ` |
 | 4 | Fecha pasada (`2020-01-15T10:00:00`) | **`400`** | sin `message` (no dice por qué) |
 | 5a | Domingo (`2026-11-22T11:00:00`) | **`201`** (la acepta) | `{ "codigoCita": ... }` |
 | 5b | Jueves a las 22:00 | **`201`** (la acepta) | `{ "codigoCita": ... }` |
@@ -319,18 +320,18 @@ Probado con `curl` contra Render con el usuario `prueba_citas_2110`. **Las 5 cit
 | — | `GET /api/v1/citas/{codigoCita}` | `403` (no existe; pendiente 16) |
 
 **Validaciones del backend, resumen:**
-- ✅ Campos obligatorios, formato de fecha y **fecha en el pasado** → `400` (pero sin mensaje: el frontend no puede saber cuál falló).
-- ❌ **No valida horario de atención** (acepta domingos y 22:00) ni **citas solapadas** en la misma franja. Hoy el frontend es la única barrera: debe ofrecer solo días y horas hábiles.
-- ❌ `tipoAsesoria` inválido da **`401` "Credenciales invalidas"**: el interceptor de axios lo tomaría como sesión vencida y cerraría la sesión (mismo problema que el pendiente 21). El frontend debe mandar **solo** valores conocidos.
+- ✅ Campos obligatorios, formato de fecha y **fecha en el pasado** → `400` (pero sin mensaje: el frontend no puede saber cuál falló). Desde el 21/10/2026 el backend corre en zona `America/Caracas`, así que "en el pasado" se compara con la hora de Caracas.
+- ❌ **No valida horario de atención** (acepta domingos y 22:00) ni **citas solapadas** en la misma franja (probado el 21/10/2026; no se ha confirmado que cambiara). El frontend es la barrera: ofrece solo días y horas hábiles.
+- ✅ `tipoAsesoria` inválido da **`400`** (antes `401`, que el interceptor habría tomado como sesión vencida). Igual, el frontend manda solo los valores conocidos.
 - ❌ Código inexistente en `PUT`/`DELETE` da `500` en vez de `404`.
 
 **Seguridad de `PUT`/`DELETE`:** ambos **exigen token** (`403` sin él), así que un visitante anónimo no puede tocar citas aunque conozca el código. **No se probó si un usuario puede modificar o borrar la cita de *otro* usuario** (haría falta una segunda cuenta). Si el backend solo comprueba "hay token válido" y no "esta cita es tuya", cualquier usuario registrado que adivine o vea un `codigoCita` (16,7 millones de combinaciones) podría cambiarla o borrarla. Ver pendiente 17.
 
 ### Zonas horarias en `fechaHora`
 
-El backend acepta `14:30:00` y `14:30:00Z`, pero **rechaza `14:30:00-04:00`**. Eso indica (por inferencia, no confirmado) que en Java el campo es un **`LocalDateTime`**: una fecha y hora **sin zona horaria**. Jackson tolera la `Z` final y la descarta; un offset distinto no lo sabe interpretar.
+**Confirmado por el compañero (21/10/2026):** el campo es un **`LocalDateTime`** (columna `DATETIME`) y guarda la **hora de Caracas sin zona**. El backend corre en `America/Caracas`. Acepta `14:30:00` y `14:30:00Z` (Jackson descarta la `Z`), pero **rechaza `14:30:00-04:00`**.
 
-Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las **10:30 en Caracas (UTC−4)** se enviaría como `"…T14:30:00.000Z"`, y el backend probablemente guardaría **14:30**, con 4 horas de diferencia. Por eso el frontend **envía la hora local tal cual, sin `Z`** (`"2026-11-20T10:30:00"`), construyendo el string a mano desde el selector de fecha y hora, sin pasar por `toISOString()`. Pendiente de confirmar con el compañero (pendiente 11-bis).
+Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las **10:30 en Caracas (UTC−4)** se enviaría como `"…T14:30:00.000Z"` y se guardaría **14:30**, con 4 horas de diferencia. Por eso el frontend **envía la hora local tal cual, sin `Z`** (`"2026-11-20T10:30:00"`), construyendo el string a mano desde el selector de fecha y hora, sin pasar por `toISOString()`. Propuesta aprobada (cierra el pendiente 11-bis).
 
 ---
 
@@ -360,13 +361,9 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 10-bis. **Registro duplicado debería ser `409` con JSON**, no `401 text/plain` (un `401` confunde al interceptor de axios, que lo interpretaría como "sesión vencida"). Y **registro sin `email` debería ser `400`**, no `500`.
 10-ter. **Validar en el backend el formato de `email` y la fuerza de la `password`** en el registro (hoy acepta `"noesemail"` y contraseñas de 1 carácter). El frontend ya exige formato de correo y **mínimo 8 caracteres** (21/10/2026); el backend debería aplicar la misma regla, porque la validación del navegador se puede saltar.
 10-quater. **¿Agendar cita es público o requiere login?** Hoy `POST /api/v1/citas` exige token (`403` sin él). Si la idea es un formulario público (ver `CLAUDE.md`), pedir que sea público; si no, el frontend obligará a iniciar sesión antes de agendar. **Decidir con el compañero.** **Pendiente de hablar con el backend (21/10/2026):** mientras siga exigiendo token, las pantallas de login y registro dicen solo "No necesitas cuenta para cotizar ni para escribirnos por WhatsApp". Si las citas se vuelven públicas, hay que actualizar ese texto para incluir las visitas (ver "Login y registro" en `DESIGN.md`).
-11. **Lista completa de valores de `tipoAsesoria`.** Solo se conoce `VISITA_SHOWROOM` (probado el 21/10/2026). Pedir que el enum se exponga en el Swagger (`@Schema(allowableValues=...)` o tipando el campo como enum) o un `GET /api/v1/citas/tipos`. Y que un valor inválido dé **`400` con la lista de valores válidos**, no `401` "Credenciales invalidas".
-11-bis. **Zona horaria de `fechaHora`** (ver [Zonas horarias](#zonas-horarias-en-fechahora)). Preguntar al compañero:
-   - ¿El campo es `LocalDateTime`, `OffsetDateTime`/`ZonedDateTime` o `Instant`? ¿Y la columna de la BD es `timestamp` o `timestamptz`?
-   - ¿Qué significa la hora guardada: **hora de Caracas** o UTC? Propuesta: hora local de Venezuela sin zona, y el frontend manda `"2026-11-20T10:30:00"`.
-   - Si llega con `Z`, ¿la convierte a hora de Caracas o descarta la `Z`? Hoy parece descartarla, y eso movería las citas 4 horas si alguien envía UTC.
-   - La validación de "fecha en el pasado": ¿compara contra la hora de Caracas o contra la del servidor? Render corre en **UTC**: si compara un `LocalDateTime` con `LocalDateTime.now()` en UTC, durante 4 horas al día aceptará o rechazará citas de forma incorrecta. Recomendar `ZoneId.of("America/Caracas")` o `-Duser.timezone=America/Caracas`.
-11-ter. **Validar horario de atención y citas solapadas en el backend:** hoy acepta domingos, 22:00 y dos citas en la misma franja. ¿Cuál es el horario real del showroom? ¿Cuánto dura una cita?
+11. ~~**Lista completa de valores de `tipoAsesoria`.**~~ ✅ **Resuelto (21/10/2026):** `VISITA_SHOWROOM`, `COTIZACION_GENERAL`, `PROYECTO_CORPORATIVO`, `DISENO_DE_ESPACIOS`, `RETIRO_DE_COMPRA`; un valor inválido ahora da `400`. Sigue sin aparecer en el Swagger (sería bueno exponerlo con `@Schema(allowableValues=...)`, pero ya no bloquea).
+11-bis. ~~**Zona horaria de `fechaHora`.**~~ ✅ **Resuelto (21/10/2026):** `LocalDateTime`, columna `DATETIME`, hora de Caracas sin `Z` (`"2026-11-20T14:30:00"`). El backend corre en `America/Caracas`, así que la validación de "fecha en el pasado" usa la hora local. Ver [Zonas horarias](#zonas-horarias-en-fechahora).
+11-ter. **Validar horario de atención y citas solapadas en el backend.** ✅ Horario confirmado (21/10/2026): lunes a viernes 8:30–17:00, sábados 8:30–13:30. **Siguen abiertos:** que el backend rechace citas fuera de ese horario y citas solapadas (el 21/10/2026 aceptaba domingos, 22:00 y dos citas en la misma franja), y **cuánto dura una cita**. Mientras tanto, el frontend usa `duracionCitaMinutos: 60` en `src/config/empresa.js` (el último turno ofrecido es una hora antes del cierre).
 12. ~~Forma exacta de la respuesta de `POST /api/v1/citas` y confirmar que devuelve el `codigoCita`.~~ ✅ **Resuelto (21/10/2026):** `201 { "codigoCita": "CITA-XXXXXX", "mensaje": "Cita agendada con éxito" }`. El Swagger dice `200`, pero responde `201`.
 12-bis. **Errores de citas:** `400` sin `message` (no se sabe qué campo falló) y `500` con un código inexistente en `PUT`/`DELETE` (debería ser `404`). Ver pendiente 9.
 13. **`tipoEspacio`: confirmar si es valor único o lista.** Si es lista, cambia la forma del producto (`"tipoEspacio": ["OFICINA", "HOGAR"]`) y cómo funciona el filtro `?tipoEspacio=`.
