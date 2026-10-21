@@ -1,18 +1,14 @@
 <script setup>
 import {
   CalendarCheck,
-  CalendarPlus,
   Check,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
-  CircleCheck,
-  Copy,
   Info,
 } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ShowroomInfo from '../components/layout/ShowroomInfo.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
@@ -24,13 +20,12 @@ import { submitErrorMessage } from '../services/errorMessages'
 import { obtenerProductoPorId } from '../services/productoService'
 import { useAuthStore } from '../stores/auth'
 import { borrarBorradorCita, guardarBorradorCita, tomarBorradorCita } from '../utils/borradorCita'
-import { descargarIcs } from '../utils/calendario'
+import { guardarCita } from '../utils/citasGuardadas'
 import {
   ahoraEnCaracas,
   describirDia,
   diasDisponibles,
   esHorarioDisponible,
-  formatearFechaHora,
   formatearHora,
   horariosDelDia,
 } from '../utils/fecha'
@@ -258,10 +253,6 @@ const serverError = computed(() => {
   return submitErrorMessage(error.value, 'agendar tu visita')
 })
 
-// La cita creada: { codigoCita, fecha, hora, tipoAsesoria }. Con ella se muestra la confirmación.
-const cita = ref(null)
-const successHeading = useTemplateRef('successHeading')
-
 // Sesión vencida: se guarda lo escrito, se cierra la sesión y se lleva al login.
 // Al volver (el login respeta ?redirect=), el borrador se recupera arriba.
 function handleSessionExpired(usuario, returnPath) {
@@ -303,10 +294,14 @@ async function handleSubmit() {
 
   if (!error.value) {
     borrarBorradorCita()
-    cita.value = { codigoCita: resultado.codigoCita, fecha: datos.fecha, hora: datos.hora, tipoAsesoria: datos.tipoAsesoria }
-    window.scrollTo({ top: 0 })
-    await nextTick()
-    successHeading.value?.focus()
+    // Se guarda con todos sus datos (los mismos que se enviaron): la confirmación los lee de ahí,
+    // así recargarla no crea otra cita, y el paso 6F los necesita para reprogramar con PUT.
+    guardarCita({ codigoCita: resultado.codigoCita, ...resultado.enviada })
+    // replace: "Atrás" desde la confirmación no vuelve a un formulario ya enviado.
+    router.replace({
+      name: 'appointment-confirmation',
+      query: { codigo: resultado.codigoCita, ...(producto.value && { producto: String(producto.value.id) }) },
+    })
     return
   }
 
@@ -333,21 +328,7 @@ async function handleSubmit() {
   }
 }
 
-// --- Confirmación ---
-const copied = ref(false)
-let copiedTimer = null
-
-async function copyCode() {
-  try {
-    await navigator.clipboard.writeText(cita.value.codigoCita)
-    copied.value = true
-    clearTimeout(copiedTimer)
-    copiedTimer = setTimeout(() => (copied.value = false), 2500)
-  } catch {
-    // Sin permiso para el portapapeles: el código se puede seleccionar a mano (select-all).
-  }
-}
-
+// --- Resumen "Tu visita" ---
 const resumen = computed(() => ({
   tipo: etiquetaTipoAsesoria(form.tipoAsesoria),
   dia: form.fecha ? describirDia(form.fecha).completo : '',
@@ -363,65 +344,12 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearInterval(relojTimer)
-  clearTimeout(copiedTimer)
   stripObserver?.disconnect()
 })
 </script>
 
 <template>
-  <!-- Confirmación: reemplaza al formulario cuando la cita queda creada -->
-  <div v-if="cita" class="mx-auto w-full max-w-xl px-4 pt-8 pb-12 sm:pt-12 sm:pb-16">
-    <section aria-labelledby="cita-ok-title" class="sm:rounded-md sm:border sm:border-line sm:bg-surface sm:p-8">
-      <span class="inline-flex size-12 items-center justify-center rounded-full bg-success-bg text-success">
-        <CircleCheck class="size-6" aria-hidden="true" />
-      </span>
-      <h1 id="cita-ok-title" ref="successHeading" tabindex="-1" class="mt-4 text-headline text-ink focus:outline-none">
-        Tu visita quedó agendada
-      </h1>
-      <p class="mt-2 text-ink-muted">
-        {{ etiquetaTipoAsesoria(cita.tipoAsesoria) }}: te esperamos el
-        <strong class="font-semibold text-ink">{{ formatearFechaHora(cita.fecha, cita.hora) }}</strong>.
-      </p>
-
-      <div class="mt-6 rounded-md border border-line bg-ground p-4">
-        <p class="text-label text-ink-muted uppercase">Código de tu cita</p>
-        <div class="mt-1 flex flex-wrap items-center justify-between gap-3">
-          <p class="text-headline font-extrabold tracking-wide text-ink tabular-nums select-all">{{ cita.codigoCita }}</p>
-          <BaseButton variant="secondary" size="sm" @click="copyCode">
-            <template #icon-left>
-              <Check v-if="copied" />
-              <Copy v-else />
-            </template>
-            {{ copied ? 'Copiado' : 'Copiar' }}
-          </BaseButton>
-        </div>
-        <p class="mt-2 text-small text-ink-muted">Guárdalo: lo necesitas para modificar o cancelar tu cita.</p>
-        <p class="sr-only" role="status">{{ copied ? 'Código copiado.' : '' }}</p>
-      </div>
-
-      <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-        <BaseButton variant="secondary" class="sm:flex-1" @click="descargarIcs(cita)">
-          <template #icon-left><CalendarPlus /></template>
-          Agregar a mi calendario
-        </BaseButton>
-        <BaseButton
-          v-if="producto"
-          variant="ghost"
-          class="sm:flex-1"
-          :to="{ name: 'product', params: { id: producto.id } }"
-        >
-          Volver al producto
-        </BaseButton>
-        <BaseButton v-else variant="ghost" class="sm:flex-1" to="/">Seguir viendo el catálogo</BaseButton>
-      </div>
-
-      <div class="mt-8 border-t border-line pt-6">
-        <ShowroomInfo />
-      </div>
-    </section>
-  </div>
-
-  <div v-else class="container-page pt-8 pb-12 sm:pt-12 sm:pb-16">
+  <div class="container-page pt-8 pb-12 sm:pt-12 sm:pb-16">
     <h1 class="text-headline text-ink">Agendar visita</h1>
     <p class="mt-2 max-w-[60ch] text-ink-muted">
       Elige qué necesitas, el día y la hora. Te atendemos en nuestro showroom de {{ company.showroom.address }}.

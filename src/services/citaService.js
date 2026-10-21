@@ -91,13 +91,15 @@ function armarCitaRequest({ nombreCliente, empresa, telefono, email, fecha, hora
 // POST /api/v1/citas (exige token) → 201 { codigoCita, mensaje }
 // `datos` trae fecha ('AAAA-MM-DD') y hora ('HH:MM') por separado, como los da src/utils/fecha.js.
 // La vista debe mostrar y guardar el codigoCita: es la única forma de modificar o cancelar la cita.
+// Además de la respuesta devuelve `enviada`, el CitaRequest tal como se envió: es lo que se guarda
+// para reprogramar con PUT (que pide el CitaRequest completo).
 export async function crearCita(datos) {
   const body = armarCitaRequest(datos)
-  if (useMocks) return fakeDelay(mockCitaCreada())
+  if (useMocks) return fakeDelay({ ...mockCitaCreada(), enviada: body })
 
   try {
     const { data } = await api.post('/api/v1/citas', body)
-    return data
+    return { ...data, enviada: body }
   } catch (error) {
     throw traducirError(error)
   }

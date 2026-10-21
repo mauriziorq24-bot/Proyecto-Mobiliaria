@@ -22,3 +22,20 @@ export function productInquiryMessage({ nombre, cantidad = 1, url }) {
 export function productInquiryUrl(producto, cantidad, url) {
   return whatsappUrl(productInquiryMessage({ nombre: producto.nombre, cantidad, url }))
 }
+
+// Mensajes de la confirmación de cita. `cuando` es la fecha y hora ya en texto
+// ("viernes 20 de noviembre, 2:30 p. m."), para que diga lo mismo que la pantalla.
+export function citaAgendadaUrl({ codigoCita, tipo, cuando }) {
+  return whatsappUrl(
+    [
+      'Hola, acabo de agendar una cita desde la página web:',
+      `• Código: ${codigoCita}`,
+      `• ${tipo}`,
+      `• ${cuando}`,
+    ].join('\n'),
+  )
+}
+
+export function cambiarCitaUrl({ codigoCita, cuando }) {
+  return whatsappUrl(`Hola, quiero cambiar o cancelar mi cita ${codigoCita} (${cuando}).`)
+}

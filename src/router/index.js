@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { buscarCitaReciente } from '../utils/citasGuardadas'
 import { setPageTitle } from '../utils/pageTitle'
 import { getSafeRedirect } from '../utils/redirect'
 import HomeView from '../views/HomeView.vue'
@@ -16,6 +17,17 @@ const routes = [
   { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { title: 'Mi cotización' } },
   { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { title: 'Favoritos' } },
   { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita', requiereSesion: true } },
+  // Confirmación: lee la cita guardada en este navegador (?codigo=CITA-…), nunca la vuelve a enviar.
+  // No exige sesión: solo muestra datos locales. Sin una cita reciente con ese código, al formulario.
+  {
+    path: '/agendar-cita/confirmacion',
+    name: 'appointment-confirmation',
+    component: () => import('../views/AppointmentConfirmationView.vue'),
+    meta: { title: 'Visita agendada' },
+    beforeEnter: (to) => {
+      if (!buscarCitaReciente(to.query.codigo)) return { name: 'appointment', replace: true }
+    },
+  },
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true } },
   { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true } },
   { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi perfil', requiereSesion: true } },
