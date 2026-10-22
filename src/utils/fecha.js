@@ -177,3 +177,16 @@ export function describirDia(fecha) {
 export function formatearHora(hora) {
   return formatoHora.format(fechaUtc('2000-01-01', hora))
 }
+
+// Cuándo se envió algo, a partir de un instante (Date.now()), en hora de Caracas:
+// el 22 de octubre de 2026 → '22 oct 2026'. Para el historial de cotizaciones del perfil.
+const formatoFechaCorta = new Intl.DateTimeFormat('es-VE', {
+  timeZone: ZONA_HORARIA,
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
+export function formatearFechaCorta(instante) {
+  return formatoFechaCorta.format(new Date(instante)).replace('.', '') // algunos navegadores dan "oct."
+}

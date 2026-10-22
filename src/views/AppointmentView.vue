@@ -235,7 +235,8 @@ async function handleSubmit() {
     borrarBorradorCita()
     // Se guarda con todos sus datos (los mismos que se enviaron): la confirmación los lee de ahí,
     // así recargarla no crea otra cita, y el paso 6F los necesita para reprogramar con PUT.
-    guardarCita({ codigoCita: resultado.codigoCita, ...resultado.enviada })
+    // Con el usuario de la sesión: /mi-cita y /perfil muestran solo las de esa cuenta.
+    guardarCita({ codigoCita: resultado.codigoCita, ...resultado.enviada }, usuario)
     // replace: "Atrás" desde la confirmación no vuelve a un formulario ya enviado.
     router.replace({
       name: 'appointment-confirmation',

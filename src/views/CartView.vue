@@ -293,6 +293,7 @@ async function handleSubmit() {
   // Se copian antes de esperar: la lista podría cambiar desde otra pestaña mientras se envía.
   const items = cotizacion.itemsDisponibles.map((item) => ({ ...item }))
   const totalReferencial = cotizacion.totalReferencial
+  const username = auth.usuario?.username ?? null
   const resultado = await enviar({ ...form }, items)
   if (errorEnvio.value) {
     if (errorEnvio.value.code === ERRORES_COTIZACION.DATOS_INVALIDOS) await explicarDatosInvalidos()
@@ -300,17 +301,21 @@ async function handleSubmit() {
   }
 
   // Aquí sí se vacía: sabemos que la solicitud llegó. La confirmación lee esta copia, así que
-  // recargarla no reenvía nada.
-  guardarCotizacionEnviada({
-    codigoCotizacion: resultado.codigoCotizacion,
-    items: items.map(({ productoId, cantidad, producto }) => ({
-      productoId,
-      cantidad,
-      nombre: producto.nombre,
-      precioReferencialUsd: producto.precioReferencialUsd,
-    })),
-    totalReferencial,
-  })
+  // recargarla no reenvía nada. Con el usuario de la sesión, si hay: así aparece en su perfil
+  // (enviada sin sesión, no aparece en el perfil de nadie).
+  guardarCotizacionEnviada(
+    {
+      codigoCotizacion: resultado.codigoCotizacion,
+      items: items.map(({ productoId, cantidad, producto }) => ({
+        productoId,
+        cantidad,
+        nombre: producto.nombre,
+        precioReferencialUsd: producto.precioReferencialUsd,
+      })),
+      totalReferencial,
+    },
+    username,
+  )
   cotizacion.vaciar()
   // replace: "Atrás" desde la confirmación no vuelve a un formulario ya enviado.
   router.replace({ name: 'quote-confirmation', query: { codigo: resultado.codigoCotizacion } })

@@ -11,7 +11,12 @@ import { useToast } from '../composables/useToast'
 import { cancelarCita, ERRORES_CITA, modificarCita } from '../services/citaService'
 import { submitErrorMessage } from '../services/errorMessages'
 import { useAuthStore } from '../stores/auth'
-import { actualizarCitaGuardada, leerCitasGuardadas, quitarCitaGuardada } from '../utils/citasGuardadas'
+import {
+  actualizarCitaGuardada,
+  escucharCitasGuardadas,
+  leerCitasGuardadas,
+  quitarCitaGuardada,
+} from '../utils/citasGuardadas'
 import {
   aFechaHoraBackend,
   ahoraEnCaracas,
@@ -41,16 +46,15 @@ let relojTimer = null
 // --- Citas guardadas ---
 // TODO: cuando el backend tenga un GET de las citas del usuario (pendientes 16 y 17 de API.md),
 // pedirlas a la API con useAsync (cargando, error y vacío) en lugar de leer localStorage.
-const guardadas = shallowRef(leerCitasGuardadas())
+// Solo las de la cuenta con sesión (la ruta la exige).
+const guardadas = shallowRef(leerCitasGuardadas(auth.usuario?.username))
 
 function recargar() {
-  guardadas.value = leerCitasGuardadas()
+  guardadas.value = leerCitasGuardadas(auth.usuario?.username)
 }
 
 // Si otra pestaña agenda, cambia o cancela una cita, esta lista se pone al día.
-function onStorage(event) {
-  if (event.key === null || event.key === 'mobiliario.citas') recargar()
-}
+let dejarDeEscuchar = null
 
 // Cada cita con su fecha y hora separadas y los textos ya listos para la pantalla.
 // Una cita con fechaHora ilegible (editada a mano, otra versión) no se muestra.
@@ -333,12 +337,12 @@ const tituloDialogo = computed(() =>
 
 onMounted(() => {
   relojTimer = setInterval(() => (ahora.value = ahoraEnCaracas()), 60_000)
-  window.addEventListener('storage', onStorage)
+  dejarDeEscuchar = escucharCitasGuardadas(recargar)
 })
 
 onBeforeUnmount(() => {
   clearInterval(relojTimer)
-  window.removeEventListener('storage', onStorage)
+  dejarDeEscuchar?.()
 })
 </script>
 
@@ -350,7 +354,7 @@ onBeforeUnmount(() => {
     <p class="mt-6 flex items-start gap-2.5 rounded-md bg-brand-tint px-3.5 py-3 text-small text-ink">
       <Info class="mt-px size-4 shrink-0 text-brand-deep" aria-hidden="true" />
       <span>
-        Aquí aparecen solo las citas agendadas desde este navegador. Para otras,
+        Aquí aparecen las citas que agendaste con tu cuenta desde este navegador. Para otras,
         <a
           :href="consultarCitaUrl()"
           target="_blank"

@@ -86,3 +86,10 @@ export function consultarCitaUrl() {
 export function citaNoEncontradaUrl({ codigoCita, cuando }) {
   return whatsappUrl(`Hola, quise cambiar mi cita ${codigoCita} (${cuando}) desde la web y dice que ya no existe.`)
 }
+
+// Perfil: consultar por una solicitud de cotización enviada antes.
+export function consultarCotizacionUrl(codigoCotizacion) {
+  return whatsappUrl(
+    `Hola, quiero consultar por mi solicitud de cotización ${codigoCotizacion}, enviada desde la página web.`,
+  )
+}
