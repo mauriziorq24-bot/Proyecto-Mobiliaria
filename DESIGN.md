@@ -317,7 +317,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
   2. Catálogo: categorías de la API (máx. 6), "En showroom".
   3. Showroom: dirección, horario, `button-visit` "Agendar visita", "Cómo llegar".
   4. Contacto: `button-whatsapp`, teléfono, email, @mobiliariodeoficina.
-  - Fila inferior: "© 2026 Mobiliario de Oficina · Los precios son referenciales; el precio final se confirma en la cotización."
+  - Fila inferior: "© 2026 Mobiliario de Oficina · Los precios son referenciales; el precio final se confirma en la cotización." y, a la derecha (debajo en móvil y tablet), los enlaces "Términos y condiciones" y "Privacidad".
 - **Móvil:** una columna en orden de utilidad — Showroom → Contacto (WhatsApp a todo el ancho) → Catálogo en acordeón → aviso. Relleno inferior extra para que la barra de cotización no tape contenido.
 
 ## Elevation & Depth
@@ -435,6 +435,13 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
   - Cada fila es un botón con `aria-expanded` que despliega ahí mismo lo que se pidió (cantidad × nombre, subtotal con el precio de ese momento) y "Precios referenciales de cuando la enviaste. Si vuelves a cotizarla, se usan los de hoy." Acciones: "Volver a cotizar lo mismo" (primario) y `button-whatsapp` "Preguntar por WhatsApp" (con el código); debajo, el código con "Copiar código" (ghost).
   - **Volver a cotizar lo mismo:** pide el catálogo (solo al tocarlo) y agrega los productos que siguen disponibles, sumando la cantidad si ya estaban (hasta 99). Aviso de Éxito "Agregamos 2 productos a tu cotización · 1 ya no está disponible" + "Ver mi cotización". Si ninguno sigue: aviso (fondo Aviso) en la fila que invita a escribir por WhatsApp. Si falla la red: error en la fila.
 - **Por cuenta:** citas y cotizaciones enviadas se guardan con el `username` de la sesión (`null` si se enviaron sin sesión: esas solo se ven en su confirmación). `/mi-cita` y `/perfil` muestran solo las de la cuenta con sesión. El filtro vive en `crearRegistrosPorCuenta` (`src/utils/almacenamiento.js`). Se guardan como máximo 20 cotizaciones por cuenta. Lo guardado antes del cambio (claves sin versión) se asignó a la sesión con que se abrió la app, o se descartó sin sesión.
+
+### Términos y privacidad (`/terminos`) — decidido el 2026-10-22
+- **Decisión: avisar sin interrumpir.** Sin ventanas emergentes, sin casillas obligatorias ("Acepto los términos") y **sin banner de cookies**: el sitio solo usa almacenamiento funcional (cotización, favoritos, sesión, citas y cotizaciones enviadas en `localStorage`), nada de publicidad ni seguimiento. Si algún día se agrega analítica o publicidad, esta decisión se revisa.
+- **Una sola página** con los Términos (Parte I) y la Política de privacidad (Parte II), con el contenido de `docs/terminos-y-condiciones.md`. Título de la pestaña: "Términos y condiciones". `/privacidad` redirige a `/terminos#privacidad`.
+- **Estructura:** columna de lectura (~70ch), `headline` + fecha de actualización, índice "En esta página" (tarjeta blanca con borde, dos columnas desde `sm`) con enlace a cada parte y sección. Partes en `title`, secciones en negrita a 18px. Al saltar a una sección, el header fijo no la tapa (`scroll-margin-top`) y recibe el foco.
+- **Contacto** (sección 12): sale de `src/config/empresa.js`, igual que el footer; un dato pendiente (`null`) no aparece.
+- **Aceptación implícita:** bajo cada botón que envía datos, en `small` Tinta Suave, "Al [acción] aceptas los Términos y la Política de privacidad" (`LegalNotice`). Los enlaces abren otra pestaña para no perder lo escrito. Va en: registro ("crear tu cuenta", y "continuar con Google" bajo el botón de Google), solicitar cotización ("enviar") y agendar visita ("agendar tu visita"). No va en login.
 
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.

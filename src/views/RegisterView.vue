@@ -2,6 +2,7 @@
 import { computed, nextTick, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import AuthLayout from '../components/layout/AuthLayout.vue'
+import LegalNotice from '../components/legal/LegalNotice.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
@@ -116,6 +117,7 @@ async function handleSubmit() {
     switch-prompt="¿Ya tienes cuenta?"
     switch-label="Ingresa"
     switch-to="login"
+    google-legal-notice
   >
     <!-- novalidate: los mensajes de error los ponemos nosotros, en español y junto a cada campo -->
     <form novalidate class="flex flex-col gap-4" @submit.prevent="handleSubmit">
@@ -163,7 +165,10 @@ async function handleSubmit() {
 
       <BaseFormError v-if="serverError">{{ serverError }}</BaseFormError>
 
-      <BaseButton type="submit" block :loading="loading" class="mt-2">Crear cuenta</BaseButton>
+      <div class="mt-2 flex flex-col gap-3">
+        <BaseButton type="submit" block :loading="loading">Crear cuenta</BaseButton>
+        <LegalNotice action="crear tu cuenta" class="text-center" />
+      </div>
     </form>
   </AuthLayout>
 </template>

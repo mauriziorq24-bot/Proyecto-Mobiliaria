@@ -4,6 +4,7 @@ import { buscarCitaReciente } from '../utils/citasGuardadas'
 import { buscarCotizacionReciente } from '../utils/cotizacionesEnviadas'
 import { setPageTitle } from '../utils/pageTitle'
 import { getSafeRedirect } from '../utils/redirect'
+import { scrollToHash } from '../utils/scrollToHash'
 import HomeView from '../views/HomeView.vue'
 
 // meta.title: título de la pestaña. Sin él (inicio) se muestra solo la marca;
@@ -48,6 +49,9 @@ const routes = [
   { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true, ocultarBarraCotizacion: true } },
   { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true, ocultarBarraCotizacion: true } },
   { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi perfil', requiereSesion: true } },
+  // Términos y condiciones + política de privacidad, en una sola página. /privacidad lleva a su sección.
+  { path: '/terminos', name: 'terms', component: () => import('../views/TerminosView.vue'), meta: { title: 'Términos y condiciones' } },
+  { path: '/privacidad', redirect: { name: 'terms', hash: '#privacidad' } },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
   { path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue'), meta: { title: 'Guía de estilo' } },
   // Cualquier ruta que no coincida con las anteriores muestra la página 404.
@@ -59,9 +63,12 @@ const router = createRouter({
   routes,
   // Al cambiar de página (también de un producto a otro relacionado), volver arriba.
   // Con "Atrás"/"Adelante" del navegador, savedPosition trae dónde estaba la persona: se respeta.
+  // Con #ancla (/terminos#privacidad) va a esa sección; dentro de la misma página, con desplazamiento suave.
   // Si solo cambia la query (un filtro de /buscar, el texto buscado) es la misma página: no se mueve.
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) return savedPosition
+    // scrollToHash ya hizo el scroll: false le dice al router que no haga otro.
+    if (to.hash && scrollToHash(to.hash, { smooth: to.path === from.path })) return false
     if (to.path === from.path) return false
     return { top: 0 }
   },

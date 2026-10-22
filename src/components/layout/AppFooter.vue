@@ -178,9 +178,15 @@ const link =
     </div>
 
     <div class="border-t border-white/10">
-      <p class="container-page py-6 text-small text-white/60">
-        © {{ year }} {{ company.name }} · Los precios son referenciales; el precio final se confirma en la cotización.
-      </p>
+      <div
+        class="container-page flex flex-col gap-3 py-6 text-small text-white/60 lg:flex-row lg:items-baseline lg:justify-between lg:gap-8"
+      >
+        <p>© {{ year }} {{ company.name }} · Los precios son referenciales; el precio final se confirma en la cotización.</p>
+        <ul class="flex shrink-0 flex-wrap gap-x-5 gap-y-3">
+          <li><RouterLink :to="{ name: 'terms' }" :class="link">Términos y condiciones</RouterLink></li>
+          <li><RouterLink :to="{ name: 'terms', hash: '#privacidad' }" :class="link">Privacidad</RouterLink></li>
+        </ul>
+      </div>
     </div>
   </footer>
 </template>

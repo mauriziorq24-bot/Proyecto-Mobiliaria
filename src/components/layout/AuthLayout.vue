@@ -7,6 +7,7 @@ import { useAuthRedirect } from '../../composables/useAuthRedirect'
 import { submitErrorMessage } from '../../services/errorMessages'
 import { useAuthStore } from '../../stores/auth'
 import { GOOGLE_CLIENT_ID, SHOW_MOCK_GOOGLE_BUTTON } from '../../utils/googleSignIn'
+import LegalNotice from '../legal/LegalNotice.vue'
 import BaseFormError from '../ui/BaseFormError.vue'
 import GoogleSignInButton from './GoogleSignInButton.vue'
 
@@ -21,6 +22,8 @@ defineProps({
   switchLabel: { type: String, required: true },
   // Nombre de la ruta de la otra pantalla ('login' o 'register').
   switchTo: { type: String, required: true },
+  // Registro: "Al continuar con Google aceptas…" bajo el botón de Google (con Google también se crea la cuenta).
+  googleLegalNotice: { type: Boolean, default: false },
 })
 
 const auth = useAuthStore()
@@ -56,6 +59,7 @@ async function handleGoogleCredential(credential) {
 
       <div v-if="showGoogle" class="mt-6">
         <GoogleSignInButton @credential="handleGoogleCredential" @unavailable="googleUnavailable = true" />
+        <LegalNotice v-if="googleLegalNotice" action="continuar con Google" class="mt-3 text-center" />
 
         <!-- role="status" queda siempre en el DOM para que el lector de pantalla anuncie el texto
              cuando aparece. Vacío no ocupa espacio. -->

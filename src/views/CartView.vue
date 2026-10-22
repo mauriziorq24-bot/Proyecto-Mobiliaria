@@ -4,6 +4,7 @@ import { computed, nextTick, onBeforeUnmount, reactive, ref, useTemplateRef, wat
 import { useRoute, useRouter } from 'vue-router'
 import QuoteLineItem from '../components/cart/QuoteLineItem.vue'
 import QuoteMobileBar from '../components/cart/QuoteMobileBar.vue'
+import LegalNotice from '../components/legal/LegalNotice.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseConfirmDialog from '../components/ui/BaseConfirmDialog.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
@@ -603,6 +604,7 @@ async function handleSubmit() {
                 {{ cotizacion.totalUnidades === 1 ? 'unidad' : 'unidades' }}).
               </p>
             </div>
+            <LegalNotice action="enviar" />
           </form>
         </section>
       </div>

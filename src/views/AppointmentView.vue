@@ -3,6 +3,7 @@ import { CalendarCheck, Check, Info } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppointmentSlotPicker from '../components/appointment/AppointmentSlotPicker.vue'
+import LegalNotice from '../components/legal/LegalNotice.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
@@ -493,6 +494,7 @@ onBeforeUnmount(() => clearInterval(relojTimer))
           <p class="mt-3 text-small text-ink-muted">
             Al agendar recibirás un código para modificar o cancelar tu cita.
           </p>
+          <LegalNotice action="agendar tu visita" class="mt-2" />
         </div>
       </aside>
     </form>
