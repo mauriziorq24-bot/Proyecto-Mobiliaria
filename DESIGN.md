@@ -474,7 +474,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **WhatsApp** (verde WhatsApp, con ícono): "Enviar por WhatsApp".
 - **Secundario** (blanco, borde y texto Azul Acción): acciones de apoyo.
 - **Peligro** (`danger`, Error #C62F2F con texto blanco, 5.1:1; hover #A82626): solo para confirmar algo que no se puede deshacer, dentro de un diálogo ("Sí, cancelar visita").
-- Altura mínima 44px para toque; foco visible con anillo Azul Silla de 2px y 2px de separación.
+- Altura mínima 44px para toque; foco visible con anillo Azul Silla de 2px y 2px de separación. Sobre el header azul y el footer oscuro el anillo es blanco (`focus-visible:outline-white`).
 
 ### Agregar a la cotización
 - **Se implementa en la Fase 7** (cuando exista el store del carrito). Hasta entonces el botón se ve, pero no simula una confirmación.
@@ -533,6 +533,15 @@ Página para hacer una tarea: patrones conocidos (IKEA, Amazon), sin adornos. Ll
 - **Búsqueda local:** el texto se busca en el navegador, palabra por palabra y sin tildes, en nombre, descripción, material y categoría ("melamina", "semicuero" o "silla malla" encuentran). El catálogo se pide una sola vez (ver la decisión en `API.md`).
 - **Relevancia:** el backend no da puntuación. Primero los productos con todo el texto en el nombre, luego los que lo tienen en los otros campos; dentro de cada grupo, el orden de la API. Sin texto buscado, el orden de la API.
 - **Una opción por grupo:** una sola categoría y un solo ambiente a la vez (como el `tipoEspacio` único del backend); la URL lleva un valor por parámetro.
+
+### Teclado y lector de pantalla — decidido el 2026-10-22
+- **Saltar al contenido:** primer elemento de la página. Oculto hasta recibir el foco con Tab; entonces aparece arriba a la izquierda, sobre el header, como botón blanco de 44px con texto Azul Acción y anillo de foco **blanco** (el Azul Silla no se ve sobre el header). Lleva a `<main id="contenido">`.
+- **Cambio de página** (`RouteAnnouncer`, en `AppLayout`): el foco va al `h1` de la nueva página y una región `aria-live="polite"` anuncia el título de la pestaña ("Sillería · Mobiliario de Oficina"). Si la página aún carga sus datos, el foco espera en `<main>` y pasa al `h1` cuando aparece, salvo que la persona ya lo haya movido. No actúa en la primera carga, cuando solo cambia la query (filtros de `/buscar`) ni con `#ancla` (el foco va a la sección).
+  - Toda vista tiene un `h1`, también en sus estados vacío y "no encontrado". Mientras carga no lleva `h1` falso: el skeleton no es el título.
+  - Los títulos y `<main>` enfocados por código no llevan anillo (no son controles); el lector los anuncia igual.
+- **Lo fijo no tapa el foco** (WCAG 2.4.11): `<html>` tiene `scroll-padding-top` = alto del header (`--header-h`) + barra "Filtros / Ordenar" de `/buscar` (`--subbar-h`), y `scroll-padding-bottom` = barra inferior móvil (`--bottom-bar-h`). Cada barra fija publica su altura; en pantallas bajas las que dejan de ser fijas valen 0.
+  - Por eso los `scroll-mt` de las secciones solo dan aire sobre el título (`scroll-mt-3`/`scroll-mt-6`); **nunca** sumar ahí el alto del header, o el desplazamiento se cuenta dos veces.
+- **Anillo de foco sin recortar:** un contenedor con scroll (`overflow-x-auto`, `overflow-y-auto`) recorta lo que sale de él. Dentro de uno, el anillo va por dentro (`focus-visible:-outline-offset-2`) o el contenedor deja 4px de aire (`-mx-1 px-1`, `-ml-1 pl-1`).
 
 ## Do's and Don'ts
 
