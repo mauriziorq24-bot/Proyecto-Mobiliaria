@@ -1,5 +1,5 @@
 <script setup>
-import { X } from 'lucide-vue-next'
+import { Check, X } from 'lucide-vue-next'
 import { useId } from 'vue'
 import { TIPOS_ESPACIO } from '../../config/tiposEspacio'
 
@@ -78,6 +78,14 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
               class="absolute inset-0 bg-[repeating-linear-gradient(135deg,color-mix(in_srgb,currentColor_9%,transparent)_0_1.5px,transparent_1.5px_6px)]"
               aria-hidden="true"
             />
+            <!-- Marca de elegida: no depende solo del tamaño ni de la sombra (aria-pressed lo dice al lector) -->
+            <span
+              v-if="selected === tipo.valor"
+              class="absolute top-2.5 right-[26px] flex size-6 items-center justify-center rounded-full bg-white text-ink shadow-sm"
+              aria-hidden="true"
+            >
+              <Check class="size-4" :stroke-width="2.5" />
+            </span>
             <component :is="tipo.icon" class="relative size-5" :stroke-width="1.75" aria-hidden="true" />
             <span class="relative pr-[18px] text-sm leading-tight font-bold">{{ tipo.etiqueta }}</span>
           </span>

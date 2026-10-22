@@ -475,6 +475,9 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
     - `POST` y `DELETE` son idempotentes: repetirlos responde `204`.
     - Con un token válido, favoritos ya no responde `401`. Los `401` que quedan (un id no numérico) y el `500` con un token mal formado son los pendientes generales 21 y 21-bis, no de favoritos.
 
+### Detectados al probar "Compra por ambiente" del inicio (22/10/2026)
+28. **`enShowroom` y `tipoEspacio` no se combinan.** Probado con curl contra Render: `?tipoEspacio=HOGAR` → 20 productos (todos `HOGAR`), pero `?enShowroom=true&tipoEspacio=HOGAR` (en cualquier orden) → los 41 del showroom, de todos los ambientes. Con `enShowroom` presente, `tipoEspacio` se ignora (probablemente un `if / else if` en el controlador). Pedir que los filtros se apliquen juntos. Mientras tanto el frontend **no envía filtros**: `obtenerProductos` pide el catálogo completo y filtra en el navegador con `filtrarProductos`, la misma función de `/buscar`.
+
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
 

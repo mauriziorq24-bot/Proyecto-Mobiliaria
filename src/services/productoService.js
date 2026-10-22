@@ -28,49 +28,22 @@ function notFoundError(message) {
   return error
 }
 
-// Imita en los mocks los filtros que el backend ya hace: buscar, tipoEspacio y enShowroom.
-// Como el backend, buscar mira solo el nombre y como una sola frase (ver API.md).
-function applyBackendFilters(list, { buscar, tipoEspacio, enShowroom }) {
-  const term = normalize(buscar)
-  return list.filter((p) => {
-    if (term && !normalize(p.nombre).includes(term)) return false
-    if (tipoEspacio && p.tipoEspacio !== tipoEspacio) return false
-    if (enShowroom !== undefined && enShowroom !== null && p.enShowroom !== enShowroom) return false
-    return true
-  })
-}
+// GET /api/v1/productos → [ProductoResponse], filtrado aquí con la misma función que /buscar.
+// Todos los filtros son opcionales; enShowroom: true deja solo los del showroom.
+// Los filtros NO se envían al backend: con ?enShowroom=true&tipoEspacio=HOGAR ignora
+// tipoEspacio y devuelve todo el showroom (probado con curl el 22/10/2026, pendiente 28 de
+// API.md). Pidiendo el catálogo completo y filtrando con filtrarProductos, el inicio, la
+// categoría y la búsqueda dan siempre los mismos resultados.
+export async function obtenerProductos({ tipoEspacio, enShowroom, categoriaSlug } = {}) {
+  const [productos, categorias] = await Promise.all([
+    useMocks ? fakeDelay(mockProductos) : api.get('/api/v1/productos').then(({ data }) => data),
+    categoriaSlug ? getCategorias() : [],
+  ])
 
-// TODO: reemplazar por ?categoria=slug cuando el backend lo soporte (pendiente 2 de API.md).
-// Mientras tanto se busca la categoría por slug y se compara por categoriaId
-// (categoriaNombre queda solo de respaldo, por si algún producto llegara sin categoriaId).
-async function filterByCategory(list, categoriaSlug) {
-  const categorias = await getCategorias()
-  const categoria = categorias.find((c) => c.slug === categoriaSlug)
-  if (!categoria) return []
+  // Un slug que no existe no muestra nada (filtrarProductos lo ignoraría y devolvería todo).
+  if (categoriaSlug && !categorias.some((c) => c.slug === categoriaSlug)) return []
 
-  return list.filter((p) =>
-    p.categoriaId != null
-      ? p.categoriaId === categoria.id
-      : normalize(p.categoriaNombre) === normalize(categoria.nombre),
-  )
-}
-
-// GET /api/v1/productos?buscar=&tipoEspacio=&enShowroom= → [ProductoResponse]
-// Todos los filtros son opcionales. categoriaSlug se resuelve aquí (el backend aún no lo acepta).
-export async function obtenerProductos({ buscar, tipoEspacio, enShowroom, categoriaSlug } = {}) {
-  let productos
-
-  if (useMocks) {
-    productos = applyBackendFilters(await fakeDelay(mockProductos), { buscar, tipoEspacio, enShowroom })
-  } else {
-    // axios omite los parámetros undefined, así que solo viajan los filtros que se usen.
-    const { data } = await api.get('/api/v1/productos', {
-      params: { buscar: buscar || undefined, tipoEspacio: tipoEspacio || undefined, enShowroom },
-    })
-    productos = data
-  }
-
-  return categoriaSlug ? filterByCategory(productos, categoriaSlug) : productos
+  return filtrarProductos(productos, { tipoEspacio, enShowroom: enShowroom === true, categoria: categoriaSlug }, categorias)
 }
 
 // GET /api/v1/productos/{id} → ProductoResponse

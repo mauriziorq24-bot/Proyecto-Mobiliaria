@@ -67,10 +67,14 @@ watch(tipoEspacio, () => loadProductos(), { immediate: true })
 
 const tipoActivo = computed(() => (tipoEspacio.value ? estiloTipoEspacio(tipoEspacio.value) : null))
 
-// Enlace bajo la grilla: al buscador con el ambiente elegido (el filtro llega en la Fase 4).
+// Enlace bajo la grilla: al buscador con los mismos filtros que la grilla (ambiente + showroom),
+// para que /buscar empiece por los mismos productos que se ven aquí.
 const verTodos = computed(() =>
   tipoActivo.value
-    ? { to: { name: 'search', query: { tipoEspacio: tipoActivo.value.valor } }, text: `Ver todos los de ${tipoActivo.value.etiqueta}` }
+    ? {
+        to: { name: 'search', query: { tipoEspacio: tipoActivo.value.valor, enShowroom: 'true' } },
+        text: `Ver todos los de ${tipoActivo.value.etiqueta}`,
+      }
     : { to: { name: 'search', query: { enShowroom: 'true' } }, text: 'Ver todos los productos en showroom' },
 )
 
