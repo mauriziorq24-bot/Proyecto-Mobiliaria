@@ -11,7 +11,7 @@ import BaseInput from '../components/ui/BaseInput.vue'
 import { company } from '../config/empresa'
 import { useAsync } from '../composables/useAsync'
 import { useToast } from '../composables/useToast'
-import { cotizacionApiActiva, enviarCotizacion, ERRORES_COTIZACION } from '../services/cotizacionService'
+import { cotizacionApiActiva, ERRORES_COTIZACION, solicitarCotizacion } from '../services/cotizacionService'
 import { submitErrorMessage } from '../services/errorMessages'
 import { obtenerProductos } from '../services/productoService'
 import { useAuthStore } from '../stores/auth'
@@ -215,24 +215,71 @@ const {
   loading: enviando,
   error: errorEnvio,
   execute: enviar,
-} = useAsync((datos, items) => enviarCotizacion(datos, items), { immediate: false })
+} = useAsync((datos, items) => solicitarCotizacion(datos, items), { immediate: false })
+
+// Mensaje de un 400 cuando averiguamos qué producto falló (ver explicarDatosInvalidos).
+const errorProductos = ref('')
+// Mientras se averigua, el botón sigue "enviando": la solicitud todavía no tiene respuesta clara.
+const revisandoError = ref(false)
 
 const serverError = computed(() => {
+  if (errorProductos.value) return errorProductos.value
   if (!errorEnvio.value) return ''
   if (errorEnvio.value.code === ERRORES_COTIZACION.DATOS_INVALIDOS) return errorEnvio.value.message
+  // Red o servidor: no se borra nada de lo escrito ni de la lista; basta con volver a enviar.
   return submitErrorMessage(errorEnvio.value, 'enviar tu solicitud')
 })
 
+const listaEnTexto = new Intl.ListFormat('es', { type: 'conjunction' })
+
+function focusField(field) {
+  document.getElementById(`cot-${field}`)?.focus()
+}
+
+// El backend responde 400 sin decir qué falló (API.md). Puede ser:
+// 1. Un producto que ya no existe: se vuelve a revisar el catálogo y se nombra.
+// 2. Un dato del formulario: se revisan los campos y el foco va al primero con error.
+// Si no se logra saber, queda el mensaje general del servicio.
+async function explicarDatosInvalidos() {
+  const { campos = [] } = errorEnvio.value
+  if (!campos.length) {
+    revisandoError.value = true
+    const productos = await cargarCatalogo()
+    revisandoError.value = false
+    const perdidos = productos ? cotizacion.reconciliar(productos) : []
+    if (perdidos.length) {
+      const nombres = listaEnTexto.format(perdidos.map((item) => item.producto.nombre))
+      errorProductos.value =
+        perdidos.length === 1
+          ? `Ya no está disponible: ${nombres}. Lo marcamos en tu lista y no se enviará: vuelve a enviar tu solicitud.`
+          : `Ya no están disponibles: ${nombres}. Los marcamos en tu lista y no se enviarán: vuelve a enviar tu solicitud.`
+      errorEnvio.value = null
+      // Si no queda nada que enviar, el formulario se oculta con su mensaje: se anuncia aparte.
+      if (!puedeEnviar.value) anuncio.value = errorProductos.value
+      return
+    }
+  }
+
+  fields.forEach(validateField)
+  const invalid = fields.find((field) => errors[field])
+  if (invalid) {
+    errorEnvio.value = null // el error ya se ve en su campo
+    await nextTick()
+    focusField(invalid)
+  }
+}
+
 async function handleSubmit() {
   // Un segundo envío crearía dos solicitudes iguales.
-  if (enviando.value || !puedeEnviar.value) return
+  if (enviando.value || revisandoError.value || !puedeEnviar.value) return
   attempted.value = true
+  errorProductos.value = ''
   fields.forEach(validateField)
 
   const firstInvalid = fields.find((field) => errors[field])
   if (firstInvalid) {
     errorEnvio.value = null // el error del envío anterior ya no aplica
-    document.getElementById(`cot-${firstInvalid}`)?.focus()
+    focusField(firstInvalid)
     return
   }
 
@@ -240,7 +287,10 @@ async function handleSubmit() {
   const items = cotizacion.itemsDisponibles.map((item) => ({ ...item }))
   const totalReferencial = cotizacion.totalReferencial
   const resultado = await enviar({ ...form }, items)
-  if (errorEnvio.value) return
+  if (errorEnvio.value) {
+    if (errorEnvio.value.code === ERRORES_COTIZACION.DATOS_INVALIDOS) await explicarDatosInvalidos()
+    return
+  }
 
   // Aquí sí se vacía: sabemos que la solicitud llegó. La confirmación lee esta copia, así que
   // recargarla no reenvía nada.
@@ -531,7 +581,7 @@ async function handleSubmit() {
             <BaseFormError v-if="serverError">{{ serverError }}</BaseFormError>
 
             <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-              <BaseButton type="submit" size="lg" :loading="enviando" class="max-sm:w-full">
+              <BaseButton type="submit" size="lg" :loading="enviando || revisandoError" class="max-sm:w-full">
                 <template #icon-left><Send /></template>
                 Enviar solicitud
               </BaseButton>

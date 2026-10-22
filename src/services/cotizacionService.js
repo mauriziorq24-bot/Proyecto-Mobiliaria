@@ -8,6 +8,8 @@ const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
 // POST /api/v1/cotizaciones es una propuesta del frontend que el backend todavía está desarrollando
 // (ver API.md). Mientras no exista, VITE_COTIZACION_API=false oculta el formulario y WhatsApp es el
 // único envío. Con true, la página muestra el formulario y WhatsApp queda como alternativa.
+// TODO: cuando el backend publique el endpoint, probarlo con curl, quitar la nota de "propuesta" en
+// API.md y poner VITE_COTIZACION_API=true en .env y en las variables de entorno de Vercel.
 export const cotizacionApiActiva = import.meta.env.VITE_COTIZACION_API === 'true'
 
 // Simula la demora de la red para poder ver el estado "enviando" con los mocks.
@@ -20,9 +22,10 @@ export const ERRORES_COTIZACION = {
 }
 
 // El backend responde 400 sin decir qué falló: puede ser un dato del formulario o un producto que
-// ya no existe. La vista ya validó los datos, así que lo más probable es lo segundo.
+// ya no existe. La vista lo averigua (vuelve a revisar el catálogo y los campos) y dice cuál; este
+// mensaje queda para cuando no logra saberlo.
 const MENSAJE_DATOS_INVALIDOS =
-  'No pudimos enviar tu solicitud. Revisa tus datos; si están bien, puede que algún producto ya no esté disponible: recarga la página para ver tu cotización al día.'
+  'No pudimos enviar tu solicitud: algún dato no pasó la revisión. Revisa tus datos y vuelve a intentarlo.'
 
 function datosInvalidos({ cause, campos } = {}) {
   const error = new Error(MENSAJE_DATOS_INVALIDOS, { cause })
@@ -58,7 +61,8 @@ function armarCotizacionRequest({ nombreCliente, empresa, telefono, email, notas
 // POST /api/v1/cotizaciones (público, sin token) → 201 { codigoCotizacion }
 // `items` son los del store que siguen disponibles ({ productoId, cantidad, … }).
 // Además de la respuesta devuelve `enviada`, el body tal como se envió.
-export async function enviarCotizacion(datos, items) {
+// Errores: DATOS_INVALIDOS (con `campos` si lo detectó antes de enviar) o el error de axios tal cual.
+export async function solicitarCotizacion(datos, items) {
   const body = armarCotizacionRequest(datos, items)
   if (useMocks) return fakeDelay({ ...mockCotizacionCreada(), enviada: body })
 
