@@ -169,6 +169,9 @@ const recotizando = ref('') // código de la que se está agregando
 const aviso = ref(null) // { codigo, tipo: 'error' | 'ninguno', texto }
 
 async function volverACotizar(enviada) {
+  // Un pedido a la vez: `recotizando` guarda un solo código, y un segundo toque en otra fila
+  // apagaría el spinner de la primera antes de que termine.
+  if (recotizando.value) return
   const codigo = enviada.codigoCotizacion
   recotizando.value = codigo
   aviso.value = null
@@ -291,7 +294,7 @@ const groupTitle = 'px-1 text-label text-ink-muted uppercase'
 
         <p class="mt-2 flex items-start gap-2.5 rounded-md bg-brand-tint px-3.5 py-3 text-small text-ink">
           <Info class="mt-px size-4 shrink-0 text-brand-deep" aria-hidden="true" />
-          <span>Aquí aparecen las citas y cotizaciones que hiciste con tu cuenta desde este navegador.</span>
+          <span>Aquí aparecen las cotizaciones que enviaste con tu cuenta desde este navegador.</span>
         </p>
 
         <div v-if="!historial.length" class="mt-3 rounded-md border border-line bg-surface p-5">

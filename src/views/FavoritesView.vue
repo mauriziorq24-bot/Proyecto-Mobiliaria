@@ -133,8 +133,15 @@ const quitados = ref([]) // [{ id, quitado: { item, indice }, nombre, posicion }
 const timers = new Map() // id → timeout
 let ultimoId = 0
 
-// Lo que lee el lector de pantalla tras quitar, deshacer o agregar todos.
+// Lo que lee el lector de pantalla tras quitar o deshacer: la acción y, en el mismo mensaje,
+// cuántos quedan (los disponibles, como el contador del header).
 const anuncio = ref('')
+
+function cantidadGuardada() {
+  const n = favoritos.cantidad
+  if (!n) return 'No te quedan favoritos disponibles.'
+  return n === 1 ? 'Tienes 1 producto guardado.' : `Tienes ${n} productos guardados.`
+}
 
 // Cada quitado ocupa la posición que tenía su celda en la grilla.
 // Si el producto vuelve a estar en favoritos sin "Deshacer" (no se pudo quitar en la cuenta y el
@@ -189,7 +196,7 @@ function registrarQuitado(quitado, posicion, nombre) {
   const id = ++ultimoId
   quitados.value = [...quitados.value, { id, quitado, nombre, posicion }].sort((a, b) => a.posicion - b.posicion)
   programarCierre(id)
-  anuncio.value = `Quitaste ${nombre} de tus favoritos.`
+  anuncio.value = `Quitaste ${nombre} de tus favoritos. ${cantidadGuardada()}`
   nextTick(() => document.getElementById(`deshacer-${id}`)?.focus())
 }
 
@@ -200,7 +207,7 @@ function quitarNoDisponible(item, posicion) {
 function deshacer(q) {
   sacarQuitado(q.id, { correrSiguientes: false })
   favoritos.restaurar(q.quitado)
-  anuncio.value = `Volviste a guardar ${q.nombre} en favoritos.`
+  anuncio.value = `Volviste a guardar ${q.nombre} en favoritos. ${cantidadGuardada()}`
   const { productoId, disponible } = q.quitado.item
   // El foco vuelve al corazón de la tarjeta (o al nombre, si ya no está disponible).
   nextTick(() => {
@@ -283,8 +290,8 @@ const sinFavoritos = computed(() => !favoritos.items.length && !quitados.value.l
         <p v-if="!sinFavoritos" class="mt-2 max-w-[60ch] text-ink-muted">
           {{ dondeSeGuardan }}
         </p>
-        <!-- aria-live: al quitar uno, el lector de pantalla anuncia la nueva cantidad -->
-        <p v-if="!sinFavoritos" class="mt-4 min-h-5 text-small font-semibold text-ink tabular-nums" aria-live="polite">
+        <!-- Sin aria-live: la nueva cantidad ya va en el anuncio de quitar/deshacer (un solo mensaje) -->
+        <p v-if="!sinFavoritos" class="mt-4 min-h-5 text-small font-semibold text-ink tabular-nums">
           {{ conteo }}
         </p>
       </div>
@@ -383,19 +390,15 @@ const sinFavoritos = computed(() => !favoritos.items.length && !quitados.value.l
           >
             <template #actions>
               <div class="relative z-10 mt-3">
-                <BaseButton
-                  variant="secondary"
-                  size="sm"
-                  block
-                  wrap
-                  :aria-label="`Agregar ${celda.producto.nombre} a mi cotización`"
-                  @click="agregarUno(celda.producto)"
-                >
+                <!-- El nombre del producto va en sr-only después del texto visible: así el nombre
+                     accesible empieza por lo que se ve ("Agregado", "Agregar…") y el control por voz lo encuentra. -->
+                <BaseButton variant="secondary" size="sm" block wrap @click="agregarUno(celda.producto)">
                   <template #icon-left>
                     <Check v-if="recienAgregado === celda.producto.id" />
                     <Plus v-else />
                   </template>
-                  {{ recienAgregado === celda.producto.id ? 'Agregado' : 'Agregar a mi cotización' }}
+                  {{ recienAgregado === celda.producto.id ? 'Agregado' : 'Agregar a mi cotización'
+                  }}<span class="sr-only">: {{ celda.producto.nombre }}</span>
                 </BaseButton>
                 <!-- La línea reserva su alto aunque esté vacía: así las tarjetas de una fila quedan alineadas -->
                 <p class="mt-1.5 min-h-[1.4em] text-small text-ink-muted">

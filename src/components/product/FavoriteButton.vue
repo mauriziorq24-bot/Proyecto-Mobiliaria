@@ -18,7 +18,12 @@ const props = defineProps({
 const favoritos = useFavoritosStore()
 const favorito = computed(() => favoritos.esFavorito(props.producto.id))
 
-const label = computed(() =>
+// Para el lector de pantalla el nombre no cambia: aria-pressed ya dice si está guardado
+// ("Guardar X en favoritos, presionado"). Si el nombre también cambiara, sonaría contradictorio.
+const ariaLabel = computed(() => `Guardar ${props.producto.nombre} en favoritos`)
+
+// El tooltip (title) sí dice qué hará el clic: quien usa el mouse no ve aria-pressed.
+const title = computed(() =>
   favorito.value ? `Quitar ${props.producto.nombre} de favoritos` : `Guardar ${props.producto.nombre} en favoritos`,
 )
 
@@ -61,8 +66,8 @@ const variantClasses = {
     :class="[variantClasses[variant], favorito ? 'text-brand-deep' : variant === 'card' ? 'text-ink-muted' : 'text-ink']"
     :data-favorito-de="producto.id"
     :aria-pressed="favorito"
-    :aria-label="label"
-    :title="label"
+    :aria-label="ariaLabel"
+    :title="title"
     @click.prevent.stop="toggle"
   >
     <!-- motion-safe: con prefers-reduced-motion el corazón se rellena sin animarse -->

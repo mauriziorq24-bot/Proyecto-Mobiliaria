@@ -430,7 +430,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
   - **Mis visitas** (`CalendarDays`): próximas de esta cuenta; detalle "Próxima: viernes 20 de noviembre, 10:00 a. m." o "Sin visitas próximas".
   - **Mis favoritos** (`Heart`): el mismo número que el header.
   - **Mi cotización** (`ShoppingCart`): unidades, como el header; detalle "Total referencial $X" o "Vacía".
-- **Cotizaciones enviadas:** aviso fijo en Tinte Azul "Aquí aparecen las citas y cotizaciones que hiciste con tu cuenta desde este navegador." Lista de la más nueva a la más vieja: código, fecha ("20 oct 2026"), "N productos (M unidades)" y total referencial (`price`).
+- **Cotizaciones enviadas:** aviso fijo en Tinte Azul "Aquí aparecen las cotizaciones que enviaste con tu cuenta desde este navegador." (las citas están en Mis visitas) Lista de la más nueva a la más vieja: código, fecha ("20 oct 2026"), "N productos (M unidades)" y total referencial (`price`).
   - Con `VITE_COTIZACION_API=true` la sección siempre aparece; vacía: "Aún no has enviado solicitudes desde este navegador." + "Ir a Mi cotización" (secundario). Con `false`, solo si hay alguna guardada de antes.
   - Cada fila es un botón con `aria-expanded` que despliega ahí mismo lo que se pidió (cantidad × nombre, subtotal con el precio de ese momento) y "Precios referenciales de cuando la enviaste. Si vuelves a cotizarla, se usan los de hoy." Acciones: "Volver a cotizar lo mismo" (primario) y `button-whatsapp` "Preguntar por WhatsApp" (con el código); debajo, el código con "Copiar código" (ghost).
   - **Volver a cotizar lo mismo:** pide el catálogo (solo al tocarlo) y agrega los productos que siguen disponibles, sumando la cantidad si ya estaban (hasta 99). Aviso de Éxito "Agregamos 2 productos a tu cotización · 1 ya no está disponible" + "Ver mi cotización". Si ninguno sigue: aviso (fondo Aviso) en la fila que invita a escribir por WhatsApp. Si falla la red: error en la fila.
@@ -456,7 +456,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - Foto vertical 4:5 (`object-cover`, `loading="lazy"`) con `tag-showroom` "EN SHOWROOM" arriba a la derecha si `enShowroom`. Sin foto o si falla: placeholder `/placeholder-producto.svg`.
 - La tarjeta **no** lleva el material: en la API es una frase larga y no cabe; se muestra completo en la ficha del producto.
 - Categoría (`small`, Tinta Suave, 1 línea), nombre (`card-title`, máximo 2 líneas con espacio reservado para que los precios de una fila queden alineados), "Precio referencial" (`small`, Tinta Suave) y el precio (`price`). Sin precio: "Consultar precio".
-- Botón de favorito a la derecha del precio: ícono de 20px con área táctil de 44px.
+- Botón de favorito a la derecha del precio: ícono de 20px con área táctil de 44px. Nombre accesible fijo ("Guardar [nombre] en favoritos") con `aria-pressed` para el estado; solo el tooltip cambia a "Quitar [nombre] de favoritos".
 - Hover (solo en dispositivos con puntero): el borde se oscurece y la foto crece un 3%. Sin sombra, sin elevar la tarjeta.
 - Versión de carga (skeleton) con la misma forma y medidas.
 - La misma tarjeta se reconoce en todas sus escalas: miniatura del drawer, tarjeta de grilla y ficha.
