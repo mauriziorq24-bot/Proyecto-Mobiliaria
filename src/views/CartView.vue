@@ -526,12 +526,13 @@ async function handleSubmit() {
           </QuoteMobileBar>
         </div>
 
-        <!-- Formulario de solicitud. scroll-mt: al llegar desde el resumen, el header fijo no tapa el título. -->
+        <!-- Formulario de solicitud. scroll-mt: aire sobre el título al llegar desde el resumen
+             (el espacio del header fijo lo deja el scroll-padding-top de style.css). -->
         <section
           v-if="cotizacionApiActiva && puedeEnviar"
           ref="solicitud"
           aria-labelledby="cot-solicitud-title"
-          class="min-w-0 scroll-mt-32 lg:col-start-1 sm:rounded-md sm:border sm:border-line sm:bg-surface sm:p-8"
+          class="min-w-0 scroll-mt-6 lg:col-start-1 sm:rounded-md sm:border sm:border-line sm:bg-surface sm:p-8"
         >
           <h2 id="cot-solicitud-title" class="text-title text-ink">Solicitar cotización</h2>
           <p class="mt-1 max-w-[60ch] text-ink-muted">

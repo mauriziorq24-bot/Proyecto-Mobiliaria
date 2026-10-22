@@ -149,7 +149,8 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
   </section>
 
   <!-- ② CATEGORÍAS -->
-  <section id="categorias" aria-labelledby="categorias-title" class="scroll-mt-[136px] md:scroll-mt-24">
+  <!-- scroll-mt: aire sobre el título; el espacio del header fijo lo deja el scroll-padding-top de style.css -->
+  <section id="categorias" aria-labelledby="categorias-title" class="scroll-mt-3 md:scroll-mt-6">
     <div class="container-page pt-12 md:pt-16">
       <h2 id="categorias-title" ref="categoriasTitle" tabindex="-1" class="text-title focus:outline-none">
         Explora por categoría

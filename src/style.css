@@ -186,6 +186,12 @@
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    /* Lo fijo arriba (header y, en /buscar, la barra "Filtros / Ordenar") y abajo (barra de cotización
+       o del producto) no tapa lo que tiene el foco de teclado (WCAG 2.4.11): el navegador deja este
+       espacio al desplazarse hasta él, y también al saltar a un #ancla. Las alturas las publican
+       AppHeader, SearchView y useBottomBarHeight; en pantallas bajas el header no es fijo y vale 0. */
+    scroll-padding-top: calc(var(--header-h, 0px) + var(--subbar-h, 0px));
+    scroll-padding-bottom: var(--bottom-bar-h, 0px);
   }
 
   body {
@@ -207,6 +213,12 @@
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
+  }
+
+  /* Títulos y <main> que reciben el foco por código (RouteAnnouncer al cambiar de página,
+     "Saltar al contenido") no son controles: no llevan anillo. El lector igual los anuncia. */
+  :is(h1, h2, h3, main)[tabindex="-1"]:focus {
+    outline: none;
   }
 
   a {

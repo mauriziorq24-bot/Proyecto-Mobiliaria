@@ -364,11 +364,12 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           No se pudieron cargar las categorías.
           <button type="button" class="font-semibold text-brand-deep underline" @click="retry">Reintentar</button>
         </p>
+        <!-- La lista tiene scroll propio y recorta lo que sale de ella: el anillo de foco va por dentro -->
         <ul v-else :class="hideScrollbar" class="flex h-full min-w-0 flex-1 overflow-x-auto">
           <li v-for="categoria in categorias" :key="categoria.id" class="h-full shrink-0">
             <RouterLink
               :to="`/categoria/${categoria.slug}`"
-              class="relative inline-flex h-full items-center px-3 text-small font-semibold whitespace-nowrap transition-colors duration-200 ease-out hover:text-ink"
+              class="relative inline-flex h-full items-center px-3 text-small font-semibold whitespace-nowrap transition-colors duration-200 ease-out hover:text-ink focus-visible:-outline-offset-2"
               :class="isActiveCategory(categoria.slug) ? 'text-ink' : 'text-ink-muted'"
               :aria-current="isActiveCategory(categoria.slug) ? 'page' : undefined"
             >

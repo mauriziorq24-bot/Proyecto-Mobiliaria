@@ -40,9 +40,10 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 
     <!--
       -mx-4 px-4 en móvil: la tira se desliza de borde a borde de la pantalla.
-      pt/pb dejan lugar al anillo de foco y a la sombra de la muestra elegida.
+      pt/pb dejan lugar al anillo de foco y a la sombra de la muestra elegida. Desde md, -mx-1 px-1
+      hace lo mismo a los lados: el scroll recortaba el anillo de la primera muestra.
     -->
-    <div :class="hideScrollbar" class="-mx-4 overflow-x-auto px-4 pt-2 pb-6 md:mx-0 md:px-0">
+    <div :class="hideScrollbar" class="-mx-4 overflow-x-auto px-4 pt-2 pb-6 md:-mx-1 md:px-1">
       <div role="group" :aria-labelledby="labelId" class="flex h-[156px] w-max items-end">
         <!--
           Cada muestra se monta 18px sobre la anterior, como un abanico de telas.

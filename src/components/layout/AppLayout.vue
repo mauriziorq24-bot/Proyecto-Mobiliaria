@@ -6,6 +6,7 @@ import AppFooter from './AppFooter.vue'
 import AppHeader from './AppHeader.vue'
 import AppQuoteBar from './AppQuoteBar.vue'
 import AppToast from './AppToast.vue'
+import RouteAnnouncer from './RouteAnnouncer.vue'
 import ServerWakeNotice from './ServerWakeNotice.vue'
 
 const route = useRoute()
@@ -19,10 +20,12 @@ const showQuoteBar = computed(() => cotizacion.totalUnidades > 0 && !route.meta.
 <template>
   <!-- min-h-dvh + flex-1 en <main>: el footer queda abajo aunque la página tenga poco contenido -->
   <div class="flex min-h-dvh flex-col">
-    <!-- Enlace oculto para teclado: salta el header y va directo al contenido -->
+    <!-- Enlace oculto para teclado: salta el header y va directo al contenido.
+         El padding va con focus: porque not-sr-only lo deja en 0. Aparece sobre el header azul,
+         así que el anillo de foco es blanco (el Azul Silla no se vería). -->
     <a
       href="#contenido"
-      class="sr-only z-50 rounded-md bg-surface px-4 py-2 font-semibold text-brand-deep shadow-lg focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      class="sr-only z-50 rounded-md bg-surface font-semibold text-brand-deep shadow-lg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:inline-flex focus:min-h-11 focus:items-center focus:px-4 focus-visible:outline-white"
     >
       Saltar al contenido
     </a>
@@ -39,5 +42,6 @@ const showQuoteBar = computed(() => cotizacion.totalUnidades > 0 && !route.meta.
 
     <ServerWakeNotice />
     <AppToast />
+    <RouteAnnouncer />
   </div>
 </template>

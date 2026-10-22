@@ -60,9 +60,10 @@ function goToAgain(id) {
   if (route.hash === `#${id}`) scrollToHash(route.hash, { smooth: true })
 }
 
-// Clases repetidas. scroll-mt: al saltar a una sección, el header fijo no tapa su título.
+// Clases repetidas. scroll-mt: aire sobre el título al saltar a una sección (el espacio del header
+// fijo ya lo deja el scroll-padding-top de style.css).
 // tabindex="-1" en las secciones: reciben el foco al saltar (ver scrollToHash).
-const section = 'scroll-mt-[calc(var(--header-h,0px)+1.5rem)] focus:outline-none'
+const section = 'scroll-mt-6 focus:outline-none'
 const sectionTitle = 'text-lg leading-snug font-bold text-ink'
 const list = 'mt-3 list-disc space-y-2 pl-5 marker:text-ink-muted'
 const link = 'font-semibold text-brand-deep underline underline-offset-4 hover:text-brand-deeper'
