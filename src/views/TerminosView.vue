@@ -71,7 +71,7 @@ const link = 'font-semibold text-brand-deep underline underline-offset-4 hover:t
 
 <template>
   <div class="container-page py-8 md:py-12">
-    <article class="mx-auto max-w-[70ch] text-ink">
+    <article class="mx-auto max-w-measure text-ink">
       <header>
         <h1 class="text-headline text-balance">Términos y condiciones</h1>
         <p class="mt-2 text-small text-ink-muted">

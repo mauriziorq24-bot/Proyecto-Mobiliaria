@@ -179,8 +179,9 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 <template>
   <!-- display: contents: el <header> no genera caja propia. Un elemento sticky solo se queda
        fijo dentro de su contenedor; si el contenedor fuera el <header> (que mide lo mismo que
-       su contenido), la franja azul se iría con la página. Así su contenedor es todo el layout. -->
-  <header class="contents">
+       su contenido), la franja azul se iría con la página. Así su contenedor es todo el layout.
+       role="banner" explícito: algunos Safari pierden el rol de un elemento con display: contents. -->
+  <header class="contents" role="banner">
     <!-- Franja azul: fija arriba (salvo en pantallas bajas). En móvil incluye el buscador en una segunda fila. -->
     <div
       ref="stickyBar"

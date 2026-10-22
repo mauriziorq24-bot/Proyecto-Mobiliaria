@@ -327,7 +327,7 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
             <!-- Descripción y ficha técnica -->
             <section v-if="producto.descripcion" aria-labelledby="description-title" class="mt-8">
               <h2 id="description-title" class="text-label text-ink-muted uppercase">Descripción</h2>
-              <p class="mt-2 max-w-[65ch] text-pretty">{{ producto.descripcion }}</p>
+              <p class="mt-2 max-w-measure text-pretty">{{ producto.descripcion }}</p>
             </section>
 
             <section aria-labelledby="specs-title" class="mt-8">
@@ -394,9 +394,13 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
         <p v-if="enCotizacion" class="mb-2 text-small text-ink-muted">
           Ya tienes <span class="tabular-nums">{{ enCotizacion }}</span> en tu cotización
         </p>
-        <div class="flex items-center gap-3">
+        <!--
+          grow sin min-w-0: el botón mide al menos su texto. Si no cabe junto a la cantidad (pantalla
+          angosta o letra grande), baja a su propia fila en vez de cortar el texto (como en AppQuoteBar).
+        -->
+        <div class="flex flex-wrap items-center gap-3">
           <BaseQuantityInput v-model="cantidad" />
-          <BaseButton class="min-w-0 flex-1" @click="addToQuote">
+          <BaseButton class="grow" @click="addToQuote">
             <template v-if="justAdded" #icon-left><Check /></template>
             {{ justAdded ? `Agregado (${justAdded})` : 'Agregar a la cotización' }}
           </BaseButton>

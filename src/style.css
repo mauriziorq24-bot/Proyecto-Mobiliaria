@@ -105,6 +105,10 @@
   --text-price-large--line-height: 1.15;
   --text-price-large--font-weight: 800;
 
+  /* Ancho de lectura (max-w-measure): ~75 caracteres de texto corrido a 16px.
+     En rem y no en ch: el "0" de Figtree es ancho y 70ch daba ~97 caracteres por línea. */
+  --container-measure: 32rem;
+
   /* Radios */
   --radius-sm: 6px;
   --radius-md: 10px;

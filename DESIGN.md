@@ -246,7 +246,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 - **Title** (700, 20px → 24px, 1.28): títulos de sección.
 - **Wordmark** (800, 19px, 1.05, −0.01em): solo el nombre "Mobiliario de Oficina" junto al logo, en header y footer (`text-wordmark`).
 - **Card title** (600, 16px, 1.35): nombre del producto en tarjetas; máximo 2 líneas.
-- **Body** (400, 16px, 1.5): texto general y descripciones, máximo ~70ch. 16px en inputs evita el zoom de iOS.
+- **Body** (400, 16px, 1.5): texto general y descripciones, máximo ~75 caracteres por línea: `max-w-measure` (32rem). En rem y no en `ch`, porque el "0" de Figtree es ancho y 70ch rinde ~97 caracteres. 16px en inputs evita el zoom de iOS.
 - **Small** (500, 13px → 14px, 1.4): metadatos y ayudas.
 - **Label** (700, 11px, +0.12em, MAYÚSCULAS): "TIPO DE ESPACIO", "EN SHOWROOM", encabezados del footer.
 - **Price** (700, 16px → 18px, cifras tabulares): precio en tarjeta. **Price large** (800, 28px) en la ficha.
@@ -439,7 +439,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 ### Términos y privacidad (`/terminos`) — decidido el 2026-10-22
 - **Decisión: avisar sin interrumpir.** Sin ventanas emergentes, sin casillas obligatorias ("Acepto los términos") y **sin banner de cookies**: el sitio solo usa almacenamiento funcional (cotización, favoritos, sesión, citas y cotizaciones enviadas en `localStorage`), nada de publicidad ni seguimiento. Si algún día se agrega analítica o publicidad, esta decisión se revisa.
 - **Una sola página** con los Términos (Parte I) y la Política de privacidad (Parte II), con el contenido de `docs/terminos-y-condiciones.md`. Título de la pestaña: "Términos y condiciones". `/privacidad` redirige a `/terminos#privacidad`.
-- **Estructura:** columna de lectura (~70ch), `headline` + fecha de actualización, índice "En esta página" (tarjeta blanca con borde, dos columnas desde `sm`) con enlace a cada parte y sección. Partes en `title`, secciones en negrita a 18px. Al saltar a una sección, el header fijo no la tapa (`scroll-margin-top`) y recibe el foco.
+- **Estructura:** columna de lectura (`max-w-measure`), `headline` + fecha de actualización, índice "En esta página" (tarjeta blanca con borde, dos columnas desde `sm`) con enlace a cada parte y sección. Partes en `title`, secciones en negrita a 18px. Al saltar a una sección, el header fijo no la tapa (`scroll-margin-top`) y recibe el foco.
 - **Contacto** (sección 12): sale de `src/config/empresa.js`, igual que el footer; un dato pendiente (`null`) no aparece.
 - **Aceptación implícita:** bajo cada botón que envía datos, en `small` Tinta Suave, "Al [acción] aceptas los Términos y la Política de privacidad" (`LegalNotice`). Los enlaces abren otra pestaña para no perder lo escrito. Va en: registro ("crear tu cuenta", y "continuar con Google" bajo el botón de Google), solicitar cotización ("enviar") y agendar visita ("agendar tu visita"). No va en login.
 
