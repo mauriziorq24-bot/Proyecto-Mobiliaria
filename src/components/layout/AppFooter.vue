@@ -2,7 +2,7 @@
 import { CalendarCheck, ChevronDown, Clock, Instagram, MapPin, MessageCircle, Phone } from 'lucide-vue-next'
 import { computed, ref, useId } from 'vue'
 import { RouterLink } from 'vue-router'
-import logoUrl from '../../assets/logo.png'
+import logoUrl from '../../assets/logo-80.png'
 import { useCategorias } from '../../composables/useCategorias'
 import { company } from '../../config/empresa'
 import { whatsappUrl } from '../../utils/whatsapp'

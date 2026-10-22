@@ -15,7 +15,7 @@ import {
   User,
 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import logoUrl from '../assets/logo.png'
+import logoUrl from '../assets/logo-80.png'
 import BaseBadge from '../components/ui/BaseBadge.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseIconButton from '../components/ui/BaseIconButton.vue'

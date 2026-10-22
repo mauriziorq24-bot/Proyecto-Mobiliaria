@@ -2,7 +2,7 @@
 import { CalendarCheck, Heart, LayoutGrid, Menu, RotateCw, Search, ShoppingCart } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import logoUrl from '../../assets/logo.png'
+import logoUrl from '../../assets/logo-80.png'
 import { useCategorias } from '../../composables/useCategorias'
 import { useDebounce } from '../../composables/useDebounce'
 import { company } from '../../config/empresa'
