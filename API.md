@@ -337,7 +337,11 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 
 ## Cotizaciones — `/api/v1/cotizaciones`
 
-> **Propuesta del frontend, pendiente de confirmar con el backend** (el compañero la está desarrollando). Todavía no existe: el frontend la usa solo con `VITE_COTIZACION_API=true` (ver `CLAUDE.md`); con los mocks responde `src/mocks/cotizaciones.js`.
+> ✅ **Publicado por el backend y probado con curl (21/10/2026).** El frontend lo usa con `VITE_COTIZACION_API=true` (ver `CLAUDE.md`); con los mocks responde `src/mocks/cotizaciones.js`.
+>
+> Resultados de la prueba: cuerpo válido → `201 {"codigoCotizacion":"COT-0001"}` (el código es **secuencial**). `400` (cuerpo vacío, sin detalle de qué falló) con: `{}`, `items: []`, `productoId` inexistente, `cantidad: 0`, `nombreCliente` en blanco, email o teléfono con formato inválido. El Swagger dice `200`, pero responde `201`.
+>
+> El backend también expone `GET /api/v1/cotizaciones` (lista con `detalles`, `totalUsd`, `estado`: `PENDIENTE` | `CONTACTADO` | `CANCELADA`) y `PATCH /api/v1/cotizaciones/{id}/estado`. Sin token responden `403`: son para administración y el frontend no los usa.
 
 ### `POST /api/v1/cotizaciones`
 
@@ -374,7 +378,7 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 1. **Carrito, favoritos y pedidos:** no existen endpoints. Mientras se decide, el frontend guarda carrito y favoritos en Pinia + localStorage (ver `CLAUDE.md`). Decidir:
    - **Opción A:** el backend los crea (`/api/v1/carrito`, `/api/v1/favoritos`, `/api/v1/pedidos`).
    - **Opción B:** carrito y favoritos viven en el frontend (Pinia + localStorage) y el "checkout" se convierte en **solicitud de cotización** (vía cita, WhatsApp o un endpoint `POST /api/v1/cotizaciones`). Encaja con `precioReferencialUsd`.
-   - **En curso (21/10/2026):** el frontend sigue la opción B. La forma propuesta de `POST /api/v1/cotizaciones` está en [Cotizaciones](#cotizaciones--apiv1cotizaciones); falta que el backend la confirme y la publique.
+   - **Decidido (21/10/2026):** opción B. `POST /api/v1/cotizaciones` ya está publicado (ver [Cotizaciones](#cotizaciones--apiv1cotizaciones)).
 2. **Filtro por categoría:** `GET /api/v1/productos` no acepta categoría. Pedir `?categoria={slug}` o `?categoriaId={id}`.
 3. ~~**`categoriaId` llega `null`**~~ ✅ **Resuelto** (20/10/2026): los 15 productos del seed traen `categoriaId`, y coincide con el `id` de `GET /api/v1/categorias`. Las migas de pan de la ficha resuelven la categoría por `categoriaId`.
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).

@@ -5,11 +5,8 @@ import api from './api'
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
 
-// POST /api/v1/cotizaciones es una propuesta del frontend que el backend todavía está desarrollando
-// (ver API.md). Mientras no exista, VITE_COTIZACION_API=false oculta el formulario y WhatsApp es el
-// único envío. Con true, la página muestra el formulario y WhatsApp queda como alternativa.
-// TODO: cuando el backend publique el endpoint, probarlo con curl, quitar la nota de "propuesta" en
-// API.md y poner VITE_COTIZACION_API=true en .env y en las variables de entorno de Vercel.
+// POST /api/v1/cotizaciones ya está publicado (ver API.md). Con VITE_COTIZACION_API=true la página
+// muestra el formulario y WhatsApp queda como alternativa; con false, WhatsApp es el único envío.
 export const cotizacionApiActiva = import.meta.env.VITE_COTIZACION_API === 'true'
 
 // Simula la demora de la red para poder ver el estado "enviando" con los mocks.

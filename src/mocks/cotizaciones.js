@@ -1,5 +1,4 @@
-// Respuesta simulada de POST /api/v1/cotizaciones (misma forma que la propuesta de API.md).
-// El endpoint todavía no existe: lo está desarrollando el backend.
+// Respuesta simulada de POST /api/v1/cotizaciones (misma forma que la respuesta real de API.md).
 
 // 'COT-' + 4 caracteres hexadecimales en mayúsculas, como el ejemplo de API.md ("COT-XXXX").
 export function createMockCodigoCotizacion() {
