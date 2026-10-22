@@ -43,7 +43,7 @@ Según la empresa, lo que la distingue es: **showroom físico** (se pueden ver y
 - Cada producto trae nombre, descripción, categoría, tipo de espacio, precio referencial en USD, material, dimensiones estándar e imágenes.
 - Cuentas de usuario con JWT: registro, login y login con Google.
 - Agendar cita/asesoría.
-- El carrito es la cotización y vive en el frontend (Pinia + localStorage); se envía con `POST /api/v1/cotizaciones` o por WhatsApp. No hay endpoints de carrito ni de pedidos. Favoritos tiene endpoint, pero hoy falla (pendiente 27 de `API.md`), así que también viven en el navegador.
+- El carrito es la cotización y vive en el frontend (Pinia + localStorage); se envía con `POST /api/v1/cotizaciones` o por WhatsApp. No hay endpoints de carrito ni de pedidos. Favoritos sí tiene endpoint: sin sesión viven en el navegador y, con `VITE_FAVORITOS_API=true` y sesión iniciada, se sincronizan con la cuenta.
 - Nombres de campos de la API en español; se usan tal cual.
 - **Decisiones abiertas** (ver pendientes en `API.md`): si `tipoEspacio` es un solo valor o una lista; filtro de productos por categoría en el servidor; si existe rol ADMIN; si agendar cita exige sesión; ubicación exacta del showroom (hoy solo la ciudad).
 
