@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { crearAlmacenamiento } from '../utils/almacenamiento'
 
 // La cotización en curso (el "carrito"). No hay endpoints de carrito (pendiente 1 de API.md):
-// vive en Pinia y se guarda en localStorage.
-//
-// La clave lleva la versión del formato. Si algún día cambia la forma de los items, se pasa a
-// ':v2' y lo guardado con ':v1' simplemente se ignora, en vez de leerse con la forma equivocada.
+// vive en Pinia y se guarda en localStorage (con la utilidad de utils/almacenamiento.js).
 const STORAGE_KEY = 'mobiliario.cotizacion:v1'
 
 export const CANTIDAD_MINIMA = 1
@@ -50,28 +48,18 @@ function normalizarItem(item) {
   }
 }
 
-// Como en el store de auth, localStorage puede fallar (modo privado, bloqueado, lleno) o tener
-// JSON roto. En cualquiera de esos casos se empieza con la cotización vacía, sin romper la app.
-function leerAlmacenamiento() {
-  try {
-    const guardado = JSON.parse(localStorage.getItem(STORAGE_KEY))
+// Se guarda como { items: [...] }. Si lo leído no tiene esa forma (o no se puede leer), se
+// empieza con la cotización vacía, sin romper la app.
+const almacenamiento = crearAlmacenamiento(STORAGE_KEY, {
+  validar(guardado) {
     if (!Array.isArray(guardado?.items)) return []
     return guardado.items.filter(esItemValido).map(normalizarItem)
-  } catch {
-    return []
-  }
-}
-
-function escribirAlmacenamiento(items) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items }))
-  } catch {
-    // Sin almacenamiento disponible: la cotización sigue en memoria hasta recargar.
-  }
-}
+  },
+  vacio: () => [],
+})
 
 export const useCotizacionStore = defineStore('cotizacion', () => {
-  const items = ref(leerAlmacenamiento())
+  const items = ref(almacenamiento.leer())
 
   // Los productos que ya no existen no suman: no se pueden cotizar.
   const itemsDisponibles = computed(() => items.value.filter((item) => item.disponible))
@@ -95,7 +83,7 @@ export const useCotizacionStore = defineStore('cotizacion', () => {
   // Se guarda al final de cada acción (y no con un watch) para que aplicar un cambio que llega
   // de otra pestaña no lo vuelva a escribir.
   function guardar() {
-    escribirAlmacenamiento(items.value)
+    almacenamiento.escribir({ items: items.value })
   }
 
   function buscarItem(productoId) {
@@ -176,17 +164,10 @@ export const useCotizacionStore = defineStore('cotizacion', () => {
     return recienNoDisponibles
   }
 
-  // Sincronización entre pestañas. El evento 'storage' solo llega a las OTRAS pestañas del
-  // mismo sitio cuando una cambia localStorage (nunca a la que hizo el cambio).
-  // e.key es null cuando otra pestaña llamó a localStorage.clear().
-  // El store se crea una sola vez por pestaña, así que el listener también.
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY || event.key === null) {
-        items.value = leerAlmacenamiento()
-      }
-    })
-  }
+  // Si otra pestaña cambia la cotización, esta se pone al día.
+  almacenamiento.escucharOtrasPestanas((guardados) => {
+    items.value = guardados
+  })
 
   return {
     items,
