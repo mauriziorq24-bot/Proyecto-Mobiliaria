@@ -303,8 +303,9 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 │ [ Ver mi cotización ]  [WhatsApp]  │
 └──────────────────────────────────┘
 ```
-- Fija abajo, fondo blanco, sombra `lg`, respeta `env(safe-area-inset-bottom)`.
+- Fija abajo, fondo blanco, sombra `dock` (la `lg` hacia arriba), respeta `env(safe-area-inset-bottom)`.
 - Con productos: resumen + `button-primary` "Ver mi cotización" (lleva a `/carrito`: llevar no es solicitar) + `button-whatsapp`.
+- Ningún botón de una barra fija corta su texto: si no caben lado a lado (pantalla angosta, letra grande del sistema), el segundo baja a su propia fila.
 - Lista vacía: "¿Quieres verlas en persona?" + `button-visit` "Agendar visita".
 - Se oculta en las vistas de cotización/carrito, cita, login y registro.
 - En la ficha de producto la reemplaza la **barra del producto**: selector de cantidad + `button-primary` "Agregar a la cotización" (WhatsApp y visita quedan en el contenido de la ficha, no en la barra). Mismo fondo, sombra `lg` y `env(safe-area-inset-bottom)`; la página reserva espacio al final para que la barra no tape los relacionados ni el footer.
@@ -325,7 +326,8 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 
 ### Shadow Vocabulary
 - **sm** (`box-shadow: 0 1px 2px rgba(20,23,28,.06)`): header fijo después de hacer scroll.
-- **lg** (`box-shadow: 0 10px 28px rgba(20,23,28,.14)`): menús desplegables, drawer, barra de cotización, muestra seleccionada.
+- **lg** (`box-shadow: 0 10px 28px rgba(20,23,28,.14)`): menús desplegables, drawer, muestra seleccionada.
+- **dock** (`box-shadow: 0 -10px 28px rgba(20,23,28,.14)`): la misma `lg` hacia arriba, para las barras fijas de abajo en móvil (cotización, producto).
 
 ### Named Rules
 **La regla de lo que flota.** Si no está encima de otra cosa, no lleva sombra.
@@ -392,8 +394,10 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Al entrar** se pide el catálogo una vez (`GET /api/v1/productos`) y se reconcilia la lista. Mientras llega, la lista se ve con la copia guardada y junto al título "Resumen" aparece "Revisando precios…" (no mueve la página). Si falla: aviso (fondo Aviso) "No pudimos revisar los precios actuales…" con "Reintentar"; la lista sigue sirviendo.
 - **Estructura:** escritorio, lista (y formulario) a la izquierda y "Resumen" fijo a la derecha (sticky, salvo en pantallas bajas). Móvil y tablet: lista → "Vaciar mi cotización" → resumen → barra fija → formulario. La barra fija se detiene al terminar el resumen, así no tapa el formulario.
 - **Línea:** foto 4:5 (80 → 96px), categoría, nombre (enlace a la ficha), "Precio referencial $X c/u", subtotal (`price`) a la derecha, selector de cantidad (1–99, − / + / campo; flechas ↑↓) y "Quitar" (ghost).
+  - En móvil, cantidad y "Quitar" van en una fila a todo el ancho, debajo de la foto; desde `sm`, en la columna de los datos. La foto mide en px (no crece con la letra). Si no quedan ~9rem para el nombre, el subtotal baja debajo de él: con letra grande nada se oculta.
+  - Selector de cantidad: borde Línea de campo; el anillo de foco va por dentro de cada parte (−, número, +).
 - **No disponible** (salió del catálogo): foto atenuada en gris, nombre en Tinta Suave, "Ya no está disponible" (Aviso, con ícono) y "Salió del catálogo, así que no suma al total"; sin selector de cantidad; "Quitar" con borde (secundario). El resumen dice "No disponibles: N, no suman". Si ninguno sigue disponible, no hay envío: aviso con enlace al catálogo.
-- **Quitar → Deshacer:** la línea se reemplaza en su lugar por "**Producto quitado** · [nombre]  ↶ Deshacer" durante 6 s (no se va mientras el puntero o el foco están en ella). El foco pasa a "Deshacer"; al deshacer, el producto vuelve a su posición y el foco a su nombre. Se anuncia por `role="status"`. Va en la lista y no en el aviso flotante para que con teclado esté a mano.
+- **Quitar → Deshacer:** la línea se reemplaza en su lugar por "**Producto quitado** · [nombre]  ↶ Deshacer" durante 6 s (no se va mientras el puntero o el foco de teclado están en ella; con el mouse se va a los 6 s aunque el foco siga en "Deshacer"). El foco pasa a "Deshacer"; al deshacer, el producto vuelve a su posición y el foco a su nombre. Se anuncia por `role="status"`. Va en la lista y no en el aviso flotante para que con teclado esté a mano.
 - **Resumen:** productos, unidades, "Total referencial" (`price-large`) y "Es un precio de referencia. El precio final te lo confirmamos al responder tu cotización."
 - **Acciones según `VITE_COTIZACION_API`:**
   - `false`: `button-whatsapp` "Enviar por WhatsApp" es la única acción principal, con "Se abre WhatsApp con tu lista ya escrita. Tu cotización sigue guardada aquí." Sin botones deshabilitados ni "Pronto".
@@ -404,7 +408,7 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Formulario** (`true`): "Solicitar cotización" + "Déjanos tus datos y te enviamos el precio final por WhatsApp o correo. No necesitas cuenta." Nombre y apellido, empresa o negocio (opcional), teléfono, correo, notas (opcional). Validación como en citas. "Enviar solicitud" (primario, `lg`) con "Se envían N productos (M unidades)". Si hay sesión, se prellena lo que da la cuenta (hoy solo el correo, si el usuario tiene forma de correo).
   - **Errores:** un `400` no dice qué falló, así que se vuelve a revisar el catálogo: si un producto dejó de existir, "Ya no está disponible: [nombre]. Lo marcamos en tu lista y no se enviará: vuelve a enviar tu solicitud." Si no, se revisan los campos y el foco va al primero con error. Red o servidor caído: mensaje sobre el botón y **se conserva todo** (datos escritos y lista).
 - **Vacía:** "Tu cotización está vacía" + "Ver catálogo" y, separado, "¿Prefieres verlos en persona?" + `button-visit`.
-- **Confirmación (`/carrito/confirmacion?codigo=…`):** se llega con `replace` tras el `201`; la lista se vacía (ahí sí sabemos que llegó). Ícono de Éxito, "Recibimos tu solicitud", "Te contactaremos por WhatsApp o correo…", código grande con "Copiar código", "Lo que pediste" (cantidad × nombre, subtotal, total referencial), `button-whatsapp` "Escríbenos por WhatsApp" con el código ya escrito y "Seguir viendo el catálogo". Lee la copia de `src/utils/cotizacionesEnviadas.js`: recargar no reenvía. Sin una solicitud de las últimas 24 h con ese código, lleva a `/carrito`.
+- **Confirmación (`/carrito/confirmacion?codigo=…`):** se llega con `replace` tras el `201`; la lista se vacía (ahí sí sabemos que llegó). Ícono de Éxito, "Recibimos tu solicitud", "Te contactaremos por WhatsApp o correo…", código grande con "Copiar código" (`title` en móvil para que quepa en una línea desde 320px, `display` desde `sm`), "Lo que pediste" (cantidad × nombre, subtotal, total referencial), `button-whatsapp` "Escríbenos por WhatsApp" con el código ya escrito y "Seguir viendo el catálogo" (a `/buscar`). Lee la copia de `src/utils/cotizacionesEnviadas.js`: recargar no reenvía. Sin una solicitud de las últimas 24 h con ese código, lleva a `/carrito`.
 
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.

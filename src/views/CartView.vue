@@ -110,13 +110,20 @@ function pausarCierre(id) {
   clearTimeout(timers.get(id))
 }
 
+// Al quitar, el foco pasa a "Deshacer" también si se usó el mouse. Solo el foco de teclado
+// (:focus-visible) detiene el cierre: con el mouse la fila se va a los 6 s, como se espera.
+function pausarSiEsTeclado(event, id) {
+  if (event.target.matches(':focus-visible')) pausarCierre(id)
+}
+
 function cerrarQuitado(id) {
   clearTimeout(timers.get(id))
   timers.delete(id)
   // Si el foco estaba en esa fila, no se pierde: pasa al título.
-  const teniaFoco =document.getElementById(`quitado-${id}`)?.contains(document.activeElement)
+  const teniaFoco = document.getElementById(`quitado-${id}`)?.contains(document.activeElement)
   quitados.value = quitados.value.filter((quitado) => quitado.id !== id)
-  if (teniaFoco) nextTick(() => heading.value?.focus())
+  // preventScroll: la fila se cierra sola; mover la página hacia el título sorprendería.
+  if (teniaFoco) nextTick(() => heading.value?.focus({ preventScroll: true }))
 }
 
 function quitarItem(item) {
@@ -381,7 +388,7 @@ async function handleSubmit() {
                   class="flex items-center justify-between gap-3 py-3 motion-safe:animate-fade-in"
                   @mouseenter="pausarCierre(fila.quitado.id)"
                   @mouseleave="programarCierre(fila.quitado.id)"
-                  @focusin="pausarCierre(fila.quitado.id)"
+                  @focusin="pausarSiEsTeclado($event, fila.quitado.id)"
                   @focusout="programarCierre(fila.quitado.id)"
                 >
                   <p class="min-w-0 text-small">

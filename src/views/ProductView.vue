@@ -384,7 +384,7 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
       -->
       <div
         ref="productBar"
-        class="sticky bottom-0 z-20 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgb(20_23_28/0.14)] md:hidden"
+        class="sticky bottom-0 z-20 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-dock md:hidden"
       >
         <p v-if="enCotizacion" class="mb-2 text-small text-ink-muted">
           Ya tienes <span class="tabular-nums">{{ enCotizacion }}</span> en tu cotización

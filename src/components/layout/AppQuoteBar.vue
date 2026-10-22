@@ -29,22 +29,28 @@ useBottomBarHeight(bar)
   <aside
     ref="bar"
     aria-label="Mi cotización"
-    class="sticky bottom-0 z-20 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgb(20_23_28/0.14)] md:hidden"
+    class="sticky bottom-0 z-20 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-dock md:hidden"
   >
     <p class="flex items-baseline justify-between gap-3 text-small">
       <span class="font-semibold text-ink">
         Mi cotización · <span class="tabular-nums">{{ cotizacion.totalUnidades }}</span>
       </span>
       <span class="text-ink-muted">
-        <span aria-hidden="true">ref.</span>
+        <span aria-hidden="true">ref. </span>
         <span class="sr-only">Total referencial</span>
         <span class="tabular-nums">{{ totalTexto }}</span>
       </span>
     </p>
-    <div class="mt-2 flex gap-3">
+    <!--
+      grow sin min-w-0: cada botón mide al menos su texto. Si los dos no caben (pantalla angosta o
+      letra grande), WhatsApp baja a otra fila en vez de cortar el texto. "Ver mi cotización" crece
+      el doble: es la acción principal.
+    -->
+    <div class="mt-2 flex flex-wrap gap-3">
       <!-- Lleva a la página de la cotización: ahí se revisa y se envía. Llevar no es solicitar. -->
-      <BaseButton to="/carrito" class="min-w-0 flex-1">Ver mi cotización</BaseButton>
+      <BaseButton to="/carrito" class="grow-[2]">Ver mi cotización</BaseButton>
       <BaseButton
+        class="grow"
         variant="whatsapp"
         :href="whatsappLink"
         target="_blank"

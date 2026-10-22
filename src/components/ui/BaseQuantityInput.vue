@@ -35,19 +35,23 @@ function onChange(event) {
   event.target.value = quantity.value
 }
 
+// -outline-offset-2: el anillo de foco va por dentro de cada parte. Así se ve completo y deja
+// claro cuál de las tres (−, número, +) tiene el foco.
 const buttonClasses =
-  'inline-flex size-11 shrink-0 items-center justify-center text-ink transition-[background-color,color,transform] duration-200 ease-out hover:bg-brand-tint hover:text-brand-deep active:scale-[0.92] disabled:cursor-not-allowed disabled:text-ink-muted/50 disabled:hover:bg-transparent disabled:active:scale-100'
+  'inline-flex size-11 shrink-0 items-center justify-center text-ink -outline-offset-2 transition-[background-color,color,transform] duration-200 ease-out hover:bg-brand-tint hover:text-brand-deep active:scale-[0.92] disabled:cursor-not-allowed disabled:text-ink-muted/50 disabled:hover:bg-transparent disabled:active:scale-100'
 </script>
 
 <template>
   <div class="inline-flex flex-col gap-1.5">
     <label :for="inputId" :class="showLabel ? 'text-small text-ink-muted' : 'sr-only'">{{ label }}</label>
-    <div
-      class="inline-flex h-[46px] items-center overflow-hidden rounded-md border border-line bg-surface focus-within:border-brand-deep"
-    >
+    <!--
+      Sin overflow-hidden: recortaba el anillo de foco de − y +. Las esquinas las redondea cada
+      botón (radio md menos el borde de 1px). Borde Línea de campo, como BaseInput (WCAG 1.4.11).
+    -->
+    <div class="inline-flex h-[46px] items-center rounded-md border border-line-strong bg-surface">
       <button
         type="button"
-        :class="buttonClasses"
+        :class="[buttonClasses, 'rounded-l-[9px]']"
         :disabled="!canDecrease"
         :aria-label="`Disminuir ${label.toLowerCase()}`"
         @click="step(-1)"
@@ -62,14 +66,14 @@ const buttonClasses =
         inputmode="numeric"
         pattern="[0-9]*"
         autocomplete="off"
-        class="h-full w-10 border-x border-line bg-transparent text-center text-base font-semibold tabular-nums outline-none"
+        class="h-full w-10 border-x border-line bg-transparent text-center text-base font-semibold tabular-nums -outline-offset-2"
         @change="onChange"
         @keydown.up.prevent="step(1)"
         @keydown.down.prevent="step(-1)"
       />
       <button
         type="button"
-        :class="buttonClasses"
+        :class="[buttonClasses, 'rounded-r-[9px]']"
         :disabled="!canIncrease"
         :aria-label="`Aumentar ${label.toLowerCase()}`"
         @click="step(1)"

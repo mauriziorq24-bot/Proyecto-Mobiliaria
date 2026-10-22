@@ -70,7 +70,12 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
       <div class="mt-6 rounded-md border border-line bg-ground p-4 sm:p-5">
         <p class="text-label text-ink-muted uppercase">Código de tu solicitud</p>
         <div class="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-          <p ref="code" class="text-display font-extrabold tracking-wide text-ink tabular-nums select-all">
+          <!-- Un código se dicta y se copia: en móvil va un tamaño menor para que quepa en una
+               línea desde 320px. Con letra muy grande se parte en el guion antes que salirse. -->
+          <p
+            ref="code"
+            class="text-title font-extrabold tracking-wide text-ink tabular-nums select-all sm:text-display"
+          >
             {{ cotizacion.codigoCotizacion }}
           </p>
           <BaseButton variant="secondary" size="sm" class="max-[400px]:w-full" @click="copyCode">
@@ -121,7 +126,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
     </section>
 
     <div class="mt-6 flex justify-center">
-      <BaseButton variant="ghost" to="/">Seguir viendo el catálogo</BaseButton>
+      <BaseButton variant="ghost" to="/buscar">Seguir viendo el catálogo</BaseButton>
     </div>
   </div>
 </template>
