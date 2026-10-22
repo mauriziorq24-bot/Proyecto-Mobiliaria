@@ -84,8 +84,12 @@ api.interceptors.response.use(
     // 401 = sesión vencida, pero solo si la petición llevaba token: el backend también
     // da 401 en GET públicos con un id no numérico (pendiente 21 de API.md) y eso
     // no debe echar a nadie de su sesión.
+    // Una petición puede pedir que su 401 no cierre la sesión (keepSessionOn401): p. ej. favoritos,
+    // que hoy responde 401 con un token válido (pendiente 27 de API.md) y echaba a la persona
+    // apenas iniciaba sesión.
     const sentToken = Boolean(error.config?.headers?.Authorization)
-    if (error.response?.status === 401 && sentToken && !isAuthEndpoint(error.config)) {
+    const keepSession = Boolean(error.config?.keepSessionOn401)
+    if (error.response?.status === 401 && sentToken && !keepSession && !isAuthEndpoint(error.config)) {
       auth.onUnauthorized()
     }
     return Promise.reject(error)

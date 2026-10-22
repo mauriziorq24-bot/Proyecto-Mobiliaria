@@ -31,21 +31,26 @@ function fakeRequest(responder, ms = 400) {
 // --- API ---
 // Las tres exigen token: sin él el backend responde 403 (y 401 si lo rechaza, ver API.md).
 
+// Un 401 de favoritos no cierra la sesión: hoy el backend lo devuelve incluso con un token válido
+// (pendiente 27 de API.md). Un token vencido igual se detecta antes de enviarse (api.js), así que
+// la sesión no queda abierta de más; solo falla la sincronización y los favoritos siguen en este navegador.
+const sessionOptions = { keepSessionOn401: true }
+
 // GET /api/v1/favoritos → [1, 4, 7] (ids de productos). Lo que no sea un id entero se descarta.
 export async function obtenerFavoritos() {
   if (useMocks) return fakeRequest(() => [...mockGuardados])
-  const { data } = await api.get('/api/v1/favoritos')
+  const { data } = await api.get('/api/v1/favoritos', sessionOptions)
   return Array.isArray(data) ? data.filter(Number.isInteger) : []
 }
 
 // POST /api/v1/favoritos/{productoId} → 200 sin cuerpo. Idempotente: repetirlo no duplica.
 export async function agregarFavorito(productoId) {
   if (useMocks) return fakeRequest(() => void mockGuardados.add(productoId))
-  await api.post(`/api/v1/favoritos/${productoId}`)
+  await api.post(`/api/v1/favoritos/${productoId}`, null, sessionOptions)
 }
 
 // DELETE /api/v1/favoritos/{productoId} → 200 sin cuerpo. Idempotente: quitar uno que no está no falla.
 export async function quitarFavorito(productoId) {
   if (useMocks) return fakeRequest(() => void mockGuardados.delete(productoId))
-  await api.delete(`/api/v1/favoritos/${productoId}`)
+  await api.delete(`/api/v1/favoritos/${productoId}`, sessionOptions)
 }

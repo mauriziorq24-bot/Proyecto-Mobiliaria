@@ -180,7 +180,7 @@ export const useFavoritosStore = defineStore('favoritos', () => {
       try {
         enCuenta = await obtenerFavoritos()
       } catch (error) {
-        // Un 401 ya cerró la sesión: no hay nada que avisar aquí.
+        // Si mientras tanto se cerró la sesión, no hay nada que avisar aquí.
         if (conCuenta()) toast.show(`No pudimos traer los favoritos de tu cuenta. ${sugerencia(error)}`)
         return
       }
