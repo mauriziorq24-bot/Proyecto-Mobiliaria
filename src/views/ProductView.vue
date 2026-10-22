@@ -1,6 +1,6 @@
 <script setup>
-import { ArrowLeft, ArrowRight, CalendarDays, ChevronRight, MessageCircle, PackageX, Plus } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, MessageCircle, PackageX, Plus } from 'lucide-vue-next'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import ProductGallery from '../components/product/ProductGallery.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
@@ -9,9 +9,12 @@ import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
 import BaseQuantityInput from '../components/ui/BaseQuantityInput.vue'
 import { useAsync } from '../composables/useAsync'
+import { useBottomBarHeight } from '../composables/useBottomBarHeight'
 import { useCategorias } from '../composables/useCategorias'
 import { estiloTipoEspacio } from '../config/tiposEspacio'
+import { useToast } from '../composables/useToast'
 import { obtenerProductoPorId, obtenerProductos } from '../services/productoService'
+import { CANTIDAD_MAXIMA, useCotizacionStore } from '../stores/cotizacion'
 import { formatearPrecio } from '../utils/formato'
 import { setPageTitle } from '../utils/pageTitle'
 import { productInquiryUrl } from '../utils/whatsapp'
@@ -24,6 +27,17 @@ const router = useRouter()
 // Cantidad elegida: la comparten el selector, la barra móvil y el mensaje de WhatsApp.
 // Se declara antes del watch del id porque ese watch la reinicia al cambiar de producto.
 const cantidad = ref(1)
+
+// Unidades que sumó el último clic en "Agregar a la cotización" (null = el botón muestra su
+// texto normal). También se reinicia al cambiar de producto, por eso va aquí arriba.
+const justAdded = ref(null)
+let addedTimer = null
+
+function resetAdded() {
+  clearTimeout(addedTimer)
+  justAdded.value = null
+}
+onBeforeUnmount(resetAdded)
 
 // --- Producto ---
 // useAsync guarda data/loading/error; aquí solo se dice QUÉ pedir.
@@ -44,6 +58,7 @@ watch(
   (id) => {
     if (!id) return
     cantidad.value = 1
+    resetAdded()
     loadProducto(id)
   },
   { immediate: true },
@@ -99,11 +114,42 @@ const whatsappLink = computed(() => {
 
 const appointmentLink = computed(() => ({ name: 'appointment', query: { producto: producto.value?.id } }))
 
+// --- Agregar a la cotización (DESIGN.md › Agregar a la cotización) ---
+// La persona no sale de la página: el botón pasa un momento a "✓ Agregado (N)", aparece el aviso
+// con "Ver mi cotización" y junto al selector se ve cuántas lleva. Si ya estaba, la cantidad se suma.
+const ADDED_FEEDBACK_MS = 2000
+
+const cotizacion = useCotizacionStore()
+const toast = useToast()
+
+const enCotizacion = computed(() => (producto.value ? cotizacion.cantidadDe(producto.value.id) : 0))
+
 function addToQuote() {
-  // TODO (Fase 7 · carrito): useCartStore().add(producto.value, cantidad.value).
-  // Según DESIGN.md: el botón muestra "✓ Agregado", aparece el aviso "Agregado a tu cotización"
-  // y, si ya estaba, la cantidad se suma. Hasta entonces no se simula ninguna confirmación.
+  const antes = enCotizacion.value
+  cotizacion.agregar(producto.value, cantidad.value)
+  // El store no pasa de CANTIDAD_MAXIMA: lo sumado puede ser menos de lo pedido, o nada.
+  const sumadas = enCotizacion.value - antes
+
+  if (sumadas === 0) {
+    toast.show(`Ya tienes el máximo (${CANTIDAD_MAXIMA}) de este producto en tu cotización.`, {
+      action: { label: 'Ver mi cotización', to: '/carrito' },
+    })
+    return
+  }
+
+  justAdded.value = sumadas
+  clearTimeout(addedTimer)
+  addedTimer = setTimeout(resetAdded, ADDED_FEEDBACK_MS)
+
+  toast.show('Agregado a tu cotización', {
+    tone: 'success',
+    action: { label: 'Ver mi cotización', to: '/carrito' },
+  })
 }
+
+// La barra del producto publica su altura para que el aviso aparezca encima de ella.
+const productBar = ref(null)
+useBottomBarHeight(productBar)
 
 // --- Productos relacionados ---
 // Hasta 4 de la misma categoría, sin el actual. Se pide 1 de más por si el actual viene en la lista.
@@ -235,12 +281,20 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
             </div>
 
             <!-- Cantidad + cotización (desde tablet; en móvil van en la barra inferior) -->
-            <div class="mt-6 hidden items-end gap-3 md:flex">
-              <BaseQuantityInput v-model="cantidad" show-label />
-              <BaseButton class="flex-1" @click="addToQuote">
-                <template #icon-left><Plus /></template>
-                Agregar a la cotización
-              </BaseButton>
+            <div class="mt-6 hidden md:block">
+              <div class="flex items-end gap-3">
+                <BaseQuantityInput v-model="cantidad" show-label />
+                <BaseButton class="flex-1" @click="addToQuote">
+                  <template #icon-left>
+                    <Check v-if="justAdded" />
+                    <Plus v-else />
+                  </template>
+                  {{ justAdded ? `Agregado (${justAdded})` : 'Agregar a la cotización' }}
+                </BaseButton>
+              </div>
+              <p v-if="enCotizacion" class="mt-2 text-small text-ink-muted">
+                Ya tienes <span class="tabular-nums">{{ enCotizacion }}</span> en tu cotización
+              </p>
             </div>
 
             <div class="mt-3 grid gap-3 max-md:mt-6">
@@ -329,10 +383,19 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
         y se detiene antes del footer, así nunca lo tapa (no hace falta reservar espacio).
       -->
       <div
-        class="sticky bottom-0 z-20 flex items-center gap-3 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgb(20_23_28/0.14)] md:hidden"
+        ref="productBar"
+        class="sticky bottom-0 z-20 border-t border-line bg-surface px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgb(20_23_28/0.14)] md:hidden"
       >
-        <BaseQuantityInput v-model="cantidad" />
-        <BaseButton class="min-w-0 flex-1" @click="addToQuote">Agregar a la cotización</BaseButton>
+        <p v-if="enCotizacion" class="mb-2 text-small text-ink-muted">
+          Ya tienes <span class="tabular-nums">{{ enCotizacion }}</span> en tu cotización
+        </p>
+        <div class="flex items-center gap-3">
+          <BaseQuantityInput v-model="cantidad" />
+          <BaseButton class="min-w-0 flex-1" @click="addToQuote">
+            <template v-if="justAdded" #icon-left><Check /></template>
+            {{ justAdded ? `Agregado (${justAdded})` : 'Agregar a la cotización' }}
+          </BaseButton>
+        </div>
       </div>
     </template>
   </div>

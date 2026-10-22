@@ -1,9 +1,19 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import { useCotizacionStore } from '../../stores/cotizacion'
 import AppFooter from './AppFooter.vue'
 import AppHeader from './AppHeader.vue'
+import AppQuoteBar from './AppQuoteBar.vue'
 import AppToast from './AppToast.vue'
 import ServerWakeNotice from './ServerWakeNotice.vue'
+
+const route = useRoute()
+const cotizacion = useCotizacionStore()
+
+// Barra de cotización móvil: solo si hay productos y la ruta no la oculta (meta.ocultarBarraCotizacion).
+// Va con v-if (no solo CSS) para que al quitarse publique altura 0 y los avisos bajen.
+const showQuoteBar = computed(() => cotizacion.totalUnidades > 0 && !route.meta.ocultarBarraCotizacion)
 </script>
 
 <template>
@@ -24,6 +34,8 @@ import ServerWakeNotice from './ServerWakeNotice.vue'
     </main>
 
     <AppFooter />
+
+    <AppQuoteBar v-if="showQuoteBar" />
 
     <ServerWakeNotice />
     <AppToast />

@@ -18,6 +18,7 @@ import { company } from '../config/empresa'
 import { whatsappUrl } from '../utils/whatsapp'
 import { estiloTipoEspacio } from '../config/tiposEspacio'
 import { obtenerProductos } from '../services/productoService'
+import { useCotizacionStore } from '../stores/cotizacion'
 
 // --- Hero ---
 // Siluetas de la vitrina: son ilustración (no datos), por eso la lista es fija.
@@ -28,6 +29,9 @@ const VITRINE_SLUGS = ['escritorios', 'silleria', 'comedores', 'peinadores', 'ca
 // Con movimiento reducido el salto es instantáneo. El foco pasa al título de la sección
 // para que quien navega con teclado o lector de pantalla siga desde ahí.
 const categoriasTitle = ref(null)
+
+// El botón de cierre ("Pide una cotización") cambia según haya o no productos en la cotización.
+const cotizacion = useCotizacionStore()
 function scrollToCategorias(event) {
   event.preventDefault()
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -260,8 +264,17 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
               Agrega a tu cotización los productos que te interesan y envíanos la lista: te respondemos con el precio
               final.
             </p>
-            <!-- TODO (Fase 7): si el carrito tiene productos, este botón pasa a "Solicitar cotización" y va a /carrito. -->
-            <BaseButton variant="secondary" href="#categorias" class="mt-4 max-sm:w-full" @click="scrollToCategorias">
+            <!-- Con productos en la cotización, el siguiente paso es enviarla; si no, elegir productos. -->
+            <BaseButton v-if="cotizacion.totalUnidades > 0" to="/carrito" class="mt-4 max-sm:w-full">
+              Solicitar cotización
+            </BaseButton>
+            <BaseButton
+              v-else
+              variant="secondary"
+              href="#categorias"
+              class="mt-4 max-sm:w-full"
+              @click="scrollToCategorias"
+            >
               Explorar categorías
             </BaseButton>
           </div>

@@ -1,11 +1,12 @@
 <script setup>
 import { CalendarCheck, Heart, LayoutGrid, Menu, RotateCw, Search, ShoppingCart } from 'lucide-vue-next'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo.png'
 import { useCategorias } from '../../composables/useCategorias'
 import { useDebounce } from '../../composables/useDebounce'
 import { company } from '../../config/empresa'
+import { useCotizacionStore } from '../../stores/cotizacion'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
 import BaseInput from '../ui/BaseInput.vue'
@@ -16,9 +17,15 @@ const route = useRoute()
 const router = useRouter()
 const { categorias, loading, error, retry } = useCategorias()
 
-// Contadores: quedan en 0 hasta que existan los stores de favoritos y carrito.
+// Favoritos: queda en 0 hasta que exista su store.
 const favoritesCount = 0
-const cartCount = 0
+
+// Cotización: unidades en total (2 sillas + 1 escritorio = 3). Con 0, el contador se oculta.
+const cotizacion = useCotizacionStore()
+const cotizacionLabel = computed(() => {
+  const n = cotizacion.totalUnidades
+  return `Mi cotización, ${n} ${n === 1 ? 'producto' : 'productos'}`
+})
 
 function isActiveCategory(slug) {
   return route.name === 'category' && route.params.slug === slug
@@ -218,10 +225,11 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           <BaseIconButton :icon="Heart" label="Ver favoritos" variant="inverse" to="/favoritos" :badge="favoritesCount" />
           <BaseIconButton
             :icon="ShoppingCart"
-            label="Ver cotización"
+            label="Mi cotización"
             variant="inverse"
             to="/carrito"
-            :badge="cartCount"
+            :badge="cotizacion.totalUnidades"
+            :badge-label="cotizacionLabel"
           />
           <BaseIconButton
             ref="menuButton"

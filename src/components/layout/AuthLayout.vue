@@ -47,10 +47,12 @@ async function handleGoogleCredential(credential) {
     <!-- En móvil no hay tarjeta: los campos van directo sobre el fondo. Desde sm, tarjeta plana con borde. -->
     <section aria-labelledby="auth-title" class="sm:rounded-md sm:border sm:border-line sm:bg-surface sm:p-8">
       <h1 id="auth-title" class="text-headline text-balance text-ink">{{ title }}</h1>
-      <!-- TODO: ampliar cuando existan (DESIGN.md › Login y registro):
-           "Tus datos se completan solos al pedir una cotización" (Fase 7) y
-           "Revisa tus citas" (si el backend agrega un GET de las citas del usuario). -->
-      <p class="mt-2 text-ink-muted">Con una cuenta puedes agendar visitas a nuestro showroom.</p>
+      <!-- TODO: agregar "Revisa tus citas" si el backend agrega un GET de las citas del usuario
+           (DESIGN.md › Login y registro). -->
+      <p class="mt-2 text-ink-muted">
+        Con una cuenta puedes agendar visitas a nuestro showroom. Tus datos se completan solos al pedir una
+        cotización.
+      </p>
 
       <div v-if="showGoogle" class="mt-6">
         <GoogleSignInButton @credential="handleGoogleCredential" @unavailable="googleUnavailable = true" />

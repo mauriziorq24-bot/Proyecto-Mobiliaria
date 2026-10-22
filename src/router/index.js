@@ -8,30 +8,31 @@ import HomeView from '../views/HomeView.vue'
 // meta.title: título de la pestaña. Sin él (inicio) se muestra solo la marca;
 // categoría, producto y búsqueda lo fijan desde su vista: dependen de la API o de la URL.
 // meta.requiereSesion / meta.soloInvitados / meta.requiereAdmin: los revisa el guard de abajo.
+// meta.ocultarBarraCotizacion: AppLayout no muestra la barra de cotización móvil en esa ruta.
 const routes = [
   { path: '/', name: 'home', component: HomeView },
   // Las demás vistas se cargan bajo demanda (lazy loading): solo se descargan al visitarlas.
   { path: '/categoria/:slug', name: 'category', component: () => import('../views/CategoryView.vue') },
-  { path: '/producto/:id', name: 'product', component: () => import('../views/ProductView.vue') },
+  { path: '/producto/:id', name: 'product', component: () => import('../views/ProductView.vue'), meta: { ocultarBarraCotizacion: true } },
   { path: '/buscar', name: 'search', component: () => import('../views/SearchView.vue') },
-  { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { title: 'Mi cotización' } },
+  { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { title: 'Mi cotización', ocultarBarraCotizacion: true } },
   { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { title: 'Favoritos' } },
-  { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita', requiereSesion: true } },
+  { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita', requiereSesion: true, ocultarBarraCotizacion: true } },
   // Confirmación: lee la cita guardada en este navegador (?codigo=CITA-…), nunca la vuelve a enviar.
   // No exige sesión: solo muestra datos locales. Sin una cita reciente con ese código, al formulario.
   {
     path: '/agendar-cita/confirmacion',
     name: 'appointment-confirmation',
     component: () => import('../views/AppointmentConfirmationView.vue'),
-    meta: { title: 'Visita agendada' },
+    meta: { title: 'Visita agendada', ocultarBarraCotizacion: true },
     beforeEnter: (to) => {
       if (!buscarCitaReciente(to.query.codigo)) return { name: 'appointment', replace: true }
     },
   },
   // Reprogramar o cancelar las citas guardadas en este navegador. Exige sesión: PUT y DELETE piden token.
   { path: '/mi-cita', name: 'my-appointments', component: () => import('../views/MyAppointmentsView.vue'), meta: { title: 'Mis visitas', requiereSesion: true } },
-  { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true } },
-  { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true } },
+  { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { title: 'Ingresar', soloInvitados: true, ocultarBarraCotizacion: true } },
+  { path: '/registro', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { title: 'Crear cuenta', soloInvitados: true, ocultarBarraCotizacion: true } },
   { path: '/perfil', name: 'profile', component: () => import('../views/ProfileView.vue'), meta: { title: 'Mi perfil', requiereSesion: true } },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
   { path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue'), meta: { title: 'Guía de estilo' } },

@@ -23,6 +23,17 @@ export function productInquiryUrl(producto, cantidad, url) {
   return whatsappUrl(productInquiryMessage({ nombre: producto.nombre, cantidad, url }))
 }
 
+// Cotización completa desde la barra móvil: una línea por producto y el total referencial.
+// `items` son los del store de la cotización que siguen disponibles; `total` ya viene formateado.
+export function cotizacionUrl(items, total) {
+  const lines = [
+    'Hola, vengo de la página web y quiero cotizar estos productos:',
+    ...items.map((item) => `• ${item.cantidad} × ${item.producto.nombre}`),
+    `Total referencial: ${total}`,
+  ]
+  return whatsappUrl(lines.join('\n'))
+}
+
 // Mensajes de la confirmación de cita. `cuando` es la fecha y hora ya en texto
 // ("viernes 20 de noviembre, 2:30 p. m."), para que diga lo mismo que la pantalla.
 export function citaAgendadaUrl({ codigoCita, tipo, cuando }) {

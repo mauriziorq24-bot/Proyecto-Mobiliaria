@@ -10,7 +10,10 @@ const waking = useServerWaking()
 <template>
   <!-- role="status" queda siempre en el DOM: los lectores de pantalla solo anuncian
        cambios dentro de una región que ya existía cuando apareció el texto. -->
-  <div role="status" class="pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-center">
+  <div
+    role="status"
+    class="pointer-events-none fixed inset-x-4 bottom-[calc(1rem+var(--bottom-bar-h,0px))] z-40 flex justify-center"
+  >
     <Transition
       enter-active-class="transition duration-200 ease-out motion-reduce:transition-none"
       enter-from-class="translate-y-2 opacity-0"

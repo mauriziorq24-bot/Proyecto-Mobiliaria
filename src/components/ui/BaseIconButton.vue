@@ -24,6 +24,9 @@ const props = defineProps({
   },
   // Contador opcional sobre el ícono (favoritos, carrito). 0 o null lo oculta.
   badge: { type: Number, default: null },
+  // Texto accesible completo mientras se ve el contador ("Mi cotización, 3 productos").
+  // Sin él se anuncia "label, número".
+  badgeLabel: { type: String, default: null },
   disabled: { type: Boolean, default: false },
   type: { type: String, default: 'button' },
   // Con "to" se dibuja como RouterLink (p. ej. el ícono de favoritos lleva a /favoritos).
@@ -50,8 +53,11 @@ const sizeClasses = {
 
 const showBadge = computed(() => props.badge !== null && props.badge > 0)
 
-// El contador también se anuncia: "Ver carrito, 3".
-const accessibleLabel = computed(() => (showBadge.value ? `${props.label}, ${props.badge}` : props.label))
+// El contador también se anuncia: "Ver favoritos, 3" (o el badgeLabel, si llega).
+const accessibleLabel = computed(() => {
+  if (!showBadge.value) return props.label
+  return props.badgeLabel ?? `${props.label}, ${props.badge}`
+})
 </script>
 
 <template>
