@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026). Y el 21/10/2026, **respuestas del compañero** sobre citas: `fechaHora` en hora de Caracas, lista de `tipoAsesoria`, `400` para enum inválido y horario de atención (cierran los pendientes 11 y 11-bis).
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026). Y el 21/10/2026, **respuestas del compañero** sobre citas: `fechaHora` en hora de Caracas, lista de `tipoAsesoria`, `400` para enum inválido y horario de atención (cierran los pendientes 11 y 11-bis). Actualizado el 22/10/2026: **favoritos** (`/api/v1/favoritos`), contrato del Swagger y prueba con curl; ver [Favoritos](#favoritos--apiv1favoritos) y pendiente 27.
 Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -120,7 +120,7 @@ Header: `{ "alg": "HS384" }`. Payload (base64, decodificable en el navegador):
 - **⚠️ Un token inválido o mal formado en un `GET` público da `500`, no `401`.** Mandar `Authorization: Bearer abc.def.ghi` a `GET /api/v1/productos` devuelve `500 Internal Server Error`. Esto es un problema para el frontend: el interceptor de axios espera que "token malo/vencido" sea `401` (para cerrar sesión y mandar al login, ver `CLAUDE.md`). Hoy un token vencido podría manifestarse como `500` en vez de `401` (ver pendiente 21-bis). Mientras tanto, conviene **no mandar el header `Authorization` en las peticiones públicas** si no hay sesión, y tratar el `500` con prudencia.
 - `GET /api/v1/categorias/{id}` responde `405 Method Not Allowed` (ese path existe en el spec solo para otros métodos, no para `GET`).
 
-> Nota de limpieza: estas pruebas crearon en la base de datos de Render los usuarios `prueba_front_2110`, `prueba_front_2110b`, `prueba_front_2110d` y `prueba_front_2110e`, y las pruebas de citas crearon `prueba_citas_2110` (correo `prueba_citas_2110@example.com`). Si el compañero quiere, puede borrarlos del seed/BD. Las citas de prueba ya se borraron.
+> Nota de limpieza: estas pruebas crearon en la base de datos de Render los usuarios `prueba_front_2110`, `prueba_front_2110b`, `prueba_front_2110d` y `prueba_front_2110e`, y las pruebas de citas crearon `prueba_citas_2110` (correo `prueba_citas_2110@example.com`). Si el compañero quiere, puede borrarlos del seed/BD. Las citas de prueba ya se borraron. El 22/10/2026, la prueba de favoritos creó `prueba_fav_2210` (correo `prueba_fav_2210@example.com`), sin favoritos guardados (todas las escrituras fallaron).
 
 ---
 
@@ -372,6 +372,50 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 
 ---
 
+## Favoritos — `/api/v1/favoritos`
+
+> **Publicado en el Swagger (revisado el 22/10/2026), pero hoy no funciona en producción** (ver [prueba](#comportamiento-real-de-favoritos-probado-el-22102026) y pendiente 27). El frontend lo usa solo con `VITE_FAVORITOS_API=true` y sesión iniciada (ver `CLAUDE.md`); con los mocks responde `src/mocks/favoritos.js`.
+
+**Los tres exigen token** y trabajan sobre los favoritos del usuario del token.
+
+| Método | Ruta | Respuesta (según el Swagger) |
+|---|---|---|
+| `GET` | `/api/v1/favoritos` | `200` · arreglo de ids de productos (`int64`): `[1, 4, 7]` |
+| `POST` | `/api/v1/favoritos/{productoId}` | `200` sin cuerpo |
+| `DELETE` | `/api/v1/favoritos/{productoId}` | `200` sin cuerpo |
+
+- El frontend trata **cualquier `2xx`** como éxito, así que da igual si el backend responde `200` o `204`.
+- El frontend asume que `POST` y `DELETE` son **idempotentes** (guardar dos veces no duplica; quitar uno que no está no falla). Confirmar con el compañero.
+- Nombres y forma del producto: el `GET` devuelve **solo ids**; el frontend busca nombre, precio y fotos en `GET /api/v1/productos`.
+
+### Diferencias con la propuesta que le hicimos
+
+| | Propuesta | Backend (Swagger) |
+|---|---|---|
+| Rutas | `GET /api/v1/favoritos`, `POST`/`DELETE /api/v1/favoritos/{productoId}` | **Iguales** |
+| `GET` | `[1, 4, 7]` | **Igual** (arreglo de enteros) |
+| `POST` / `DELETE` | `204` | **`200`** sin cuerpo |
+| Sin token | `401` | **`403`** (como el resto de endpoints protegidos) |
+| Producto inexistente | `404` | No documentado; hoy `500` (ver prueba) |
+
+### Comportamiento real de favoritos (probado el 22/10/2026)
+
+Probado con curl contra Render con un usuario de prueba recién registrado (`prueba_fav_2210`). Su token funciona en otros endpoints protegidos (`GET /api/v1/cotizaciones/mis-cotizaciones` → `200 []`).
+
+| Petición | Sin token | Con token válido |
+|---|---|---|
+| `GET /api/v1/favoritos` | `403` | **`401` Unauthorized** ❌ |
+| `POST /api/v1/favoritos/1` (existe) | `403` | **`500`** ❌ (también al repetirlo) |
+| `POST /api/v1/favoritos/99999` (no existe) | — | `500` (debería ser `404`) |
+| `POST /api/v1/favoritos/abc` | — | `401` `text/plain` "Credenciales invalidas For input string" (pendiente 21) |
+| `DELETE /api/v1/favoritos/1` | `403` | **`500`** ❌ |
+
+- **No se pudo comprobar** la idempotencia ni la forma real del `GET`: ninguna petición con token tuvo éxito.
+- **⚠️ El `401` del `GET` con un token válido es peligroso:** el interceptor de axios lo toma como "sesión vencida", cierra la sesión y lleva al login. Con `VITE_FAVORITOS_API=true`, **cada inicio de sesión terminaría cerrándola**. Por eso la variable debe seguir en `false` hasta que el backend lo arregle.
+- Parece que el controlador no logra obtener el usuario del token (p. ej. busca por un dato que el JWT no trae, como el email: el JWT solo tiene `sub` = username).
+
+---
+
 ## ⚠️ Pendientes con el backend
 
 ### Bloquean funcionalidades del plan
@@ -379,6 +423,7 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
    - **Opción A:** el backend los crea (`/api/v1/carrito`, `/api/v1/favoritos`, `/api/v1/pedidos`).
    - **Opción B:** carrito y favoritos viven en el frontend (Pinia + localStorage) y el "checkout" se convierte en **solicitud de cotización** (vía cita, WhatsApp o un endpoint `POST /api/v1/cotizaciones`). Encaja con `precioReferencialUsd`.
    - **Decidido (21/10/2026):** opción B. `POST /api/v1/cotizaciones` ya está publicado (ver [Cotizaciones](#cotizaciones--apiv1cotizaciones)).
+   - **Favoritos (22/10/2026):** el backend publicó `/api/v1/favoritos` (ver [Favoritos](#favoritos--apiv1favoritos)). El frontend ya está listo para sincronizarlos con la cuenta, pero no funciona hasta resolver el pendiente 27.
 2. **Filtro por categoría:** `GET /api/v1/productos` no acepta categoría. Pedir `?categoria={slug}` o `?categoriaId={id}`.
 3. ~~**`categoriaId` llega `null`**~~ ✅ **Resuelto** (20/10/2026): los 15 productos del seed traen `categoriaId`, y coincide con el `id` de `GET /api/v1/categorias`. Las migas de pan de la ficha resuelven la categoría por `categoriaId`.
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).
@@ -417,6 +462,12 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 20. **Un `id` inexistente devuelve `500` en vez de `404`.** `ProductoService.obtenerPorId` lanza una `RuntimeException` genérica; debería lanzar una excepción que termine en `404` (p. ej. `ResponseStatusException(HttpStatus.NOT_FOUND, ...)` o un `@ControllerAdvice`), con cuerpo `{ "message": "Producto no encontrado" }` (pendiente 9). **Seguridad:** la respuesta de error incluye el stack trace (`trace`); desactivarlo con `server.error.include-stacktrace=never`.
 21. **Un `id` no numérico devuelve `401` "Credenciales invalidas"** en un endpoint público. Parece que el manejo de errores de Spring Security convierte cualquier excepción en `401`; debería ser `400`. Es grave para el frontend: un `401` significa "sesión vencida", y el interceptor de axios cerrará la sesión y llevará al login (ver `CLAUDE.md`).
 21-bis. **Un token inválido/vencido en un `GET` público devuelve `500`, no `401`** (probado 21/10/2026: `Authorization: Bearer abc.def.ghi` en `GET /api/v1/productos` → `500`). El interceptor de axios espera `401` para cerrar sesión; con `500` no lo hará. Pedir que un token mal formado o vencido devuelva `401`. Mientras tanto, el frontend **no debe mandar `Authorization` en peticiones públicas si no hay sesión**.
+
+### Detectados al probar favoritos (22/10/2026)
+27. **Favoritos no funciona con un token válido:** `GET /api/v1/favoritos` → `401` y `POST`/`DELETE /api/v1/favoritos/{productoId}` → `500` (ver [prueba](#comportamiento-real-de-favoritos-probado-el-22102026)). Revisar cómo el controlador obtiene el usuario del token: el JWT solo trae `sub` (username). Además, pedir:
+    - Producto inexistente → `404` (no `500`).
+    - Confirmar que `POST` y `DELETE` son idempotentes (repetirlos responde `2xx`).
+    - Que un `401` signifique solo "token vencido o inválido": el frontend cierra la sesión al recibirlo.
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).

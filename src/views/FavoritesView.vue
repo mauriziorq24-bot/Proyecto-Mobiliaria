@@ -10,15 +10,19 @@ import BaseErrorState from '../components/ui/BaseErrorState.vue'
 import { company } from '../config/empresa'
 import { useAsync } from '../composables/useAsync'
 import { useToast } from '../composables/useToast'
+import { favoritosApiActiva } from '../services/favoritoService'
 import { obtenerProductos } from '../services/productoService'
+import { useAuthStore } from '../stores/auth'
 import { CANTIDAD_MAXIMA, useCotizacionStore } from '../stores/cotizacion'
 import { useFavoritosStore } from '../stores/favoritos'
 import { setPageTitle } from '../utils/pageTitle'
 
 // Mis favoritos: los productos guardados con el corazón (DESIGN.md › Favoritos).
-// Viven en este navegador (store de favoritos); no hace falta sesión.
+// Viven en este navegador (store de favoritos); no hace falta sesión. Con VITE_FAVORITOS_API=true
+// y sesión iniciada, además se guardan en la cuenta.
 
 const favoritos = useFavoritosStore()
+const auth = useAuthStore()
 const cotizacion = useCotizacionStore()
 const toast = useToast()
 const route = useRoute()
@@ -57,6 +61,23 @@ watch(
   },
   { immediate: true },
 )
+
+// Si llegan favoritos nuevos con el catálogo ya cargado (los de la cuenta al iniciar sesión, o de
+// otra pestaña), se reconcilian otra vez: así se completa su copia y se marca el que ya no exista.
+watch(
+  () => favoritos.items.length,
+  () => {
+    if (catalogo.value) favoritos.reconciliar(catalogo.value)
+  },
+)
+
+// Dónde se guardan: lo dicen el encabezado y el estado vacío.
+const dondeSeGuardan = computed(() => {
+  if (!favoritosApiActiva) return 'Se guardan en este navegador, no necesitas cuenta.'
+  return auth.estaSesionIniciada
+    ? 'Se guardan en tu cuenta: los verás en cualquier dispositivo donde entres.'
+    : 'Se guardan en este navegador. Si entras a tu cuenta, también los verás en otros dispositivos.'
+})
 
 // Hasta que llega la respuesta, la grilla muestra skeletons (uno por favorito, máximo 8).
 const cargando = computed(() => !catalogo.value && !error.value && favoritos.items.length > 0)
@@ -116,9 +137,12 @@ let ultimoId = 0
 const anuncio = ref('')
 
 // Cada quitado ocupa la posición que tenía su celda en la grilla.
+// Si el producto vuelve a estar en favoritos sin "Deshacer" (no se pudo quitar en la cuenta y el
+// store lo devolvió, o se guardó desde otra pestaña), su celda "Quitado" ya no se muestra.
 const celdas = computed(() => {
   const lista = [...celdasBase.value]
   for (const quitado of quitados.value) {
+    if (favoritos.esFavorito(quitado.quitado.item.productoId)) continue
     lista.splice(Math.min(quitado.posicion, lista.length), 0, { key: `quitado-${quitado.id}`, tipo: 'quitado', quitado })
   }
   return lista
@@ -257,7 +281,7 @@ const sinFavoritos = computed(() => !favoritos.items.length && !quitados.value.l
           Mis favoritos
         </h1>
         <p v-if="!sinFavoritos" class="mt-2 max-w-[60ch] text-ink-muted">
-          Se guardan en este navegador, no necesitas cuenta.
+          {{ dondeSeGuardan }}
         </p>
         <!-- aria-live: al quitar uno, el lector de pantalla anuncia la nueva cantidad -->
         <p v-if="!sinFavoritos" class="mt-4 min-h-5 text-small font-semibold text-ink tabular-nums" aria-live="polite">
@@ -302,8 +326,7 @@ const sinFavoritos = computed(() => !favoritos.items.length && !quitados.value.l
           class="sr-only"
           >corazón</span
         >
-        de cualquier producto para guardarlo aquí y encontrarlo después. Se guardan en este navegador, no necesitas
-        cuenta.
+        de cualquier producto para guardarlo aquí y encontrarlo después. {{ dondeSeGuardan }}
       </p>
       <BaseButton to="/buscar" class="mt-6 max-sm:w-full">Ver catálogo</BaseButton>
 
