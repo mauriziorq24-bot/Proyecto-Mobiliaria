@@ -10,13 +10,9 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   // Cuántas tarjetas de carga mostrar: 8 llena dos filas en escritorio.
   skeletonCount: { type: Number, default: 8 },
-  // ids marcados como favoritos (solo visual hasta que exista el store).
-  favoritos: { type: Array, default: () => [] },
   // Junto a una barra lateral (página de búsqueda) el escritorio usa 3 columnas en vez de 4.
   withSidebar: { type: Boolean, default: false },
 })
-
-const emit = defineEmits(['toggle-favorito'])
 
 // 2 columnas en móvil, 3 en tablet, 4 en escritorio (DESIGN.md).
 const gridClasses = computed(() => [
@@ -53,11 +49,7 @@ const gridClasses = computed(() => [
   <!-- Con productos -->
   <ul v-else :class="gridClasses">
     <li v-for="producto in productos" :key="producto.id">
-      <ProductCard
-        :producto="producto"
-        :favorito="favoritos.includes(producto.id)"
-        @toggle-favorito="emit('toggle-favorito', $event)"
-      />
+      <ProductCard :producto="producto" />
     </li>
   </ul>
 </template>

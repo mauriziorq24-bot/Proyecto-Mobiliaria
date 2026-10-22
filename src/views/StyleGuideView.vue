@@ -172,12 +172,6 @@ const cardCases = [
   },
 ]
 
-// Favoritos solo visuales: se guardan los ids en memoria mientras no exista el store.
-const demoFavorites = ref([baseProduct.id])
-function toggleDemoFavorite(producto) {
-  const ids = demoFavorites.value
-  demoFavorites.value = ids.includes(producto.id) ? ids.filter((id) => id !== producto.id) : [...ids, producto.id]
-}
 
 // Demo de ProductGrid: los tres estados con un selector.
 const gridStates = [
@@ -583,19 +577,14 @@ const galleryCases = [
           <h2 class="text-headline">Productos</h2>
           <p class="mt-2 max-w-[65ch] text-ink-muted">
             La tarjeta entera lleva a la ficha del producto. Pasa el cursor para ver el hover y prueba el
-            corazón: por ahora es solo visual.
+            corazón: guarda de verdad en tus favoritos (y suma en el contador del header).
           </p>
 
           <h3 class="mt-8 text-title">Tarjeta</h3>
           <ul class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-6">
             <li v-for="item in cardCases" :key="item.producto.id" class="flex flex-col gap-2">
               <span class="text-small text-ink-muted">{{ item.note }}</span>
-              <ProductCard
-                :producto="item.producto"
-                :favorito="demoFavorites.includes(item.producto.id)"
-                class="flex-1"
-                @toggle-favorito="toggleDemoFavorite"
-              />
+              <ProductCard :producto="item.producto" class="flex-1" />
             </li>
           </ul>
 
@@ -631,8 +620,6 @@ const galleryCases = [
             <ProductGrid
               :productos="gridProducts"
               :loading="gridState === 'loading'"
-              :favoritos="demoFavorites"
-              @toggle-favorito="toggleDemoFavorite"
             >
               <template #empty>
                 <p class="text-card-title">No hay productos en showroom con ese filtro</p>

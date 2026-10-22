@@ -7,6 +7,7 @@ import { useCategorias } from '../../composables/useCategorias'
 import { useDebounce } from '../../composables/useDebounce'
 import { company } from '../../config/empresa'
 import { useCotizacionStore } from '../../stores/cotizacion'
+import { useFavoritosStore } from '../../stores/favoritos'
 import BaseButton from '../ui/BaseButton.vue'
 import BaseIconButton from '../ui/BaseIconButton.vue'
 import BaseInput from '../ui/BaseInput.vue'
@@ -17,8 +18,13 @@ const route = useRoute()
 const router = useRouter()
 const { categorias, loading, error, retry } = useCategorias()
 
-// Favoritos: queda en 0 hasta que exista su store.
-const favoritesCount = 0
+// Favoritos: cuántos productos guardados (los que ya no están en el catálogo no cuentan).
+// Con 0, el contador se oculta.
+const favoritos = useFavoritosStore()
+const favoritosLabel = computed(() => {
+  const n = favoritos.cantidad
+  return `Ver favoritos, ${n} ${n === 1 ? 'producto guardado' : 'productos guardados'}`
+})
 
 // Cotización: unidades en total (2 sillas + 1 escritorio = 3). Con 0, el contador se oculta.
 const cotizacion = useCotizacionStore()
@@ -222,7 +228,14 @@ const hideScrollbar = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           </BaseButton>
           <!-- Cuenta: en móvil y tablet va en el menú lateral -->
           <AccountMenu class="max-lg:hidden" />
-          <BaseIconButton :icon="Heart" label="Ver favoritos" variant="inverse" to="/favoritos" :badge="favoritesCount" />
+          <BaseIconButton
+            :icon="Heart"
+            label="Ver favoritos"
+            variant="inverse"
+            to="/favoritos"
+            :badge="favoritos.cantidad"
+            :badge-label="favoritosLabel"
+          />
           <BaseIconButton
             :icon="ShoppingCart"
             label="Mi cotización"

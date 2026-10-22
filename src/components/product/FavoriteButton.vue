@@ -1,0 +1,65 @@
+<script setup>
+import { Heart } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { useFavoritosStore } from '../../stores/favoritos'
+
+const props = defineProps({
+  // Basta con { id, nombre }: el nombre va en el aria-label.
+  producto: { type: Object, required: true },
+  // card: ícono suelto de la tarjeta (DESIGN.md › Tarjeta de producto) · detail: con borde, en la ficha.
+  variant: {
+    type: String,
+    default: 'card',
+    validator: (value) => ['card', 'detail'].includes(value),
+  },
+})
+
+const favoritos = useFavoritosStore()
+const favorito = computed(() => favoritos.esFavorito(props.producto.id))
+
+const label = computed(() =>
+  favorito.value ? `Quitar ${props.producto.nombre} de favoritos` : `Guardar ${props.producto.nombre} en favoritos`,
+)
+
+// Cada vez que se marca, sube el contador: el :key del corazón cambia, Vue lo vuelve a crear y la
+// animación arranca de cero (también si se toca rápido varias veces). En 0 no se anima, así el
+// corazón no "late" al cargar la página ni cuando el cambio llega de otra pestaña.
+const pops = ref(0)
+
+// .prevent.stop en el template: en la tarjeta el botón está encima del enlace estirado, y así un
+// toque en el corazón nunca termina abriendo la ficha del producto.
+function toggle() {
+  if (favoritos.alternar(props.producto.id)) pops.value++
+}
+
+const variantClasses = {
+  card: '-mr-2 -mb-2 hover:bg-brand-tint hover:text-brand-deep [&>svg]:size-5',
+  detail: 'border border-line bg-surface hover:border-brand-deep hover:text-brand-deep [&>svg]:size-[22px]',
+}
+</script>
+
+<template>
+  <!--
+    size-11 = 44px de área táctil en las dos variantes.
+    La presión (scale 0.9) va en el botón y el "latido" en el ícono: así las dos transformaciones
+    no se pisan.
+  -->
+  <button
+    type="button"
+    class="relative z-10 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-[color,background-color,border-color,transform] duration-200 ease-out active:scale-[0.9]"
+    :class="[variantClasses[variant], favorito ? 'text-brand-deep' : variant === 'card' ? 'text-ink-muted' : 'text-ink']"
+    :aria-pressed="favorito"
+    :aria-label="label"
+    :title="label"
+    @click.prevent.stop="toggle"
+  >
+    <!-- motion-safe: con prefers-reduced-motion el corazón se rellena sin animarse -->
+    <Heart
+      :key="pops"
+      :fill="favorito ? 'currentColor' : 'none'"
+      :stroke-width="1.75"
+      :class="pops > 0 && favorito && 'motion-safe:animate-heart-pop'"
+      aria-hidden="true"
+    />
+  </button>
+</template>

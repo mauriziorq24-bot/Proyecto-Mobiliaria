@@ -1,20 +1,16 @@
 <script setup>
-import { Heart } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { formatearPrecio } from '../../utils/formato'
 import BaseBadge from '../ui/BaseBadge.vue'
+import FavoriteButton from './FavoriteButton.vue'
 
 const PLACEHOLDER = '/placeholder-producto.svg'
 
 const props = defineProps({
   // ProductoResponse de API.md, con sus campos en español tal cual.
   producto: { type: Object, required: true },
-  // Solo visual por ahora: el estado real vendrá del store de favoritos.
-  favorito: { type: Boolean, default: false },
 })
-
-const emit = defineEmits(['toggle-favorito'])
 
 // Si la foto falla al cargar, se cambia por el placeholder.
 const imageFailed = ref(false)
@@ -92,21 +88,9 @@ function onImageError() {
           <span v-else class="block text-small text-ink-muted">Consultar precio</span>
         </p>
 
-        <!--
-          relative z-10 lo pone por encima del enlace estirado.
-          size-11 = 44px de área táctil; el ícono se ve de 20px.
-          -mr-2 -mb-2 compensa el área extra para que el ícono quede alineado al borde del texto.
-        -->
-        <button
-          type="button"
-          class="relative z-10 -mr-2 -mb-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-[color,background-color,transform] duration-200 ease-out hover:bg-brand-tint hover:text-brand-deep active:scale-[0.9]"
-          :class="favorito ? 'text-brand-deep' : 'text-ink-muted'"
-          :aria-pressed="favorito"
-          :aria-label="favorito ? `Quitar ${producto.nombre} de favoritos` : `Guardar ${producto.nombre} en favoritos`"
-          @click="emit('toggle-favorito', producto)"
-        >
-          <Heart class="size-5" :fill="favorito ? 'currentColor' : 'none'" :stroke-width="1.75" aria-hidden="true" />
-        </button>
+        <!-- Favorito: lee y cambia el store directamente, así cualquier grilla lo trae funcionando.
+             Va por encima del enlace estirado (z-10) y no abre la ficha al tocarlo. -->
+        <FavoriteButton :producto="producto" />
       </div>
     </div>
   </article>

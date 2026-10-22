@@ -2,6 +2,7 @@
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, MessageCircle, PackageX, Plus } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import FavoriteButton from '../components/product/FavoriteButton.vue'
 import ProductGallery from '../components/product/ProductGallery.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
 import BaseBadge from '../components/ui/BaseBadge.vue'
@@ -267,7 +268,11 @@ const showRelacionados = computed(() => relacionadosLoading.value || relacionado
           <!-- En escritorio la información acompaña a la galería al hacer scroll -->
           <div class="mt-6 lg:sticky lg:top-24 lg:col-span-5 lg:mt-0">
             <p v-if="producto.categoriaNombre" class="text-small text-ink-muted">{{ producto.categoriaNombre }}</p>
-            <h1 id="product-title" class="mt-1 text-headline text-balance">{{ producto.nombre }}</h1>
+            <!-- El corazón acompaña al nombre: se ve igual en móvil y en escritorio -->
+            <div class="mt-1 flex items-start justify-between gap-3">
+              <h1 id="product-title" class="min-w-0 text-headline text-balance">{{ producto.nombre }}</h1>
+              <FavoriteButton :producto="producto" variant="detail" class="-mt-1" />
+            </div>
             <BaseBadge v-if="producto.enShowroom" variant="showroom" class="mt-3">En showroom</BaseBadge>
 
             <!-- Precio: siempre referencial (PRODUCT.md › Cotizar, no cobrar) -->
