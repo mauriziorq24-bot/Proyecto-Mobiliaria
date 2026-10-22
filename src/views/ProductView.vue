@@ -91,7 +91,7 @@ function normalize(text) {
   return (text ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 }
 
-// Se busca por categoriaId; si llega null (pendiente 3 de API.md), por nombre.
+// Se busca por categoriaId; si llegara null, por nombre (respaldo).
 const categoria = computed(() => {
   const p = producto.value
   if (!p) return null

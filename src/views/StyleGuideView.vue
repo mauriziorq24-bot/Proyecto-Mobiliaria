@@ -565,7 +565,7 @@ const galleryCases = [
               <div class="mt-3 flex flex-wrap items-center gap-2">
                 <BaseBadge variant="success"><Check />Agregado a tu cotización</BaseBadge>
                 <BaseBadge variant="info">3 productos en tu lista</BaseBadge>
-                <BaseBadge variant="warning"><CircleAlert />Horario del showroom pendiente</BaseBadge>
+                <BaseBadge variant="warning"><CircleAlert />Ubicación exacta pendiente</BaseBadge>
                 <BaseBadge variant="error"><CircleAlert />No se pudo cargar el catálogo</BaseBadge>
               </div>
             </div>

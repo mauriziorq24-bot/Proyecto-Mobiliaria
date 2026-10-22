@@ -41,8 +41,8 @@ function applyBackendFilters(list, { buscar, tipoEspacio, enShowroom }) {
 }
 
 // TODO: reemplazar por ?categoria=slug cuando el backend lo soporte (pendiente 2 de API.md).
-// Mientras tanto se busca la categoría por slug y se compara por categoriaId;
-// si el producto trae categoriaId null (pendiente 3), se usa categoriaNombre como respaldo.
+// Mientras tanto se busca la categoría por slug y se compara por categoriaId
+// (categoriaNombre queda solo de respaldo, por si algún producto llegara sin categoriaId).
 async function filterByCategory(list, categoriaSlug) {
   const categorias = await getCategorias()
   const categoria = categorias.find((c) => c.slug === categoriaSlug)
@@ -160,7 +160,7 @@ function precioDe(p) {
 }
 
 function perteneceACategoria(p, categoria) {
-  // Si el producto trae categoriaId null (pendiente 3), se usa categoriaNombre como respaldo.
+  // Por categoriaId; categoriaNombre queda solo de respaldo, por si algún producto llegara sin él.
   return p.categoriaId != null
     ? p.categoriaId === categoria.id
     : normalize(p.categoriaNombre) === normalize(categoria.nombre)

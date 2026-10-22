@@ -318,7 +318,7 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
   3. Showroom: dirección, horario, `button-visit` "Agendar visita", "Cómo llegar".
   4. Contacto: `button-whatsapp`, teléfono, email, @mobiliariodeoficina.
   - Fila inferior: "© 2026 Mobiliario de Oficina · Los precios son referenciales; el precio final se confirma en la cotización." y, a la derecha (debajo en móvil y tablet), los enlaces "Términos y condiciones" y "Privacidad".
-- **Móvil:** una columna en orden de utilidad — Showroom → Contacto (WhatsApp a todo el ancho) → Catálogo en acordeón → aviso. Relleno inferior extra para que la barra de cotización no tape contenido.
+- **Móvil:** una columna en orden de utilidad — Showroom → Contacto (WhatsApp a todo el ancho) → Catálogo en acordeón → Marca compacta (logo y nombre en una línea, sin la frase ni Instagram, que ya está en Contacto) → aviso. Relleno inferior extra para que la barra de cotización no tape contenido.
 
 ## Elevation & Depth
 

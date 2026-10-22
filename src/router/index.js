@@ -53,7 +53,11 @@ const routes = [
   { path: '/terminos', name: 'terms', component: () => import('../views/TerminosView.vue'), meta: { title: 'Términos y condiciones' } },
   { path: '/privacidad', redirect: { name: 'terms', hash: '#privacidad' } },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
-  { path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue'), meta: { title: 'Guía de estilo' } },
+  // Solo en desarrollo: en el build import.meta.env.DEV es false, la ruta no existe (da 404)
+  // y Vite ni siquiera empaqueta StyleGuideView.
+  ...(import.meta.env.DEV
+    ? [{ path: '/guia-estilo', name: 'style-guide', component: () => import('../views/StyleGuideView.vue'), meta: { title: 'Guía de estilo' } }]
+    : []),
   // Cualquier ruta que no coincida con las anteriores muestra la página 404.
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue'), meta: { title: 'Página no encontrada' } },
 ]

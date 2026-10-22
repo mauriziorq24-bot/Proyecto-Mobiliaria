@@ -42,20 +42,21 @@ const link =
     </div>
 
     <div class="container-page grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-      <!-- Marca (desde tablet; en móvil ya está en el header) -->
-      <section class="hidden md:order-1 md:block">
+      <!-- Marca. En móvil, compacta y al final: logo y nombre en una línea, sin la frase,
+           y sin Instagram porque ya aparece en Contacto. Desde tablet, la columna completa. -->
+      <section class="order-4 md:order-1">
         <RouterLink to="/" class="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-white">
           <img :src="logoUrl" alt="" width="40" height="40" class="size-10 rounded-md" />
           <span class="text-wordmark">
-            Mobiliario<br />de Oficina
+            Mobiliario <br class="max-md:hidden" />de Oficina
           </span>
         </RouterLink>
-        <p class="mt-4 max-w-[34ch] text-small text-white/70">{{ company.tagline }}</p>
+        <p class="mt-4 hidden max-w-[34ch] text-small text-white/70 md:block">{{ company.tagline }}</p>
         <a
           :href="company.instagram.url"
           target="_blank"
           rel="noopener"
-          class="mt-5 inline-flex items-center gap-2 text-small font-semibold"
+          class="mt-5 hidden items-center gap-2 text-small font-semibold md:inline-flex"
           :class="link"
         >
           <Instagram class="size-[18px]" aria-hidden="true" />

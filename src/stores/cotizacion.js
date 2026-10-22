@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { crearAlmacenamiento } from '../utils/almacenamiento'
 
-// La cotización en curso (el "carrito"). No hay endpoints de carrito (pendiente 1 de API.md):
-// vive en Pinia y se guarda en localStorage (con la utilidad de utils/almacenamiento.js).
+// La cotización en curso (el "carrito"). No hay carrito en el backend (decisión del pendiente 1
+// de API.md): vive en Pinia y se guarda en localStorage (con la utilidad de utils/almacenamiento.js).
 const STORAGE_KEY = 'mobiliario.cotizacion:v1'
 
 export const CANTIDAD_MINIMA = 1

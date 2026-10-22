@@ -43,20 +43,20 @@ Según la empresa, lo que la distingue es: **showroom físico** (se pueden ver y
 - Cada producto trae nombre, descripción, categoría, tipo de espacio, precio referencial en USD, material, dimensiones estándar e imágenes.
 - Cuentas de usuario con JWT: registro, login y login con Google.
 - Agendar cita/asesoría.
-- Carrito y favoritos viven en el frontend (Pinia + localStorage); no hay endpoints de carrito, favoritos ni pedidos.
+- El carrito es la cotización y vive en el frontend (Pinia + localStorage); se envía con `POST /api/v1/cotizaciones` o por WhatsApp. No hay endpoints de carrito ni de pedidos. Favoritos tiene endpoint, pero hoy falla (pendiente 27 de `API.md`), así que también viven en el navegador.
 - Nombres de campos de la API en español; se usan tal cual.
-- **Decisiones abiertas** (ver pendientes en `API.md`): endpoint para recibir la solicitud de cotización (p. ej. `POST /api/v1/cotizaciones`) o si se canaliza por cita; número de WhatsApp de destino; lista completa de `tipoEspacio` y `tipoAsesoria`; filtro de productos por categoría; dirección y horario del showroom; si existe rol ADMIN.
+- **Decisiones abiertas** (ver pendientes en `API.md`): si `tipoEspacio` es un solo valor o una lista; filtro de productos por categoría en el servidor; si existe rol ADMIN; si agendar cita exige sesión; ubicación exacta del showroom (hoy solo la ciudad).
 
 ## Brand Commitments
 
 - Nombre comercial en uso: "Mobiliario de Oficina"; Instagram @mobiliariodeoficina.
 - Textos de la interfaz en español (Venezuela).
 - Referencia de experiencia de compra: IKEA.com y Amazon.com, solo en estructura (navegación, catálogo, ficha de producto, carrito), no en estética.
-- No hay logo ni identidad visual registrados en el repositorio todavía.
+- Logo en `src/assets/logo.png`; la identidad visual está en `DESIGN.md`.
 
 ## Evidence on Hand
 
-- Productos y fotos reales: los de su Instagram (aún no descargados al repo; `src/assets/` está vacío).
+- Productos y fotos reales: los de su Instagram (aún no descargados al repo; hoy el seed del backend usa fotos de Unsplash).
 - Datos de ejemplo del backend en `API.md` (escritorio bench, sillería ergonómica).
 - **No hay** testimonios, clientes, cifras de ventas, reseñas ni premios. No inventarlos.
 
