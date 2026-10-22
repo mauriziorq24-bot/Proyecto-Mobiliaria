@@ -4,7 +4,8 @@ import { computed, ref } from 'vue'
 import { useFavoritosStore } from '../../stores/favoritos'
 
 const props = defineProps({
-  // Basta con { id, nombre }: el nombre va en el aria-label.
+  // El ProductoResponse completo: al guardarlo, el store copia nombre, categoría y foto
+  // (por si un día sale del catálogo). El nombre va además en el aria-label.
   producto: { type: Object, required: true },
   // card: ícono suelto de la tarjeta (DESIGN.md › Tarjeta de producto) · detail: con borde, en la ficha.
   variant: {
@@ -26,10 +27,20 @@ const label = computed(() =>
 // corazón no "late" al cargar la página ni cuando el cambio llega de otra pestaña.
 const pops = ref(0)
 
+// Al quitar, avisa con lo que devuelve el store ({ item, indice }): la página de Favoritos lo usa
+// para ofrecer "Deshacer". En las demás páginas nadie escucha el evento y basta con el corazón vacío.
+const emit = defineEmits(['removed'])
+
 // .prevent.stop en el template: en la tarjeta el botón está encima del enlace estirado, y así un
 // toque en el corazón nunca termina abriendo la ficha del producto.
 function toggle() {
-  if (favoritos.alternar(props.producto.id)) pops.value++
+  if (favorito.value) {
+    const quitado = favoritos.quitar(props.producto.id)
+    if (quitado) emit('removed', quitado)
+    return
+  }
+  favoritos.agregar(props.producto)
+  pops.value++
 }
 
 const variantClasses = {
@@ -48,6 +59,7 @@ const variantClasses = {
     type="button"
     class="relative z-10 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-[color,background-color,border-color,transform] duration-200 ease-out active:scale-[0.9]"
     :class="[variantClasses[variant], favorito ? 'text-brand-deep' : variant === 'card' ? 'text-ink-muted' : 'text-ink']"
+    :data-favorito-de="producto.id"
     :aria-pressed="favorito"
     :aria-label="label"
     :title="label"

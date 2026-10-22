@@ -6,31 +6,82 @@ import { crearAlmacenamiento } from '../utils/almacenamiento'
 // de API.md): viven en Pinia y se guardan en localStorage, como la cotización.
 // VITE_FAVORITOS_API queda reservada para cuando el backend los publique (ver CLAUDE.md).
 //
-// Solo se guarda el id: para mostrarlos, la vista pide los productos al backend. Así nunca se
-// muestra un precio o un nombre viejo.
-const STORAGE_KEY = 'mobiliario.favoritos:v1'
+// Para mostrarlos, la vista pide los productos al backend: un favorito disponible siempre se ve
+// con su nombre y su precio actuales. La copia (nombre, categoría y foto) solo se usa cuando el
+// producto salió del catálogo, para poder decir cuál era.
+const STORAGE_KEY = 'mobiliario.favoritos:v2'
+// v1 guardaba solo { productoId, disponible }, sin copia. Se migra una vez y se borra.
+const STORAGE_KEY_V1 = 'mobiliario.favoritos:v1'
+
+// Solo lo necesario para reconocer el producto si deja de existir. Nombres de campo de la API.
+function copiarProducto(producto) {
+  return {
+    nombre: producto.nombre,
+    categoriaNombre: producto.categoriaNombre ?? null,
+    imagen: producto.imagenes?.[0] ?? null,
+  }
+}
+
+function esCopiaValida(copia) {
+  return (
+    typeof copia === 'object' &&
+    copia !== null &&
+    typeof copia.nombre === 'string' &&
+    (copia.categoriaNombre === null || typeof copia.categoriaNombre === 'string') &&
+    (copia.imagen === null || typeof copia.imagen === 'string')
+  )
+}
 
 function esItemValido(item) {
   return typeof item === 'object' && item !== null && Number.isInteger(item.productoId)
 }
 
-// Se guarda como { items: [{ productoId, disponible }] }. Si lo leído no tiene esa forma (o no
-// se puede leer), se empieza sin favoritos. Un id repetido (editado a mano) se cuenta una vez.
+// Lo leído pudo editarse a mano: los items inválidos se descartan, un id repetido se cuenta una
+// vez y una copia rota queda en null (se completa en la próxima reconciliación).
+function limpiarItems(items) {
+  const vistos = new Set()
+  return items.filter(esItemValido).flatMap((item) => {
+    if (vistos.has(item.productoId)) return []
+    vistos.add(item.productoId)
+    return [
+      {
+        productoId: item.productoId,
+        disponible: item.disponible !== false,
+        copia: esCopiaValida(item.copia) ? item.copia : null,
+      },
+    ]
+  })
+}
+
+// Se guarda como { items: [{ productoId, disponible, copia }] }, el más reciente primero.
+// null = no hay nada guardado con esta clave (así se sabe si hay que migrar desde v1).
 const almacenamiento = crearAlmacenamiento(STORAGE_KEY, {
   validar(guardado) {
+    if (guardado === null) return null
     if (!Array.isArray(guardado?.items)) return []
-    const vistos = new Set()
-    return guardado.items.filter(esItemValido).flatMap((item) => {
-      if (vistos.has(item.productoId)) return []
-      vistos.add(item.productoId)
-      return [{ productoId: item.productoId, disponible: item.disponible !== false }]
-    })
+    return limpiarItems(guardado.items)
   },
   vacio: () => [],
 })
 
+// v1 los guardaba del más viejo al más nuevo: se invierten para dejar primero el más reciente.
+const almacenamientoV1 = crearAlmacenamiento(STORAGE_KEY_V1, {
+  validar: (guardado) => (Array.isArray(guardado?.items) ? limpiarItems(guardado.items).reverse() : []),
+  vacio: () => [],
+})
+
+function leerGuardados() {
+  const guardados = almacenamiento.leer()
+  if (guardados !== null) return guardados
+
+  const migrados = almacenamientoV1.leer()
+  if (migrados.length) almacenamiento.escribir({ items: migrados })
+  almacenamientoV1.borrar()
+  return migrados
+}
+
 export const useFavoritosStore = defineStore('favoritos', () => {
-  const items = ref(almacenamiento.leer())
+  const items = ref(leerGuardados())
 
   // Los que ya no existen en el catálogo no cuentan (igual que en la cotización).
   const itemsDisponibles = computed(() => items.value.filter((item) => item.disponible))
@@ -48,23 +99,27 @@ export const useFavoritosStore = defineStore('favoritos', () => {
     almacenamiento.escribir({ items: items.value })
   }
 
-  // Lo agrega si no estaba y lo quita si estaba. Devuelve true si quedó como favorito, para que
-  // la vista pueda avisar ("Guardado en favoritos" / "Quitado de favoritos").
-  function alternar(productoId) {
-    if (!Number.isInteger(productoId)) return false
-    if (esFavorito.value(productoId)) {
-      quitar(productoId)
-      return false
-    }
-    items.value.push({ productoId, disponible: true })
+  // Recibe el producto (no solo el id) para guardar su copia. Va al principio: el más reciente primero.
+  function agregar(producto) {
+    if (!Number.isInteger(producto?.id) || esFavorito.value(producto.id)) return
+    items.value.unshift({ productoId: producto.id, disponible: true, copia: copiarProducto(producto) })
     guardar()
-    return true
   }
 
+  // Devuelve { item, indice } para poder deshacerlo con restaurar(), o null si no estaba.
   function quitar(productoId) {
     const indice = items.value.findIndex((item) => item.productoId === productoId)
-    if (indice === -1) return
-    items.value.splice(indice, 1)
+    if (indice === -1) return null
+    const [item] = items.value.splice(indice, 1)
+    guardar()
+    return { item, indice }
+  }
+
+  // "Deshacer": vuelve a poner el item en el lugar que tenía. Si mientras tanto se guardó otra
+  // vez (p. ej. desde otra pestaña), no se duplica.
+  function restaurar({ item, indice }) {
+    if (esFavorito.value(item.productoId)) return
+    items.value.splice(Math.min(indice, items.value.length), 0, item)
     guardar()
   }
 
@@ -73,29 +128,35 @@ export const useFavoritosStore = defineStore('favoritos', () => {
     guardar()
   }
 
-  // Como en la cotización: hay que pasarle el catálogo COMPLETO (productoService.obtenerCatalogo()),
+  // Como en la cotización: hay que pasarle el catálogo COMPLETO (GET /api/v1/productos sin filtros),
   // no una lista filtrada, porque lo que no aparezca se marca como no disponible.
-  // No se borran: quedan marcados para que la interfaz avise y la persona decida quitarlos.
+  // Los que siguen existiendo actualizan su copia; los que no, se dejan marcados (con la copia que
+  // tenían) para que la interfaz avise y la persona decida quitarlos.
   // Devuelve los items que pasaron a "no disponible" en esta llamada.
   function reconciliar(productosActuales) {
     if (!Array.isArray(productosActuales)) return []
 
-    const idsActuales = new Set(productosActuales.map((producto) => producto.id))
+    const porId = new Map(productosActuales.map((producto) => [producto.id, producto]))
     const recienNoDisponibles = []
 
     for (const item of items.value) {
-      const existe = idsActuales.has(item.productoId)
-      if (!existe && item.disponible) recienNoDisponibles.push(item)
-      item.disponible = existe
+      const actual = porId.get(item.productoId)
+      if (actual) {
+        item.copia = copiarProducto(actual)
+        item.disponible = true
+      } else {
+        if (item.disponible) recienNoDisponibles.push(item)
+        item.disponible = false
+      }
     }
 
     guardar()
     return recienNoDisponibles
   }
 
-  // Si otra pestaña cambia los favoritos, esta se pone al día.
+  // Si otra pestaña cambia los favoritos, esta se pone al día (null: otra pestaña borró todo).
   almacenamiento.escucharOtrasPestanas((guardados) => {
-    items.value = guardados
+    items.value = guardados ?? []
   })
 
   return {
@@ -103,8 +164,9 @@ export const useFavoritosStore = defineStore('favoritos', () => {
     itemsDisponibles,
     cantidad,
     esFavorito,
-    alternar,
+    agregar,
     quitar,
+    restaurar,
     vaciar,
     reconciliar,
   }

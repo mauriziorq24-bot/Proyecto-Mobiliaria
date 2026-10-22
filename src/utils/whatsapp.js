@@ -24,6 +24,17 @@ export function productInquiryUrl(producto, cantidad, url) {
   return whatsappUrl(productInquiryMessage({ nombre: producto.nombre, cantidad, url }))
 }
 
+// Favoritos: un producto guardado que salió del catálogo. Sin enlace: su ficha ya no existe.
+export function favoritoNoDisponibleUrl(nombre) {
+  return whatsappUrl(
+    [
+      'Hola, guardé este producto en favoritos y ya no aparece en la página web:',
+      `• ${nombre}`,
+      '¿Todavía lo tienen o algo parecido?',
+    ].join('\n'),
+  )
+}
+
 // Cotización completa (página Mi cotización y barra móvil): una línea por producto con su cantidad
 // y su precio referencial, el total referencial y el enlace a la tienda.
 // `items` son los del store de la cotización que siguen disponibles; `total` ya viene formateado.

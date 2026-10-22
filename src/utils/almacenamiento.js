@@ -2,7 +2,8 @@
 // (cotización, favoritos).
 //
 // La clave lleva la versión del formato ('...:v1'). Si algún día cambia la forma de lo guardado,
-// se pasa a ':v2' y lo de ':v1' simplemente se ignora, en vez de leerse con la forma equivocada.
+// se pasa a ':v2' y lo de ':v1' se ignora (o el store lo migra una vez y lo quita con borrar()),
+// en vez de leerse con la forma equivocada.
 //
 // localStorage puede fallar (modo privado de Safari, almacenamiento bloqueado o lleno) o tener
 // JSON roto o editado a mano. Leer nunca lanza: devuelve vacio(). Escribir tampoco: si no se
@@ -29,6 +30,15 @@ export function crearAlmacenamiento(clave, { validar, vacio }) {
     }
   }
 
+  // Para migraciones: quita la clave de una versión vieja después de pasar sus datos a la nueva.
+  function borrar() {
+    try {
+      localStorage.removeItem(clave)
+    } catch {
+      // Sin almacenamiento disponible: no hay nada que quitar.
+    }
+  }
+
   // Sincronización entre pestañas. El evento 'storage' solo llega a las OTRAS pestañas del
   // mismo sitio cuando una cambia localStorage (nunca a la que hizo el cambio).
   // e.key es null cuando otra pestaña llamó a localStorage.clear().
@@ -43,5 +53,5 @@ export function crearAlmacenamiento(clave, { validar, vacio }) {
     return () => window.removeEventListener('storage', onStorage)
   }
 
-  return { leer, escribir, escucharOtrasPestanas }
+  return { leer, escribir, borrar, escucharOtrasPestanas }
 }

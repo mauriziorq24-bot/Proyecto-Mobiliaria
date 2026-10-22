@@ -29,6 +29,9 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   // Ocupa todo el ancho disponible (útil en móvil y en formularios).
   block: { type: Boolean, default: false },
+  // El texto puede pasar a una segunda línea en vez de salirse (botones en tarjetas angostas).
+  // El alto pasa a ser mínimo: crece con el texto.
+  wrap: { type: Boolean, default: false },
   // Si lleva "to", se dibuja como RouterLink (navegación interna);
   // si lleva "href", como <a> (enlaces externos: WhatsApp, Instagram…). Si no, es un <button>.
   to: { type: [String, Object], default: null },
@@ -78,13 +81,26 @@ const variantClasses = {
 
 // En "sm" el botón mide 36px, pero el área táctil se amplía a 44px con un ::before invisible.
 const sizeClasses = {
-  sm: 'h-9 gap-1.5 px-3.5 text-sm font-semibold [&_svg]:size-4 before:absolute before:inset-x-0 before:-inset-y-1',
-  md: 'h-[46px] gap-2 px-5 text-base font-semibold [&_svg]:size-[18px]',
-  lg: 'h-13 gap-2.5 px-6 text-base font-bold [&_svg]:size-5',
+  sm: 'gap-1.5 px-3.5 text-sm font-semibold [&_svg]:size-4 before:absolute before:inset-x-0 before:-inset-y-1',
+  md: 'gap-2 px-5 text-base font-semibold [&_svg]:size-[18px]',
+  lg: 'gap-2.5 px-6 text-base font-bold [&_svg]:size-5',
+}
+
+// El alto va aparte: con "wrap" es un mínimo (y el texto lleva aire arriba y abajo).
+const heightClasses = {
+  sm: 'h-9',
+  md: 'h-[46px]',
+  lg: 'h-13',
+}
+const wrapHeightClasses = {
+  sm: 'min-h-9 py-1.5',
+  md: 'min-h-[46px] py-2.5',
+  lg: 'min-h-13 py-3',
 }
 
 const classes = computed(() => [
-  'relative inline-flex shrink-0 select-none items-center justify-center rounded-md whitespace-nowrap',
+  'relative inline-flex shrink-0 select-none items-center justify-center rounded-md',
+  props.wrap ? `whitespace-normal text-center ${wrapHeightClasses[props.size]}` : `whitespace-nowrap ${heightClasses[props.size]}`,
   'transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-[0.97]',
   'disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100',
   variantClasses[props.variant],

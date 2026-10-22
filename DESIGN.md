@@ -410,6 +410,19 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Vacía:** "Tu cotización está vacía" + "Ver catálogo" y, separado, "¿Prefieres verlos en persona?" + `button-visit`.
 - **Confirmación (`/carrito/confirmacion?codigo=…`):** se llega con `replace` tras el `201`; la lista se vacía (ahí sí sabemos que llegó). Ícono de Éxito, "Recibimos tu solicitud", "Te contactaremos por WhatsApp o correo…", código grande con "Copiar código" (`title` en móvil para que quepa en una línea desde 320px, `display` desde `sm`), "Lo que pediste" (cantidad × nombre, subtotal, total referencial), `button-whatsapp` "Escríbenos por WhatsApp" con el código ya escrito y "Seguir viendo el catálogo" (a `/buscar`). Lee la copia de `src/utils/cotizacionesEnviadas.js`: recargar no reenvía. Sin una solicitud de las últimas 24 h con ese código, lleva a `/carrito`.
 
+### Mis favoritos (`/favoritos`) — decidido el 2026-10-22
+- **No exige sesión:** los favoritos viven en este navegador (store `favoritos`, `localStorage` `mobiliario.favoritos:v2`). Bajo el título: "Se guardan en este navegador, no necesitas cuenta."
+- **Título de la pestaña:** "Mis favoritos (N)", con N = favoritos disponibles (como el contador del header); sin ninguno, "Mis favoritos".
+- **Al entrar** se pide el catálogo una vez (`GET /api/v1/productos`) y se reconcilia. Nombre y precio salen siempre de esa respuesta; mientras llega, skeletons (uno por favorito, máximo 8). Si falla: `BaseErrorState` "No pudimos cargar tus favoritos" + "Reintentar".
+- **Encabezado** (franja blanca, como en Categoría): "Mis favoritos", la línea de arriba y el conteo ("5 productos · 1 ya no está disponible", `aria-live`). A la derecha (debajo en móvil), "Agregar todos a mi cotización" (secundario) si hay 2 o más disponibles que aún no están en la cotización; si ya están todos, "Ver mi cotización".
+- **Grilla:** `ProductGrid` con `ProductCard` de siempre; el más reciente primero. Bajo el precio, "Agregar a mi cotización" (secundario, ancho completo, el texto puede pasar a dos líneas) y la línea "En tu cotización (N)", que reserva su alto aunque esté vacía para alinear las tarjetas.
+- **Agregar uno:** suma 1 unidad, como en la ficha (3 + 1 = 4); el botón muestra "Agregado" 2 s y aparece el aviso de Éxito "Agregado a tu cotización · Ver mi cotización". El producto **sigue en favoritos**.
+- **Agregar todos:** agrega 1 unidad de los que **todavía no están** en la cotización; los que ya están no se tocan. Aviso: "Agregamos 3 a tu cotización · 2 ya estaban" + "Ver mi cotización". Los no disponibles nunca se agregan.
+- **Quitar → Deshacer:** el corazón quita el favorito; la celda queda en su lugar como "Quitado de favoritos · [nombre] ↶ Deshacer" durante 6 s (mismas reglas de foco y pausa que en Mi cotización). Al deshacer, el foco vuelve al corazón.
+- **No disponible con copia:** tarjeta con la foto atenuada en gris, nombre en Tinta Suave sin enlace, "Ya no está disponible" (Aviso, con ícono), `button-whatsapp` "Preguntar por WhatsApp" (mensaje con el nombre) y "Quitar" (secundario, con deshacer). Van al final de la grilla.
+- **No disponible sin copia** (ids guardados con `:v1`, o los que lleguen del backend cuando exista la sincronización): un aviso agrupado (fondo Aviso) "2 favoritos ya no están en el catálogo." + "Quitarlos".
+- **Vacía:** corazón grande, "Aún no tienes favoritos", cómo guardarlos ("Toca el ♡ de cualquier producto…", con el ícono de verdad), "Ver catálogo" y, separado, "¿Prefieres verlos en persona?" + `button-visit`.
+
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.
 - Un solo aviso a la vez. En la Fase 7 lo puede usar "Agregado a tu cotización".

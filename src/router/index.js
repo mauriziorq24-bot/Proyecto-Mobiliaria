@@ -29,7 +29,8 @@ const routes = [
       if (!buscarCotizacionReciente(to.query.codigo)) return { name: 'cart', replace: true }
     },
   },
-  { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { title: 'Favoritos' } },
+  // Sin meta.title: la vista lo fija ("Mis favoritos (3)"). No exige sesión: se guardan en este navegador.
+  { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue') },
   { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita', requiereSesion: true, ocultarBarraCotizacion: true } },
   // Confirmación: lee la cita guardada en este navegador (?codigo=CITA-…), nunca la vuelve a enviar.
   // No exige sesión: solo muestra datos locales. Sin una cita reciente con ese código, al formulario.

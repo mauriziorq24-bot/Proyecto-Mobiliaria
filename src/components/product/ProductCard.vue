@@ -29,6 +29,9 @@ const imageSrc = computed(() => {
 
 const hasPrice = computed(() => props.producto.precioReferencialUsd != null)
 
+// Se reenvía el "quitado" del corazón (con { item, indice }) para que Favoritos ofrezca "Deshacer".
+const emit = defineEmits(['favorito-quitado'])
+
 function onImageError() {
   // Si el que falla es el propio placeholder, no se insiste (evita un bucle de errores).
   if (imageSrc.value !== PLACEHOLDER) imageFailed.value = true
@@ -90,8 +93,12 @@ function onImageError() {
 
         <!-- Favorito: lee y cambia el store directamente, así cualquier grilla lo trae funcionando.
              Va por encima del enlace estirado (z-10) y no abre la ficha al tocarlo. -->
-        <FavoriteButton :producto="producto" />
+        <FavoriteButton :producto="producto" @removed="emit('favorito-quitado', $event)" />
       </div>
+
+      <!-- Acciones extra de una página (p. ej. "Agregar a mi cotización" en Favoritos).
+           Lo que vaya aquí necesita relative z-10 para quedar por encima del enlace estirado. -->
+      <slot name="actions" />
     </div>
   </article>
 </template>

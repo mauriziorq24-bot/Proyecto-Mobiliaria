@@ -12,6 +12,9 @@ const props = defineProps({
   skeletonCount: { type: Number, default: 8 },
   // Junto a una barra lateral (página de búsqueda) el escritorio usa 3 columnas en vez de 4.
   withSidebar: { type: Boolean, default: false },
+  // Clave de cada celda. Con el slot "card" la lista puede mezclar otras cosas (en Favoritos,
+  // tarjetas de no disponibles y filas "Quitado · Deshacer"), así que la vista puede elegir otra.
+  itemKey: { type: Function, default: (producto) => producto.id },
 })
 
 // 2 columnas en móvil, 3 en tablet, 4 en escritorio (DESIGN.md).
@@ -48,8 +51,12 @@ const gridClasses = computed(() => [
 
   <!-- Con productos -->
   <ul v-else :class="gridClasses">
-    <li v-for="producto in productos" :key="producto.id">
-      <ProductCard :producto="producto" />
+    <li v-for="(producto, index) in productos" :key="itemKey(producto)">
+      <!-- Slot "card": una vista puede cambiar lo que va en cada celda; por defecto, la tarjeta.
+           index: la posición de la celda (Favoritos la usa para dejar "Deshacer" en el mismo lugar). -->
+      <slot name="card" :item="producto" :index="index">
+        <ProductCard :producto="producto" />
+      </slot>
     </li>
   </ul>
 </template>
