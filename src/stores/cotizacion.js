@@ -128,8 +128,20 @@ export const useCotizacionStore = defineStore('cotizacion', () => {
     guardar()
   }
 
+  // Devuelve { item, indice } para poder deshacerlo con restaurar(), o null si no estaba.
   function quitar(productoId) {
-    items.value = items.value.filter((item) => item.productoId !== productoId)
+    const indice = items.value.findIndex((item) => item.productoId === productoId)
+    if (indice === -1) return null
+    const [item] = items.value.splice(indice, 1)
+    guardar()
+    return { item, indice }
+  }
+
+  // "Deshacer": vuelve a poner el item en el lugar que tenía. Si mientras tanto se agregó otra
+  // vez (p. ej. desde otra pestaña), no se duplica: se deja el que ya está.
+  function restaurar({ item, indice }) {
+    if (buscarItem(item.productoId)) return
+    items.value.splice(Math.min(indice, items.value.length), 0, item)
     guardar()
   }
 
@@ -178,12 +190,14 @@ export const useCotizacionStore = defineStore('cotizacion', () => {
 
   return {
     items,
+    itemsDisponibles,
     totalUnidades,
     totalReferencial,
     cantidadDe,
     agregar,
     cambiarCantidad,
     quitar,
+    restaurar,
     vaciar,
     reconciliar,
   }

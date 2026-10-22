@@ -118,6 +118,15 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --default-transition-duration: 200ms;
   --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Aparecer en el sitio (p. ej. la fila "Producto quitado · Deshacer"): animate-fade-in */
+  --animate-fade-in: fade-in 200ms cubic-bezier(0.23, 1, 0.32, 1);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 /*

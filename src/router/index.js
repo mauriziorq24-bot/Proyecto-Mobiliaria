@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { buscarCitaReciente } from '../utils/citasGuardadas'
+import { buscarCotizacionReciente } from '../utils/cotizacionesEnviadas'
 import { setPageTitle } from '../utils/pageTitle'
 import { getSafeRedirect } from '../utils/redirect'
 import HomeView from '../views/HomeView.vue'
@@ -15,7 +16,19 @@ const routes = [
   { path: '/categoria/:slug', name: 'category', component: () => import('../views/CategoryView.vue') },
   { path: '/producto/:id', name: 'product', component: () => import('../views/ProductView.vue'), meta: { ocultarBarraCotizacion: true } },
   { path: '/buscar', name: 'search', component: () => import('../views/SearchView.vue') },
-  { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { title: 'Mi cotización', ocultarBarraCotizacion: true } },
+  // Sin meta.title: la vista lo fija ("Mi cotización (3)") porque cambia con la cantidad de productos.
+  { path: '/carrito', name: 'cart', component: () => import('../views/CartView.vue'), meta: { ocultarBarraCotizacion: true } },
+  // Confirmación de una solicitud enviada: lee la copia guardada en este navegador (?codigo=COT-…),
+  // nunca la vuelve a enviar. Sin una solicitud reciente con ese código, a la cotización.
+  {
+    path: '/carrito/confirmacion',
+    name: 'quote-confirmation',
+    component: () => import('../views/QuoteConfirmationView.vue'),
+    meta: { title: 'Solicitud enviada', ocultarBarraCotizacion: true },
+    beforeEnter: (to) => {
+      if (!buscarCotizacionReciente(to.query.codigo)) return { name: 'cart', replace: true }
+    },
+  },
   { path: '/favoritos', name: 'favorites', component: () => import('../views/FavoritesView.vue'), meta: { title: 'Favoritos' } },
   { path: '/agendar-cita', name: 'appointment', component: () => import('../views/AppointmentView.vue'), meta: { title: 'Agendar visita', requiereSesion: true, ocultarBarraCotizacion: true } },
   // Confirmación: lee la cita guardada en este navegador (?codigo=CITA-…), nunca la vuelve a enviar.

@@ -335,12 +335,46 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 
 ---
 
+## Cotizaciones — `/api/v1/cotizaciones`
+
+> **Propuesta del frontend, pendiente de confirmar con el backend** (el compañero la está desarrollando). Todavía no existe: el frontend la usa solo con `VITE_COTIZACION_API=true` (ver `CLAUDE.md`); con los mocks responde `src/mocks/cotizaciones.js`.
+
+### `POST /api/v1/cotizaciones`
+
+**Público, sin token** (no hace falta cuenta para cotizar).
+
+```json
+{
+  "nombreCliente": "string",
+  "empresa": "string (opcional)",
+  "telefono": "string",
+  "email": "string",
+  "notas": "string (opcional)",
+  "items": [{ "productoId": 1, "cantidad": 3 }]
+}
+```
+
+**Respuesta `201`:**
+
+```json
+{ "codigoCotizacion": "COT-XXXX" }
+```
+
+**Errores:** `400` si falta un campo, si un `productoId` no existe o si la `cantidad` es menor que 1.
+
+- **El frontend nunca envía precios:** el backend los calcula con el `productoId`. El total que ve la persona es referencial.
+- El frontend envía solo los productos que siguen en el catálogo, con cantidades de 1 a 99, y el teléfono en formato `+58…` (como en citas).
+- Los campos opcionales vacíos no se envían.
+
+---
+
 ## ⚠️ Pendientes con el backend
 
 ### Bloquean funcionalidades del plan
 1. **Carrito, favoritos y pedidos:** no existen endpoints. Mientras se decide, el frontend guarda carrito y favoritos en Pinia + localStorage (ver `CLAUDE.md`). Decidir:
    - **Opción A:** el backend los crea (`/api/v1/carrito`, `/api/v1/favoritos`, `/api/v1/pedidos`).
    - **Opción B:** carrito y favoritos viven en el frontend (Pinia + localStorage) y el "checkout" se convierte en **solicitud de cotización** (vía cita, WhatsApp o un endpoint `POST /api/v1/cotizaciones`). Encaja con `precioReferencialUsd`.
+   - **En curso (21/10/2026):** el frontend sigue la opción B. La forma propuesta de `POST /api/v1/cotizaciones` está en [Cotizaciones](#cotizaciones--apiv1cotizaciones); falta que el backend la confirme y la publique.
 2. **Filtro por categoría:** `GET /api/v1/productos` no acepta categoría. Pedir `?categoria={slug}` o `?categoriaId={id}`.
 3. ~~**`categoriaId` llega `null`**~~ ✅ **Resuelto** (20/10/2026): los 15 productos del seed traen `categoriaId`, y coincide con el `id` de `GET /api/v1/categorias`. Las migas de pan de la ficha resuelven la categoría por `categoriaId`.
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).

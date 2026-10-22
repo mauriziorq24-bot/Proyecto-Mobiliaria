@@ -300,11 +300,11 @@ Un color, un ícono (lucide) y un nombre por valor de `tipoEspacio`, asignados e
 ```
 ┌──────────────────────────────────┐
 │ Mi cotización · 3       ref. $720 │
-│ [ Solicitar cotización ] [WhatsApp]│
+│ [ Ver mi cotización ]  [WhatsApp]  │
 └──────────────────────────────────┘
 ```
 - Fija abajo, fondo blanco, sombra `lg`, respeta `env(safe-area-inset-bottom)`.
-- Con productos: resumen + `button-primary` "Solicitar cotización" + `button-whatsapp`.
+- Con productos: resumen + `button-primary` "Ver mi cotización" (lleva a `/carrito`: llevar no es solicitar) + `button-whatsapp`.
 - Lista vacía: "¿Quieres verlas en persona?" + `button-visit` "Agendar visita".
 - Se oculta en las vistas de cotización/carrito, cita, login y registro.
 - En la ficha de producto la reemplaza la **barra del producto**: selector de cantidad + `button-primary` "Agregar a la cotización" (WhatsApp y visita quedan en el contenido de la ficha, no en la barra). Mismo fondo, sombra `lg` y `env(safe-area-inset-bottom)`; la página reserva espacio al final para que la barra no tape los relacionados ni el footer.
@@ -386,6 +386,24 @@ Plano por defecto: las superficies en reposo no tienen sombra, se separan con el
 - **Cita que ya no existe** (`404`; hoy el backend da `500`, pendiente 12-bis): se quita de la lista y aparece un aviso (fondo Aviso) con el día y el código, y "¿Crees que es un error? Escríbenos por WhatsApp".
 - **Sesión vencida** al enviar: se cierra la sesión y se lleva al login con `?redirect=/mi-cita`.
 - **Visitas anteriores:** las que ya empezaron (hora de Caracas), en una lista compacta debajo, de la más reciente a la más vieja, sin acciones.
+
+### Mi cotización (`/carrito`) — decidido el 2026-10-21
+- **Título de la pestaña:** "Mi cotización (N)", con N = unidades; sin productos, "Mi cotización".
+- **Al entrar** se pide el catálogo una vez (`GET /api/v1/productos`) y se reconcilia la lista. Mientras llega, la lista se ve con la copia guardada y junto al título "Resumen" aparece "Revisando precios…" (no mueve la página). Si falla: aviso (fondo Aviso) "No pudimos revisar los precios actuales…" con "Reintentar"; la lista sigue sirviendo.
+- **Estructura:** escritorio, lista (y formulario) a la izquierda y "Resumen" fijo a la derecha (sticky, salvo en pantallas bajas). Móvil y tablet: lista → "Vaciar mi cotización" → resumen → barra fija → formulario. La barra fija se detiene al terminar el resumen, así no tapa el formulario.
+- **Línea:** foto 4:5 (80 → 96px), categoría, nombre (enlace a la ficha), "Precio referencial $X c/u", subtotal (`price`) a la derecha, selector de cantidad (1–99, − / + / campo; flechas ↑↓) y "Quitar" (ghost).
+- **No disponible** (salió del catálogo): foto atenuada en gris, nombre en Tinta Suave, "Ya no está disponible" (Aviso, con ícono) y "Salió del catálogo, así que no suma al total"; sin selector de cantidad; "Quitar" con borde (secundario). El resumen dice "No disponibles: N, no suman". Si ninguno sigue disponible, no hay envío: aviso con enlace al catálogo.
+- **Quitar → Deshacer:** la línea se reemplaza en su lugar por "**Producto quitado** · [nombre]  ↶ Deshacer" durante 6 s (no se va mientras el puntero o el foco están en ella). El foco pasa a "Deshacer"; al deshacer, el producto vuelve a su posición y el foco a su nombre. Se anuncia por `role="status"`. Va en la lista y no en el aviso flotante para que con teclado esté a mano.
+- **Resumen:** productos, unidades, "Total referencial" (`price-large`) y "Es un precio de referencia. El precio final te lo confirmamos al responder tu cotización."
+- **Acciones según `VITE_COTIZACION_API`:**
+  - `false`: `button-whatsapp` "Enviar por WhatsApp" es la única acción principal, con "Se abre WhatsApp con tu lista ya escrita. Tu cotización sigue guardada aquí." Sin botones deshabilitados ni "Pronto".
+  - `true`: `button-primary` "Solicitar cotización" (lleva al formulario y enfoca el primer campo) y, debajo, "¿Prefieres escribirnos?" + `button-whatsapp`.
+  - En móvil y tablet la acción principal va en la barra fija (total referencial + acción), y el resumen no la repite.
+- **WhatsApp no vacía la lista** (no sabemos si se envió). Mensaje: una línea por producto "• 4 × Nombre (ref. $450 c/u)", el total referencial y el enlace a la tienda.
+- **Vaciar mi cotización:** enlace discreto (Tinta Suave, subrayado, rojo al pasar) al final de la lista, nunca junto a los botones de enviar ni en la barra. Confirma con `BaseConfirmDialog`: "¿Vaciar tu cotización?", "No, mantenerla" / "Sí, vaciar" (`danger`). Después, aviso breve "Vaciamos tu cotización.".
+- **Formulario** (`true`): "Solicitar cotización" + "Déjanos tus datos y te enviamos el precio final por WhatsApp o correo. No necesitas cuenta." Nombre y apellido, empresa o negocio (opcional), teléfono, correo, notas (opcional). Validación como en citas. "Enviar solicitud" (primario, `lg`) con "Se envían N productos (M unidades)".
+- **Vacía:** "Tu cotización está vacía" + "Ver catálogo" y, separado, "¿Prefieres verlos en persona?" + `button-visit`.
+- **Confirmación (`/carrito/confirmacion?codigo=…`):** se llega con `replace` tras el `201`; la lista se vacía (ahí sí sabemos que llegó). Ícono de Éxito, "Recibimos tu solicitud", "Te contactaremos por WhatsApp o correo…", código grande con "Copiar código", "Lo que pediste" (cantidad × nombre, subtotal, total referencial), `button-whatsapp` "Escríbenos por WhatsApp" con el código ya escrito y "Seguir viendo el catálogo". Lee la copia de `src/utils/cotizacionesEnviadas.js`: recargar no reenvía. Sin una solicitud de las últimas 24 h con ese código, lleva a `/carrito`.
 
 ### Aviso breve (`AppToast`, `useToast`)
 - Confirma una acción que no deja otra señal visible; hoy, "Cerraste sesión.". Píldora Tinta con texto blanco e ícono de check, abajo al centro (como el aviso del servidor). Se va sola a los 4 s. Región `role="status"` siempre en el DOM para que se anuncie.

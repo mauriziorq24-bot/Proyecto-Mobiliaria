@@ -1,4 +1,5 @@
 import { company } from '../config/empresa'
+import { formatearPrecio } from './formato'
 
 // Enlace de WhatsApp con un mensaje opcional ya escrito.
 // wa.me abre el chat con el número de la empresa; el texto va codificado en ?text=.
@@ -23,15 +24,29 @@ export function productInquiryUrl(producto, cantidad, url) {
   return whatsappUrl(productInquiryMessage({ nombre: producto.nombre, cantidad, url }))
 }
 
-// Cotización completa desde la barra móvil: una línea por producto y el total referencial.
+// Cotización completa (página Mi cotización y barra móvil): una línea por producto con su cantidad
+// y su precio referencial, el total referencial y el enlace a la tienda.
 // `items` son los del store de la cotización que siguen disponibles; `total` ya viene formateado.
-export function cotizacionUrl(items, total) {
+// El enlace es a la tienda y no a /carrito: la cotización vive en el navegador de quien la arma,
+// así que en otro teléfono /carrito estaría vacío.
+export function cotizacionUrl(items, total, tiendaUrl = window.location.origin) {
   const lines = [
     'Hola, vengo de la página web y quiero cotizar estos productos:',
-    ...items.map((item) => `• ${item.cantidad} × ${item.producto.nombre}`),
+    ...items.map(
+      (item) =>
+        `• ${item.cantidad} × ${item.producto.nombre} (ref. ${formatearPrecio(item.producto.precioReferencialUsd)} c/u)`,
+    ),
     `Total referencial: ${total}`,
+    tiendaUrl,
   ]
   return whatsappUrl(lines.join('\n'))
+}
+
+// Confirmación de una solicitud de cotización ya enviada por el formulario.
+export function cotizacionEnviadaUrl(codigoCotizacion) {
+  return whatsappUrl(
+    `Hola, acabo de enviar una solicitud de cotización desde la página web. Mi código es ${codigoCotizacion}.`,
+  )
 }
 
 // Mensajes de la confirmación de cita. `cuando` es la fecha y hora ya en texto

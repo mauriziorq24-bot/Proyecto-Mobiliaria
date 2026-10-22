@@ -15,12 +15,7 @@ const cotizacion = useCotizacionStore()
 const totalTexto = computed(() => formatearPrecio(cotizacion.totalReferencial))
 
 // Solo los productos que siguen en el catálogo: los demás no se pueden cotizar.
-const whatsappLink = computed(() =>
-  cotizacionUrl(
-    cotizacion.items.filter((item) => item.disponible),
-    totalTexto.value,
-  ),
-)
+const whatsappLink = computed(() => cotizacionUrl(cotizacion.itemsDisponibles, totalTexto.value))
 
 const bar = ref(null)
 useBottomBarHeight(bar)
@@ -47,7 +42,8 @@ useBottomBarHeight(bar)
       </span>
     </p>
     <div class="mt-2 flex gap-3">
-      <BaseButton to="/carrito" class="min-w-0 flex-1">Solicitar cotización</BaseButton>
+      <!-- Lleva a la página de la cotización: ahí se revisa y se envía. Llevar no es solicitar. -->
+      <BaseButton to="/carrito" class="min-w-0 flex-1">Ver mi cotización</BaseButton>
       <BaseButton
         variant="whatsapp"
         :href="whatsappLink"
