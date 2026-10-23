@@ -285,6 +285,19 @@ Categorías (las carga el seed del backend):
 
 Los `id` los asigna el backend: el frontend no debe depender de ellos (rutas por `slug`, lista desde `GET /api/v1/categorias`).
 
+### `PUT /api/v1/categorias/{id}` y `DELETE /api/v1/categorias/{id}`
+**Estaban en el Swagger pero faltaban aquí** (revisado el 23/10/2026). No se probaron con curl (no tenemos una cuenta ADMIN).
+- `PUT`: body `CategoriaRequest` (`{ nombre, descripcion }`; solo `nombre` es obligatorio) → `200` con `CategoriaResponse`.
+- `DELETE`: `200` con un objeto de textos (`{ "clave": "texto" }`), como el de productos. El frontend no lee el cuerpo.
+- No hay `GET /api/v1/categorias/{id}` (da `405`): el formulario de editar busca la categoría en la lista.
+
+### Uso en el panel `/admin` (23/10/2026)
+- Lista, crear, editar y eliminar en `/admin/categorias` (`categoriaService`: `crearCategoria`, `actualizarCategoria`, `eliminarCategoria`). La cantidad de productos de cada una **no la da la API**: se cuenta con `GET /api/v1/productos` (por `categoriaId`).
+- **El slug no se envía nunca.** El formulario lo muestra de solo lectura; al crear, como vista previa con la regla de arriba.
+- **Eliminar una categoría con productos:** el panel no lo intenta; avisa y ofrece ver esos productos. Si el backend igual la rechaza (el conteo estaba viejo), el frontend reconoce un `409`, o un `400`/`500` cuyo `message` hable de productos o de la clave foránea, muestra el `message` del backend y vuelve a contar (pendiente 32).
+- Un `400` con campos se muestra junto a cada uno; un `409` al guardar se muestra junto al nombre (pendiente 14). Un `403` da "No tienes permiso para esta acción." sin cerrar la sesión.
+- **Con mocks:** los cambios se hacen sobre el arreglo de `src/mocks/categorias.js` (y renombrar cambia el `categoriaNombre` de sus productos en `src/mocks/productos.js`). El mock responde `409 { "message" }` a un nombre cuyo slug ya existe y a eliminar una categoría con productos.
+
 ---
 
 ## Citas — `/api/v1/citas`
@@ -529,6 +542,11 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 ### Para el panel de administración (23/10/2026)
 30. **`GET /auth/v1/me` da `500` con un token válido** (probado con curl el 23/10/2026; sin token, `403`). Es lo único que le dice al frontend si alguien es admin, así que **el panel no se puede abrir en producción** hasta que responda `200 { nombre, email, role }`. Probablemente el controlador no recibe el usuario autenticado (p. ej. `@AuthenticationPrincipal` nulo porque `/auth/**` está en `permitAll` y el filtro JWT no lo procesa). Alternativa: incluir `role` en el JWT. También hace falta **una cuenta ADMIN** para probar (¿cómo se crea? ¿seed?).
 31. **Errores `400` de productos (`POST`/`PUT`):** no sabemos qué devuelven. Propuesta: `{ "message": "Datos inválidos", "errores": { "nombre": "Ya existe otro producto con ese nombre." } }`, con los nombres de campo de `ProductoRequest`. El frontend también entiende un mapa plano (`{ "nombre": "…" }`) y la forma de Spring (`{ "errors": [{ "field", "defaultMessage" }] }`); sin campos, muestra un aviso general. Confirmar además los largos máximos (el panel usa: nombre 120, descripción 1000, material 255, dimensiones 60) y si un nombre repetido se rechaza.
+32. **Categorías (`PUT`/`DELETE`), preguntas abiertas:**
+    - **¿Qué pasa al eliminar una categoría que tiene productos?** No está documentado. Propuesta: `409 { "message": "La categoría tiene 3 productos. Muévelos o elimínalos antes." }`. Hay que descartar que los borre en cascada o los deje con `categoriaId: null` sin avisar. Hoy el panel no deja intentarlo si sabe que tiene productos.
+    - **¿`PUT` regenera el `slug` al cambiar el nombre?** Si sí, los enlaces viejos (`/categoria/silleria`) dejan de funcionar; el formulario lo avisa con un "podría". Si no, el slug queda desalineado del nombre (también vale, pero hay que saberlo).
+    - **Largos máximos** de `nombre` y `descripcion`. El panel usa 60 y 255 (el largo por defecto de una columna de texto en JPA).
+    - Un `id` inexistente en `PUT`/`DELETE` debería dar `404` (como el pendiente 20 de productos).
 29. **Citas para administración:** pedir `GET /api/v1/citas` y `PATCH /api/v1/citas/{codigoCita}` con `{ "estado" }`, los dos solo para `ADMIN` (ver [la propuesta](#-propuesta-pendiente-citas-para-administración-23102026)). Confirmar si el estado final se llama `ATENDIDA` (propuesta) o `COMPLETADA` (entidad del Swagger), y que el `GET` devuelva nombre y correo del cliente. Mientras no exista, `VITE_ADMIN_CITAS_API=false` y la sección no aparece en el panel.
 
 ### Para cuando crezca el catálogo

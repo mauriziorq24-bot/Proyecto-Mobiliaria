@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutDashboard, LogOut, Package, Store } from 'lucide-vue-next'
+import { LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
@@ -24,6 +24,7 @@ const { logout } = useLogout()
 const secciones = [
   { name: 'admin-summary', label: 'Resumen', icon: LayoutDashboard, rutas: ['admin-summary'] },
   { name: 'admin-products', label: 'Productos', icon: Package, rutas: ['admin-products', 'admin-product-new', 'admin-product-edit'] },
+  { name: 'admin-categories', label: 'Categorías', icon: Tags, rutas: ['admin-categories', 'admin-category-new', 'admin-category-edit'] },
 ]
 
 function esActiva(seccion) {

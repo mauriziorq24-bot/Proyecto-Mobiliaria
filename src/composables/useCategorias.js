@@ -19,6 +19,14 @@ function load() {
   return request
 }
 
+// Tras crear, editar o eliminar una categoría en el panel, la lista compartida quedó vieja.
+// Si ya se había pedido, se vuelve a pedir; si nadie la pidió aún, se pedirá al usarla.
+export function recargarCategorias() {
+  if (!request) return
+  request = null
+  load()
+}
+
 export function useCategorias() {
   load()
   // computed ya es de solo lectura; loading y error se envuelven para que nadie los cambie desde fuera.

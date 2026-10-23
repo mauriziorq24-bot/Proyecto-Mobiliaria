@@ -3,6 +3,7 @@ import { productos as mockProductos } from '../mocks/productos'
 import api from './api'
 import { ETIQUETAS_TIPO_ESPACIO } from '../utils/formato'
 import { getCategorias } from './categoriaService'
+import { leerErroresDeCampos } from './erroresDeCampos'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
@@ -292,34 +293,6 @@ export const CAMPOS_PRODUCTO = [
   'imagenes',
 ]
 
-// "imagenes[2]" o "imagenes.2" → "imagenes": el error se muestra junto a la lista de imágenes.
-function campoBase(campo) {
-  const base = String(campo ?? '').split(/[[.]/)[0]
-  return CAMPOS_PRODUCTO.includes(base) ? base : null
-}
-
-// La forma de un 400 de productos no está confirmada (pendiente 31 de API.md). Se aceptan:
-// - la que propusimos: { "message": "…", "errores": { "nombre": "…" } }
-// - un mapa plano: { "nombre": "…" }
-// - la de Spring con detalle de validación: { "errors": [{ "field": "nombre", "defaultMessage": "…" }] }
-// Devuelve { nombre: '…' } solo con los campos del formulario (puede quedar vacío).
-export function leerErroresDeCampos(data) {
-  const campos = {}
-  if (!data || typeof data !== 'object') return campos
-
-  const agregar = (campo, mensaje) => {
-    const base = campoBase(campo)
-    if (base && typeof mensaje === 'string' && mensaje.trim() && !campos[base]) campos[base] = mensaje.trim()
-  }
-
-  if (Array.isArray(data.errors)) {
-    for (const item of data.errors) agregar(item?.field, item?.defaultMessage ?? item?.message)
-  }
-  const mapa = data.errores && typeof data.errores === 'object' ? data.errores : data
-  for (const [campo, mensaje] of Object.entries(mapa)) agregar(campo, mensaje)
-  return campos
-}
-
 function datosInvalidos({ cause, campos = {}, message } = {}) {
   const error = new Error(message || 'Algún dato no pasó la revisión del servidor.', { cause })
   error.code = ERRORES_PRODUCTO.DATOS_INVALIDOS
@@ -371,7 +344,8 @@ function mockResponse(id, body) {
 function traducirError(error) {
   if (error?.response?.status === 400) {
     const data = error.response.data
-    throw datosInvalidos({ cause: error, campos: leerErroresDeCampos(data), message: data?.message })
+    // Un error en "imagenes[2]" se muestra junto a la lista de imágenes.
+    throw datosInvalidos({ cause: error, campos: leerErroresDeCampos(data, CAMPOS_PRODUCTO), message: data?.message })
   }
   throw error
 }

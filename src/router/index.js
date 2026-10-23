@@ -69,6 +69,10 @@ const routes = [
       // Crear y editar comparten el formulario. "nuevo" va antes que ":id" y el id debe ser numérico.
       { path: 'productos/nuevo', name: 'admin-product-new', component: () => import('../views/admin/AdminProductFormView.vue'), meta: { title: 'Nuevo producto · Panel' } },
       { path: 'productos/:id(\\d+)', name: 'admin-product-edit', component: () => import('../views/admin/AdminProductFormView.vue'), meta: { title: 'Editar producto · Panel' } },
+      { path: 'categorias', name: 'admin-categories', component: () => import('../views/admin/AdminCategoriesView.vue'), meta: { title: 'Categorías · Panel' } },
+      // Igual que productos: crear y editar comparten el formulario, "nueva" antes que ":id".
+      { path: 'categorias/nueva', name: 'admin-category-new', component: () => import('../views/admin/AdminCategoryFormView.vue'), meta: { title: 'Nueva categoría · Panel' } },
+      { path: 'categorias/:id(\\d+)', name: 'admin-category-edit', component: () => import('../views/admin/AdminCategoryFormView.vue'), meta: { title: 'Editar categoría · Panel' } },
     ],
   },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
