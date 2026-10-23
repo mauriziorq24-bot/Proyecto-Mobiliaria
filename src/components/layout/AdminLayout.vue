@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutDashboard, LogOut, Store } from 'lucide-vue-next'
+import { LayoutDashboard, LogOut, Package, Store } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
@@ -20,7 +20,15 @@ const router = useRouter()
 const { logout } = useLogout()
 
 // Secciones del panel. Cada fase agrega la suya aquí y su ruta hija en router/index.js.
-const secciones = [{ name: 'admin-summary', label: 'Resumen', icon: LayoutDashboard }]
+// rutas: las páginas donde la sección se marca como activa (Productos también en su formulario).
+const secciones = [
+  { name: 'admin-summary', label: 'Resumen', icon: LayoutDashboard, rutas: ['admin-summary'] },
+  { name: 'admin-products', label: 'Productos', icon: Package, rutas: ['admin-products', 'admin-product-new', 'admin-product-edit'] },
+]
+
+function esActiva(seccion) {
+  return seccion.rutas.includes(route.name)
+}
 
 const username = computed(() => auth.usuario?.username ?? '')
 const initial = computed(() => [...username.value][0]?.toUpperCase() ?? '')
@@ -81,7 +89,11 @@ const sideLinkActive = 'bg-brand-tint font-bold text-brand-deep hover:bg-brand-t
       <nav aria-label="Secciones del panel" class="mt-8 flex-1">
         <ul class="space-y-1">
           <li v-for="seccion in secciones" :key="seccion.name">
-            <RouterLink :to="{ name: seccion.name }" :class="sideLink" :exact-active-class="sideLinkActive">
+            <RouterLink
+              :to="{ name: seccion.name }"
+              :class="[sideLink, esActiva(seccion) && sideLinkActive]"
+              :aria-current="esActiva(seccion) ? 'page' : undefined"
+            >
               <component :is="seccion.icon" :stroke-width="1.75" aria-hidden="true" />
               {{ seccion.label }}
             </RouterLink>
@@ -122,8 +134,9 @@ const sideLinkActive = 'bg-brand-tint font-bold text-brand-deep hover:bg-brand-t
           <li v-for="seccion in secciones" :key="seccion.name">
             <RouterLink
               :to="{ name: seccion.name }"
-              class="inline-flex h-11 items-center border-b-2 border-transparent font-semibold whitespace-nowrap text-ink-muted transition-colors duration-200 ease-out hover:text-ink focus-visible:-outline-offset-2"
-              exact-active-class="border-brand! text-ink!"
+              class="inline-flex h-11 items-center border-b-2 font-semibold whitespace-nowrap transition-colors duration-200 ease-out focus-visible:-outline-offset-2"
+              :class="esActiva(seccion) ? 'border-brand text-ink' : 'border-transparent text-ink-muted hover:text-ink'"
+              :aria-current="esActiva(seccion) ? 'page' : undefined"
             >
               {{ seccion.label }}
             </RouterLink>
@@ -133,7 +146,11 @@ const sideLinkActive = 'bg-brand-tint font-bold text-brand-deep hover:bg-brand-t
     </header>
 
     <main id="contenido" tabindex="-1" class="min-w-0 focus:outline-none">
-      <RouterView />
+      <!-- key: crear y editar usan el mismo componente; sin la clave, pasar de uno a otro reutilizaría
+           el formulario sin recargarlo ni preguntar por los cambios sin guardar. -->
+      <RouterView v-slot="{ Component, route: vista }">
+        <component :is="Component" :key="vista.path" />
+      </RouterView>
     </main>
 
     <ServerWakeNotice />

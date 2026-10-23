@@ -1,3 +1,4 @@
+import { categorias as mockCategorias } from '../mocks/categorias'
 import { productos as mockProductos } from '../mocks/productos'
 import api from './api'
 import { ETIQUETAS_TIPO_ESPACIO } from '../utils/formato'
@@ -258,4 +259,185 @@ export async function buscarProductos(filtros) {
     productos: filtrarProductos(productos, filtros, categorias),
     conteos: contarOpciones(productos, filtros, categorias),
   }
+}
+
+// ---------------------------------------------------------------------------
+// Administración de productos (panel /admin › Productos)
+//
+// POST /api/v1/productos, PUT y DELETE /api/v1/productos/{id}: solo ADMIN (un usuario
+// normal recibe 403; ver API.md). El body es ProductoRequest: ProductoResponse sin
+// `id` ni `categoriaNombre`.
+// ---------------------------------------------------------------------------
+
+// El catálogo que comparten las búsquedas (obtenerCatalogo) quedó viejo después de un cambio:
+// se descarta para que la tienda lo vuelva a pedir.
+export function invalidarCatalogo() {
+  catalogoPromise = null
+}
+
+export const ERRORES_PRODUCTO = {
+  DATOS_INVALIDOS: 'DATOS_INVALIDOS',
+}
+
+// Campos de ProductoRequest, en el orden del formulario.
+export const CAMPOS_PRODUCTO = [
+  'nombre',
+  'descripcion',
+  'categoriaId',
+  'tipoEspacio',
+  'precioReferencialUsd',
+  'enShowroom',
+  'material',
+  'dimensionesEstandar',
+  'imagenes',
+]
+
+// "imagenes[2]" o "imagenes.2" → "imagenes": el error se muestra junto a la lista de imágenes.
+function campoBase(campo) {
+  const base = String(campo ?? '').split(/[[.]/)[0]
+  return CAMPOS_PRODUCTO.includes(base) ? base : null
+}
+
+// La forma de un 400 de productos no está confirmada (pendiente 31 de API.md). Se aceptan:
+// - la que propusimos: { "message": "…", "errores": { "nombre": "…" } }
+// - un mapa plano: { "nombre": "…" }
+// - la de Spring con detalle de validación: { "errors": [{ "field": "nombre", "defaultMessage": "…" }] }
+// Devuelve { nombre: '…' } solo con los campos del formulario (puede quedar vacío).
+export function leerErroresDeCampos(data) {
+  const campos = {}
+  if (!data || typeof data !== 'object') return campos
+
+  const agregar = (campo, mensaje) => {
+    const base = campoBase(campo)
+    if (base && typeof mensaje === 'string' && mensaje.trim() && !campos[base]) campos[base] = mensaje.trim()
+  }
+
+  if (Array.isArray(data.errors)) {
+    for (const item of data.errors) agregar(item?.field, item?.defaultMessage ?? item?.message)
+  }
+  const mapa = data.errores && typeof data.errores === 'object' ? data.errores : data
+  for (const [campo, mensaje] of Object.entries(mapa)) agregar(campo, mensaje)
+  return campos
+}
+
+function datosInvalidos({ cause, campos = {}, message } = {}) {
+  const error = new Error(message || 'Algún dato no pasó la revisión del servidor.', { cause })
+  error.code = ERRORES_PRODUCTO.DATOS_INVALIDOS
+  error.campos = campos
+  return error
+}
+
+const textoOpcional = (texto) => String(texto ?? '').trim()
+
+// Datos del formulario (ya validados por la vista) → ProductoRequest.
+// El precio viaja como número con 2 decimales como máximo (480.5, no "480,50").
+export function armarProductoRequest(form) {
+  return {
+    nombre: form.nombre.trim(),
+    descripcion: textoOpcional(form.descripcion),
+    categoriaId: Number(form.categoriaId),
+    tipoEspacio: form.tipoEspacio,
+    precioReferencialUsd: Math.round(Number(form.precioReferencialUsd) * 100) / 100,
+    enShowroom: Boolean(form.enShowroom),
+    material: textoOpcional(form.material),
+    dimensionesEstandar: textoOpcional(form.dimensionesEstandar),
+    imagenes: form.imagenes.map((url) => url.trim()).filter(Boolean),
+  }
+}
+
+// --- Mocks: el "servidor" es el mismo arreglo de src/mocks/productos.js, así la tienda ve los cambios ---
+
+function normalizarNombre(nombre) {
+  return normalize(nombre).replace(/\s+/g, ' ')
+}
+
+// Simula un 400 con detalle por campo, para poder ver los errores junto a cada campo:
+// el mock rechaza un nombre que ya usa otro producto. Es solo del mock (el backend real
+// no lo hace, que sepamos).
+function mockValidar(body, id = null) {
+  const repetido = mockProductos.some((p) => p.id !== id && normalizarNombre(p.nombre) === normalizarNombre(body.nombre))
+  if (repetido) {
+    const data = { message: 'Datos inválidos', errores: { nombre: 'Ya existe otro producto con ese nombre.' } }
+    throw Object.assign(new Error('Bad Request'), { response: { status: 400, data } })
+  }
+}
+
+function mockResponse(id, body) {
+  const categoria = mockCategorias.find((c) => c.id === body.categoriaId)
+  return { id, ...body, categoriaNombre: categoria?.nombre ?? '' }
+}
+
+// Errores del backend → lo que entiende la vista. Lo demás (403, red, 5xx) sigue tal cual.
+function traducirError(error) {
+  if (error?.response?.status === 400) {
+    const data = error.response.data
+    throw datosInvalidos({ cause: error, campos: leerErroresDeCampos(data), message: data?.message })
+  }
+  throw error
+}
+
+// POST /api/v1/productos → ProductoResponse
+export async function crearProducto(form) {
+  const body = armarProductoRequest(form)
+  try {
+    let creado
+    if (useMocks) {
+      await fakeDelay(null, 600)
+      mockValidar(body)
+      creado = mockResponse(Math.max(0, ...mockProductos.map((p) => p.id)) + 1, body)
+      mockProductos.push(creado)
+      creado = structuredClone(creado)
+    } else {
+      const { data } = await api.post('/api/v1/productos', body)
+      creado = data
+    }
+    invalidarCatalogo()
+    return creado
+  } catch (error) {
+    traducirError(error)
+  }
+}
+
+// PUT /api/v1/productos/{id} → ProductoResponse
+export async function actualizarProducto(id, form) {
+  const body = armarProductoRequest(form)
+  try {
+    let actualizado
+    if (useMocks) {
+      await fakeDelay(null, 600)
+      const index = mockProductos.findIndex((p) => p.id === Number(id))
+      if (index === -1) throw notFoundError('Producto no encontrado')
+      mockValidar(body, Number(id))
+      mockProductos[index] = mockResponse(Number(id), body)
+      actualizado = structuredClone(mockProductos[index])
+    } else {
+      const { data } = await api.put(`/api/v1/productos/${id}`, body)
+      actualizado = data
+    }
+    invalidarCatalogo()
+    return actualizado
+  } catch (error) {
+    traducirError(error)
+  }
+}
+
+// DELETE /api/v1/productos/{id} → 200 con un mapa de textos (el Swagger no dice cuáles).
+export async function eliminarProducto(id) {
+  if (useMocks) {
+    await fakeDelay(null, 500)
+    const index = mockProductos.findIndex((p) => p.id === Number(id))
+    if (index === -1) throw notFoundError('Producto no encontrado')
+    mockProductos.splice(index, 1)
+  } else {
+    await api.delete(`/api/v1/productos/${id}`)
+  }
+  invalidarCatalogo()
+}
+
+// Un producto que no existe: 404 cuando el backend lo corrija; hoy llega como 500 con
+// "Producto no encontrado con ID: …" en el mensaje (pendiente 20 de API.md).
+export function esProductoNoEncontrado(error) {
+  const status = error?.response?.status
+  if (status === 404) return true
+  return status === 500 && /no encontrado/i.test(error?.response?.data?.message ?? '')
 }

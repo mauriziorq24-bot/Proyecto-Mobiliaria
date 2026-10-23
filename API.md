@@ -209,6 +209,18 @@ Crea un producto (uso administrativo). Body: `ProductoRequest` (igual a `Product
 ### `PUT /api/v1/productos/{id}`
 Actualiza un producto (uso administrativo). Body: `ProductoRequest` (el mismo de `POST`).
 
+### `DELETE /api/v1/productos/{id}`
+Elimina un producto (uso administrativo). **Estaba en el Swagger pero faltaba aquí** (revisado el 23/10/2026): responde `200` con un objeto de textos (`{ "clave": "texto" }`, el Swagger no dice cuáles). El frontend no lee el cuerpo. No se probó con curl (no tenemos una cuenta ADMIN).
+
+### `ProductoRequest` según el Swagger (23/10/2026)
+Obligatorios: `nombre`, `categoriaId`, `tipoEspacio`, `precioReferencialUsd`. Opcionales: `descripcion`, `enShowroom`, `material`, `dimensionesEstandar`, `imagenes`. El Swagger no da largos máximos; el formulario del panel usa los suyos (ver pendiente 31).
+
+### Uso en el panel `/admin` (23/10/2026)
+- Lista, crear, editar y eliminar en `/admin/productos` (`productoService`: `crearProducto`, `actualizarProducto`, `eliminarProducto`). Después de cada cambio se descarta la copia del catálogo que guarda la búsqueda (`invalidarCatalogo`).
+- Un `400` se muestra junto al campo que nombre (ver pendiente 31). Un `403` da "No tienes permiso para esta acción." sin cerrar la sesión.
+- **Con mocks:** los cambios se hacen sobre el arreglo de `src/mocks/productos.js` (la tienda los ve hasta recargar la página). El mock responde `400 { "message", "errores": { "nombre": "…" } }` si el nombre ya lo usa otro producto, solo para poder ver los errores por campo.
+- **Imágenes nuevas:** URLs de jsDelivr del repositorio de fotos, `https://cdn.jsdelivr.net/gh/manuelperoza-prog/asets-mobiliario@main/{carpeta}/{archivo}` (`src/config/imagenes.js`). Las del seed usan `raw.githubusercontent.com` del mismo repositorio y siguen funcionando.
+
 ### `ProductoResponse`
 ```json
 {
@@ -516,6 +528,7 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 
 ### Para el panel de administración (23/10/2026)
 30. **`GET /auth/v1/me` da `500` con un token válido** (probado con curl el 23/10/2026; sin token, `403`). Es lo único que le dice al frontend si alguien es admin, así que **el panel no se puede abrir en producción** hasta que responda `200 { nombre, email, role }`. Probablemente el controlador no recibe el usuario autenticado (p. ej. `@AuthenticationPrincipal` nulo porque `/auth/**` está en `permitAll` y el filtro JWT no lo procesa). Alternativa: incluir `role` en el JWT. También hace falta **una cuenta ADMIN** para probar (¿cómo se crea? ¿seed?).
+31. **Errores `400` de productos (`POST`/`PUT`):** no sabemos qué devuelven. Propuesta: `{ "message": "Datos inválidos", "errores": { "nombre": "Ya existe otro producto con ese nombre." } }`, con los nombres de campo de `ProductoRequest`. El frontend también entiende un mapa plano (`{ "nombre": "…" }`) y la forma de Spring (`{ "errors": [{ "field", "defaultMessage" }] }`); sin campos, muestra un aviso general. Confirmar además los largos máximos (el panel usa: nombre 120, descripción 1000, material 255, dimensiones 60) y si un nombre repetido se rechaza.
 29. **Citas para administración:** pedir `GET /api/v1/citas` y `PATCH /api/v1/citas/{codigoCita}` con `{ "estado" }`, los dos solo para `ADMIN` (ver [la propuesta](#-propuesta-pendiente-citas-para-administración-23102026)). Confirmar si el estado final se llama `ATENDIDA` (propuesta) o `COMPLETADA` (entidad del Swagger), y que el `GET` devuelva nombre y correo del cliente. Mientras no exista, `VITE_ADMIN_CITAS_API=false` y la sección no aparece en el panel.
 
 ### Para cuando crezca el catálogo

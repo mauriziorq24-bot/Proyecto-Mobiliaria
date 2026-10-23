@@ -65,6 +65,10 @@ const routes = [
     meta: { requiereAdmin: true, layout: 'admin', noIndex: true },
     children: [
       { path: '', name: 'admin-summary', component: () => import('../views/admin/AdminSummaryView.vue'), meta: { title: 'Resumen · Panel' } },
+      { path: 'productos', name: 'admin-products', component: () => import('../views/admin/AdminProductsView.vue'), meta: { title: 'Productos · Panel' } },
+      // Crear y editar comparten el formulario. "nuevo" va antes que ":id" y el id debe ser numérico.
+      { path: 'productos/nuevo', name: 'admin-product-new', component: () => import('../views/admin/AdminProductFormView.vue'), meta: { title: 'Nuevo producto · Panel' } },
+      { path: 'productos/:id(\\d+)', name: 'admin-product-edit', component: () => import('../views/admin/AdminProductFormView.vue'), meta: { title: 'Editar producto · Panel' } },
     ],
   },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
