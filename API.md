@@ -287,6 +287,21 @@ Modifica una cita. Body: `CitaRequest` (el mismo de `POST`). Respuesta: `200 { "
 ### `DELETE /api/v1/citas/{codigoCita}`
 Cancela (elimina) una cita. Respuesta: `200 { "mensaje": "Cita eliminada con éxito" }`.
 
+### ⏳ Propuesta pendiente: citas para administración (23/10/2026)
+
+> **No existe todavía.** Es el contrato que le propusimos al backend (paso 10B) para la sección Citas del panel `/admin`. Ver pendiente 29. El frontend lo usa solo con `VITE_ADMIN_CITAS_API=true`; con `VITE_USE_MOCKS=true` responde un mock con la misma forma.
+
+| Método | Ruta | Uso |
+|---|---|---|
+| `GET` | `/api/v1/citas` | Todas las citas (fecha, cliente, tipo, estado). Solo `ADMIN`. |
+| `PATCH` | `/api/v1/citas/{codigoCita}` | Cambia el estado. Body: `{ "estado": "CONFIRMADA" }`. Solo `ADMIN`. |
+
+- **Estados propuestos:** `PENDIENTE`, `CONFIRMADA`, `CANCELADA`, `ATENDIDA`.
+- **Por confirmar con el backend:**
+  - El Swagger (revisado el 23/10/2026) ya tiene la entidad `CitaShowroom` con `estado`: `PENDIENTE | CONFIRMADA | COMPLETADA | CANCELADA`. Dice **`COMPLETADA`** donde la propuesta dice **`ATENDIDA`**: hay que quedarse con un solo nombre.
+  - `CitaShowroom` no tiene `nombreCliente` ni `email` (solo `usuario`, `empresa` y `telefono`), aunque `CitaRequest` sí los manda. El `GET` tiene que devolver `codigoCita`, `nombreCliente`, `empresa`, `telefono`, `email`, `fechaHora`, `tipoAsesoria`, `estado`, `notas` y `creadoEn`, sin exponer el `User` completo (hoy trae `password`).
+  - Hoy solo existe `GET /api/v1/citas/mis-citas` (las citas de la persona con sesión).
+
 ### Comportamiento real de citas (probado el 21/10/2026)
 
 Probado con `curl` contra Render con el usuario `prueba_citas_2110`. **Las 5 citas creadas se borraron al terminar** (un segundo `DELETE` dio `500`: ya no existen).
@@ -477,6 +492,9 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 
 ### Detectados al probar "Compra por ambiente" del inicio (22/10/2026)
 28. **`enShowroom` y `tipoEspacio` no se combinan.** Probado con curl contra Render: `?tipoEspacio=HOGAR` → 20 productos (todos `HOGAR`), pero `?enShowroom=true&tipoEspacio=HOGAR` (en cualquier orden) → los 41 del showroom, de todos los ambientes. Con `enShowroom` presente, `tipoEspacio` se ignora (probablemente un `if / else if` en el controlador). Pedir que los filtros se apliquen juntos. Mientras tanto el frontend **no envía filtros**: `obtenerProductos` pide el catálogo completo y filtra en el navegador con `filtrarProductos`, la misma función de `/buscar`.
+
+### Para el panel de administración (23/10/2026)
+29. **Citas para administración:** pedir `GET /api/v1/citas` y `PATCH /api/v1/citas/{codigoCita}` con `{ "estado" }`, los dos solo para `ADMIN` (ver [la propuesta](#-propuesta-pendiente-citas-para-administración-23102026)). Confirmar si el estado final se llama `ATENDIDA` (propuesta) o `COMPLETADA` (entidad del Swagger), y que el `GET` devuelva nombre y correo del cliente. Mientras no exista, `VITE_ADMIN_CITAS_API=false` y la sección no aparece en el panel.
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
