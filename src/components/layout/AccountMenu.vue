@@ -1,5 +1,5 @@
 <script setup>
-import { CalendarDays, ChevronDown, LogOut, User, UserRound } from 'lucide-vue-next'
+import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, User, UserRound } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useLogout } from '../../composables/useLogout'
@@ -9,6 +9,8 @@ import BaseIconButton from '../ui/BaseIconButton.vue'
 // Cuenta en el header de escritorio (en móvil y tablet vive en el menú lateral).
 // Sin sesión: ícono que lleva a /login. Con sesión: botón con la inicial que abre un menú
 // con el nombre, "Mi perfil" y "Cerrar sesión" (patrón "menu button" de WAI-ARIA).
+// "Panel de administración" aparece solo si el perfil dice ADMIN. Esconderlo es comodidad, no seguridad:
+// el backend rechaza con 403 las acciones de admin de cualquier otra cuenta.
 const auth = useAuthStore()
 const route = useRoute()
 const { logout } = useLogout()
@@ -176,6 +178,12 @@ const menuItem =
             <RouterLink to="/mi-cita" role="menuitem" tabindex="-1" :class="menuItem">
               <CalendarDays :stroke-width="1.75" aria-hidden="true" />
               Mis visitas
+            </RouterLink>
+          </li>
+          <li v-if="auth.esAdmin" role="none">
+            <RouterLink to="/admin" role="menuitem" tabindex="-1" :class="menuItem">
+              <LayoutDashboard :stroke-width="1.75" aria-hidden="true" />
+              Panel de administración
             </RouterLink>
           </li>
           <li role="none">

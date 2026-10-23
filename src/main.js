@@ -37,4 +37,7 @@ configureAuth({
   },
 })
 
+// Con la sesión ya conectada a axios: el perfil (con el rol) para el menú de cuenta y el guard de /admin.
+authStore.cargarPerfil()
+
 app.mount('#app')

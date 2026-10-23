@@ -47,10 +47,18 @@ export function configureAuth(handlers) {
   auth = { ...auth, ...handlers }
 }
 
+// El token de la sesión actual, para los mocks que imitan lo que el backend lee del token
+// (quién es la persona y qué rol tiene). Los servicios reales no lo necesitan: lo pone el interceptor.
+export function getSessionToken() {
+  return auth.getToken()
+}
+
 // Las rutas de /auth/v1 no usan la sesión: su 401 significa "usuario o correo ya
-// registrado" (API.md), no "sesión vencida".
+// registrado" (API.md), no "sesión vencida". La excepción es /auth/v1/me, que pregunta
+// "¿quién soy?" y por eso necesita el token como cualquier endpoint protegido.
 function isAuthEndpoint(config) {
-  return config?.url?.startsWith('/auth/') ?? false
+  const url = config?.url ?? ''
+  return url.startsWith('/auth/') && url !== '/auth/v1/me'
 }
 
 api.interceptors.request.use((config) => {

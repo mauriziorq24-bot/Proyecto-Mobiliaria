@@ -1,5 +1,5 @@
 <script setup>
-import { CalendarCheck, CalendarDays, ChevronRight, LogOut, MessageCircle, Phone, UserRound, X } from 'lucide-vue-next'
+import { CalendarCheck, CalendarDays, ChevronRight, LayoutDashboard, LogOut, MessageCircle, Phone, UserRound, X } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLogout } from '../../composables/useLogout'
@@ -140,6 +140,16 @@ const linkRow =
                   <span class="inline-flex items-center gap-2.5">
                     <CalendarDays class="size-[18px] text-ink-muted" aria-hidden="true" />
                     Mis visitas
+                  </span>
+                  <ChevronRight class="size-[18px] text-ink-muted" aria-hidden="true" />
+                </RouterLink>
+              </li>
+              <!-- Solo para admins (comodidad, no seguridad: el backend vuelve a comprobar el rol) -->
+              <li v-if="auth.esAdmin">
+                <RouterLink to="/admin" :class="linkRow">
+                  <span class="inline-flex items-center gap-2.5">
+                    <LayoutDashboard class="size-[18px] text-ink-muted" aria-hidden="true" />
+                    Panel de administración
                   </span>
                   <ChevronRight class="size-[18px] text-ink-muted" aria-hidden="true" />
                 </RouterLink>

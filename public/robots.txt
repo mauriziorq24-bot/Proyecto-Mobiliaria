@@ -1,0 +1,4 @@
+# El panel de administración no se rastrea ni se indexa.
+# Esto NO lo protege: cualquiera puede leer este archivo. La protección es el rol ADMIN en el backend.
+User-agent: *
+Disallow: /admin

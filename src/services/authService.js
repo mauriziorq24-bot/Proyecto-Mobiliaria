@@ -1,5 +1,6 @@
-import { createMockToken } from '../mocks/auth'
-import api from './api'
+import { createMockToken, mockPerfil } from '../mocks/auth'
+import { decodeJwtPayload } from '../utils/jwt'
+import api, { getSessionToken } from './api'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
@@ -36,6 +37,17 @@ export async function loginConGoogle(googleIdToken) {
 
   const { data } = await api.post('/auth/v1/google', { token: googleIdToken })
   return data.token
+}
+
+// GET /auth/v1/me (con token) → 200 PerfilResponse { nombre, email, role }
+// role: 'ADMIN' | 'USER'. El campo viene en inglés ("role"); se usa tal cual.
+// Probado el 23/10/2026: con un token válido el backend responde 500 (pendiente 30 de API.md);
+// el store lo trata como "sin perfil", así que nadie ve el panel hasta que se arregle.
+export async function obtenerPerfil() {
+  if (useMocks) return fakeDelay(mockPerfil(decodeJwtPayload(getSessionToken())?.sub ?? ''))
+
+  const { data } = await api.get('/auth/v1/me')
+  return data
 }
 
 // Login fallido: contraseña incorrecta, usuario inexistente o campos vacíos dan todos 403

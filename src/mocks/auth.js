@@ -20,3 +20,22 @@ export function createMockToken(username) {
   }
   return `${encodeBase64Url(header)}.${encodeBase64Url(payload)}.firma-de-prueba`
 }
+
+// Respuesta simulada de GET /auth/v1/me: PerfilResponse del Swagger, { nombre, email, role }.
+// Ojo: el campo se llama "role" (en inglés), no "rol". Ver "Perfil y rol" en API.md.
+// Con mocks, el rol sale del nombre de usuario (cualquier contraseña sirve):
+// - "admin": ADMIN, puede todo.
+// - "admin.limitado": ADMIN para el frontend, pero el "servidor" le niega las cotizaciones (403).
+//   Sirve para ver que el panel muestra "No tienes permiso para esta acción" sin cerrar la sesión,
+//   y para recordar que quien decide los permisos es el backend, no el menú.
+// - Cualquier otro: USER.
+export const MOCK_ADMINS = ['admin', 'admin.limitado']
+export const MOCK_SIN_PERMISO_COTIZACIONES = ['admin.limitado']
+
+export function mockPerfil(username) {
+  return {
+    nombre: username,
+    email: username.includes('@') ? username : null,
+    role: MOCK_ADMINS.includes(username) ? 'ADMIN' : 'USER',
+  }
+}

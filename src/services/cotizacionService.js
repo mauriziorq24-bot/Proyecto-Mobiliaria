@@ -1,6 +1,8 @@
-import { mockCotizacionCreada } from '../mocks/cotizaciones'
+import { MOCK_SIN_PERMISO_COTIZACIONES } from '../mocks/auth'
+import { mockCotizacionCreada, mockCotizacionesAdmin } from '../mocks/cotizaciones'
+import { decodeJwtPayload } from '../utils/jwt'
 import { normalizarTelefono } from '../utils/telefono'
-import api from './api'
+import api, { getSessionToken } from './api'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
@@ -71,4 +73,21 @@ export async function solicitarCotizacion(datos, items) {
     // Lo demás (sin conexión, 5xx, HTML en vez de JSON) lo explica submitErrorMessage en la vista.
     throw error
   }
+}
+
+// GET /api/v1/cotizaciones (solo ADMIN) → [Cotizacion] con estado PENDIENTE | CONTACTADO | CANCELADA.
+// Un usuario normal recibe 403: lo decide el backend con el token, no el frontend.
+// Con mocks, la cuenta "admin.limitado" recibe ese 403 para poder ver el aviso del panel.
+export async function obtenerCotizaciones() {
+  if (useMocks) {
+    const username = decodeJwtPayload(getSessionToken())?.sub
+    if (MOCK_SIN_PERMISO_COTIZACIONES.includes(username)) {
+      await fakeDelay(null, 400)
+      throw Object.assign(new Error('Forbidden'), { response: { status: 403, data: { status: 403, error: 'Forbidden' } } })
+    }
+    return fakeDelay(mockCotizacionesAdmin(), 500)
+  }
+
+  const { data } = await api.get('/api/v1/cotizaciones')
+  return data
 }

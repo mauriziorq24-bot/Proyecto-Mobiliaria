@@ -27,3 +27,17 @@ export function submitErrorMessage(error, action = 'completar la operación') {
   if (isNetworkError(error)) return 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.'
   return `Tuvimos un problema al ${action}. Inténtalo en unos minutos.`
 }
+
+// 403 con la sesión iniciada: el backend sabe quién es la persona, pero su rol no alcanza para eso.
+// No es una sesión vencida (esa da 401 y la maneja api.js), así que no se cierra la sesión:
+// solo se avisa. Lo usa el panel de administración.
+export const FORBIDDEN_MESSAGE = 'No tienes permiso para esta acción.'
+
+export function isForbidden(error) {
+  return error?.response?.status === 403
+}
+
+// Igual que loadErrorMessage, pero un 403 da el aviso de permisos.
+export function adminErrorMessage(error, subject) {
+  return isForbidden(error) ? FORBIDDEN_MESSAGE : loadErrorMessage(error, subject)
+}

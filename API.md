@@ -98,9 +98,28 @@ Header: `{ "alg": "HS384" }`. Payload (base64, decodificable en el navegador):
 ```
 
 - **Solo trae `sub` (el username), `iss` y `exp`.** No trae `email` ni `rol`. → El frontend **no puede saber el rol ni el email** desde el token; necesita el pendiente 5 (`GET /auth/v1/me`). Si se usa el `sub`, es el nombre de usuario.
+- **Actualización (23/10/2026):** el Swagger ya publica `GET /auth/v1/me`, pero falla (ver [Perfil y rol](#perfil-y-rol-get-authv1me-revisado-el-23102026)). El token sigue sin `rol`.
 - **`exp` dura ~1 hora** (probado: `exp - now ≈ 3595 s`). Tras una hora el token caduca y el backend empezará a rechazar; el frontend debe manejar esa expiración (ver más abajo el ⚠️ del `500`).
 
 **Qué es un JWT y por qué el frontend puede leerlo pero no modificarlo.** Un JWT (JSON Web Token) son tres partes separadas por puntos: `header.payload.firma`. El header y el payload son **solo JSON codificado en base64url** — no están cifrados, por eso el navegador (o cualquiera) puede decodificarlos y leer `sub`/`exp`. La tercera parte es una **firma**: el backend la calcula con el algoritmo `HS384` usando una **clave secreta que solo él conoce**. En cada petición el backend recalcula la firma del `header.payload` que recibe y la compara con la que viene; si no coincide, rechaza el token. Por eso, aunque el frontend podría cambiar el payload (p. ej. poner `"rol":"ADMIN"`), **no puede generar la firma correcta sin la clave secreta**, y el backend lo detectaría. Conclusión práctica: el frontend trata el contenido del JWT como **informativo** (mostrar el nombre, saber cuándo caduca), pero **la autorización real siempre la decide el backend**; nunca confiar en el token para dar o quitar permisos en el cliente.
+
+### Perfil y rol: `GET /auth/v1/me` (revisado el 23/10/2026)
+
+Aparece en el Swagger con respuesta `PerfilResponse`:
+
+```json
+{ "nombre": "string", "email": "string", "role": "ADMIN" }
+```
+
+- **El campo es `role` (en inglés), no `rol`.** El frontend lo usa tal cual. `role` viene del enum `ADMIN | USER` de la entidad `User`.
+- **Probado con curl contra Render** (usuario `prueba_me_2310`, creado para la prueba y que sigue existiendo: no hay endpoint para borrar usuarios):
+  | Caso | Respuesta |
+  |---|---|
+  | Sin token | `403` |
+  | Con token válido (usuario normal) | **`500`** `{ "status":500, "error":"Internal Server Error" }` ❌ (pendiente 30) |
+- **Cómo lo usa el frontend:** `authService.obtenerPerfil()`. El store de auth lo pide al abrir la app con sesión y al iniciar sesión; el rol sale del JWT si algún día lo trae (`rol` o `role`) y, si no, de `/me`. Si `/me` falla, la persona queda como usuario normal: **hoy nadie ve el panel `/admin` en producción** hasta que se arregle el `500`. `api.js` manda el token a `/auth/v1/me` (al resto de `/auth/v1` no).
+- **Con mocks:** el usuario `admin` es `ADMIN`; `admin.limitado` también, pero el mock de `GET /api/v1/cotizaciones` le responde `403` (para ver el aviso de permisos del panel). Los demás son `USER`.
+- Con un token de usuario normal, `GET /api/v1/cotizaciones` da **`403`** (probado el 23/10/2026): el backend sí protege los endpoints de administración por rol.
 
 ### Qué endpoints exigen token
 
@@ -356,7 +375,9 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 >
 > Resultados de la prueba: cuerpo válido → `201 {"codigoCotizacion":"COT-0001"}` (el código es **secuencial**). `400` (cuerpo vacío, sin detalle de qué falló) con: `{}`, `items: []`, `productoId` inexistente, `cantidad: 0`, `nombreCliente` en blanco, email o teléfono con formato inválido. El Swagger dice `200`, pero responde `201`.
 >
-> El backend también expone `GET /api/v1/cotizaciones` (lista con `detalles`, `totalUsd`, `estado`: `PENDIENTE` | `CONTACTADO` | `CANCELADA`) y `PATCH /api/v1/cotizaciones/{id}/estado`. Sin token responden `403`: son para administración y el frontend no los usa.
+> El backend también expone `GET /api/v1/cotizaciones` (lista con `detalles`, `totalUsd`, `estado`: `PENDIENTE` | `CONTACTADO` | `CANCELADA`) y `PATCH /api/v1/cotizaciones/{id}/estado`. Sin token, o con el token de un usuario normal, responden `403`: son solo para `ADMIN`. **El panel `/admin` usa el `GET`** para el contador "Cotizaciones por atender" (las `PENDIENTE`); el `PATCH` todavía no.
+>
+> Forma de cada elemento según el Swagger (**no probada**: no tenemos una cuenta ADMIN): `Cotizacion` = `{ id, codigoCotizacion, nombreCliente, empresa, telefono, email, notas, totalUsd, fechaCreacion, estado, detalles: [{ id, producto, cantidad, precioUnitario }] }`, donde `producto` es la **entidad** `Producto` (`categoria` como objeto e `imagenes` como `[{ id, urlImagen }]`), no `ProductoResponse`. El mock (`mockCotizacionesAdmin` en `src/mocks/cotizaciones.js`) sigue esa forma.
 
 ### `POST /api/v1/cotizaciones`
 
@@ -449,7 +470,7 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 4. **Servir `/uploads` desde el backend:** las fotos del seed van en `/uploads/productos/`, pero el backend todavía tiene que servir esa carpeta como contenido estático. Cuando exista, **agregar `/uploads` al proxy de Vite** (junto a `/auth` y `/api`).
 
 ### Necesarios para el login
-5. **`GET /auth/v1/me`** que devuelva los datos del usuario (`id`, `username`, `email`, `rol`). Sin esto, el frontend solo puede leer lo que venga dentro del JWT. **Confirmado el 21/10/2026:** no existe (`/auth/v1/me` y `/api/v1/usuarios/me` dan `404`), y el JWT **solo trae `sub` (username), `iss` y `exp`** — ni email ni rol. Es necesario para mostrar datos del usuario y para saber si es admin.
+5. ⏳ **`GET /auth/v1/me`** (ya publicado, pero da `500`: ver el 30) que devuelva los datos del usuario (`id`, `username`, `email`, `rol`). Sin esto, el frontend solo puede leer lo que venga dentro del JWT. **Confirmado el 21/10/2026:** no existe (`/auth/v1/me` y `/api/v1/usuarios/me` dan `404`), y el JWT **solo trae `sub` (username), `iss` y `exp`** — ni email ni rol. Es necesario para mostrar datos del usuario y para saber si es admin.
 6. ~~**Login:** ¿se entra con `username` o con `email`?~~ ✅ **Resuelto (21/10/2026):** se entra con **cualquiera de los dos** (y da igual en qué campo vaya). El frontend manda solo `{ username, password }` y el `email` **no es obligatorio**. Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026).
 7. **Google:** el frontend ya está listo (Google Identity Services → `POST /auth/v1/google` → se guarda el JWT del backend), pero el botón queda oculto hasta tener el Client ID. Falta:
    - [ ] **Client ID** de Google Cloud Console (ID de cliente OAuth 2.0, tipo "Aplicación web"). Debe ser **el mismo** con el que el backend valida el ID token en `/auth/v1/google`. Ponerlo en `VITE_GOOGLE_CLIENT_ID` del `.env` local.
@@ -494,6 +515,7 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 28. **`enShowroom` y `tipoEspacio` no se combinan.** Probado con curl contra Render: `?tipoEspacio=HOGAR` → 20 productos (todos `HOGAR`), pero `?enShowroom=true&tipoEspacio=HOGAR` (en cualquier orden) → los 41 del showroom, de todos los ambientes. Con `enShowroom` presente, `tipoEspacio` se ignora (probablemente un `if / else if` en el controlador). Pedir que los filtros se apliquen juntos. Mientras tanto el frontend **no envía filtros**: `obtenerProductos` pide el catálogo completo y filtra en el navegador con `filtrarProductos`, la misma función de `/buscar`.
 
 ### Para el panel de administración (23/10/2026)
+30. **`GET /auth/v1/me` da `500` con un token válido** (probado con curl el 23/10/2026; sin token, `403`). Es lo único que le dice al frontend si alguien es admin, así que **el panel no se puede abrir en producción** hasta que responda `200 { nombre, email, role }`. Probablemente el controlador no recibe el usuario autenticado (p. ej. `@AuthenticationPrincipal` nulo porque `/auth/**` está en `permitAll` y el filtro JWT no lo procesa). Alternativa: incluir `role` en el JWT. También hace falta **una cuenta ADMIN** para probar (¿cómo se crea? ¿seed?).
 29. **Citas para administración:** pedir `GET /api/v1/citas` y `PATCH /api/v1/citas/{codigoCita}` con `{ "estado" }`, los dos solo para `ADMIN` (ver [la propuesta](#-propuesta-pendiente-citas-para-administración-23102026)). Confirmar si el estado final se llama `ATENDIDA` (propuesta) o `COMPLETADA` (entidad del Swagger), y que el `GET` devuelva nombre y correo del cliente. Mientras no exista, `VITE_ADMIN_CITAS_API=false` y la sección no aparece en el panel.
 
 ### Para cuando crezca el catálogo

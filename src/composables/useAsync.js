@@ -14,6 +14,21 @@ export function useServerWaking() {
   return computed(() => slowCount.value > 0)
 }
 
+// Para una carga que no vive en una vista (p. ej. el perfil que espera el guard de /admin):
+// si la promesa tarda más de 5 s, también enciende el aviso. Devuelve la misma promesa.
+export function trackSlowLoad(promise) {
+  let countedAsSlow = false
+  const slowTimer = setTimeout(() => {
+    countedAsSlow = true
+    slowCount.value++
+  }, SLOW_AFTER_MS)
+
+  return promise.finally(() => {
+    clearTimeout(slowTimer)
+    if (countedAsSlow) slowCount.value--
+  })
+}
+
 // Envuelve una función que devuelve una promesa (p. ej. una llamada a un servicio)
 // y expone su estado: data, loading y error, más execute/retry para (re)lanzarla.
 // Cada vista que carga datos repetía estas mismas tres variables y el try/catch;

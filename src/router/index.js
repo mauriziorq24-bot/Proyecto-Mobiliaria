@@ -4,6 +4,7 @@ import { buscarCitaReciente } from '../utils/citasGuardadas'
 import { buscarCotizacionReciente } from '../utils/cotizacionesEnviadas'
 import { setPageTitle } from '../utils/pageTitle'
 import { getSafeRedirect } from '../utils/redirect'
+import { setNoIndex } from '../utils/robots'
 import { scrollToHash } from '../utils/scrollToHash'
 import HomeView from '../views/HomeView.vue'
 
@@ -11,6 +12,9 @@ import HomeView from '../views/HomeView.vue'
 // categoría, producto y búsqueda lo fijan desde su vista: dependen de la API o de la URL.
 // meta.requiereSesion / meta.soloInvitados / meta.requiereAdmin: los revisa el guard de abajo.
 // meta.ocultarBarraCotizacion: AppLayout no muestra la barra de cotización móvil en esa ruta.
+// meta.layout: 'admin' hace que App.vue dibuje el panel en vez de la tienda (sin header ni footer).
+// meta.noIndex: la página lleva <meta name="robots" content="noindex"> (ver utils/robots.js).
+// Las meta de una ruta padre también valen para sus hijas: vue-router las combina en to.meta.
 const routes = [
   { path: '/', name: 'home', component: HomeView },
   // Las demás vistas se cargan bajo demanda (lazy loading): solo se descargan al visitarlas.
@@ -52,6 +56,17 @@ const routes = [
   // Términos y condiciones + política de privacidad, en una sola página. /privacidad lleva a su sección.
   { path: '/terminos', name: 'terms', component: () => import('../views/TerminosView.vue'), meta: { title: 'Términos y condiciones' } },
   { path: '/privacidad', redirect: { name: 'terms', hash: '#privacidad' } },
+  // Panel de administración. Todo se carga bajo demanda: AdminLayout y cada sección son archivos
+  // aparte que el navegador solo descarga al entrar a /admin, y el guard corre antes de descargarlos,
+  // así que quien no es admin no baja ni una línea del panel.
+  {
+    path: '/admin',
+    component: () => import('../components/layout/AdminLayout.vue'),
+    meta: { requiereAdmin: true, layout: 'admin', noIndex: true },
+    children: [
+      { path: '', name: 'admin-summary', component: () => import('../views/admin/AdminSummaryView.vue'), meta: { title: 'Resumen · Panel' } },
+    ],
+  },
   // Guía de estilo: muestra los tokens y componentes base del sistema de diseño.
   // Solo en desarrollo: en el build import.meta.env.DEV es false, la ruta no existe (da 404)
   // y Vite ni siquiera empaqueta StyleGuideView.
@@ -80,7 +95,7 @@ const router = createRouter({
 
 // Guard de acceso: corre antes de cada navegación. Devolver una ruta redirige; no devolver nada deja pasar.
 // Ojo: esto solo cuida la interfaz. Quien protege los datos de verdad es el backend (revisa el JWT en cada petición).
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   // Sin sesión: al login, recordando a dónde quería ir para volver después de ingresar.
@@ -88,9 +103,12 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Con sesión pero sin rol de admin: al inicio. (Hoy esAdmin siempre es false: el JWT no trae rol, pendiente 8 de API.md.)
-  if (to.meta.requiereAdmin && !auth.esAdmin) {
-    return { name: 'home' }
+  // Con sesión pero sin rol de admin: al inicio. El rol llega con el perfil (GET /auth/v1/me):
+  // si todavía no llegó, se espera; si falla, cuenta como "no es admin". Hoy en producción /me da 500
+  // (pendiente 30 de API.md), así que nadie entra hasta que el backend lo arregle.
+  if (to.meta.requiereAdmin) {
+    await auth.cargarPerfil()
+    if (!auth.esAdmin) return { name: 'home' }
   }
 
   // Login y registro no tienen sentido con la sesión ya iniciada.
@@ -110,6 +128,7 @@ router.beforeEach((to) => {
 // lo fijan desde su vista con setPageTitle cuando llega la respuesta.
 router.afterEach((to) => {
   setPageTitle(to.meta.title)
+  setNoIndex(Boolean(to.meta.noIndex))
 })
 
 export default router
