@@ -190,3 +190,17 @@ const formatoFechaCorta = new Intl.DateTimeFormat('es-VE', {
 export function formatearFechaCorta(instante) {
   return formatoFechaCorta.format(new Date(instante)).replace('.', '') // algunos navegadores dan "oct."
 }
+
+// Cuándo se registró algo en el backend (fechaCreacion, creadoEn), tal como viene:
+// '2026-10-21T23:31:49.453401' → '21 oct 2026, 11:31 p. m.'. Se muestra la hora de pared que
+// guardó el servidor, sin convertirla: no está confirmado en qué zona la guarda (pendiente 34 de API.md).
+const formatoRegistro = new Intl.DateTimeFormat('es-VE', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' })
+
+export function formatearRegistro(fechaHora) {
+  try {
+    const { fecha, hora } = desdeFechaHoraBackend(fechaHora)
+    return `${formatoRegistro.format(fechaUtc(fecha)).replace('.', '')}, ${formatearHora(hora)}`
+  } catch {
+    return ''
+  }
+}

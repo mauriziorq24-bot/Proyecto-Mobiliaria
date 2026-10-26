@@ -1,21 +1,26 @@
 <script setup>
-import { FileText, Lock, Package, RotateCw, Tags, TriangleAlert } from 'lucide-vue-next'
+import { CalendarDays, FileText, Lock, Package, RotateCw, Tags, TriangleAlert } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import BaseButton from '../../components/ui/BaseButton.vue'
 import { useAsync } from '../../composables/useAsync'
 import { getCategorias } from '../../services/categoriaService'
+import { citasAdminActiva, obtenerCitasAdmin } from '../../services/citaService'
 import { obtenerCotizaciones } from '../../services/cotizacionService'
 import { adminErrorMessage, isForbidden } from '../../services/errorMessages'
 import { obtenerProductos } from '../../services/productoService'
+import { ahoraEnCaracas } from '../../utils/fecha'
 
 // Resumen del panel: un contador por cada dato que la API ya puede dar (ver API.md).
 // - Productos y categorías: GET públicos.
 // - Cotizaciones: GET /api/v1/cotizaciones, solo ADMIN (un 403 muestra el aviso de permisos).
-// - Citas: no aparece. Falta GET /api/v1/citas para administración (pendiente 29 de API.md).
+// - Citas: GET /api/v1/citas, solo ADMIN. Solo con VITE_ADMIN_CITAS_API=true.
 // Cada contador carga por su lado: si uno falla, los demás se ven igual.
+// Las filas de cotizaciones y citas llevan a su sección (`to`).
 const productos = useAsync(() => obtenerProductos())
 const categorias = useAsync(() => getCategorias())
 const cotizaciones = useAsync(() => obtenerCotizaciones())
+const citas = citasAdminActiva ? useAsync(() => obtenerCitasAdmin()) : null
 
 const numero = new Intl.NumberFormat('es-VE')
 const listaCorta = new Intl.ListFormat('es', { type: 'conjunction' })
@@ -62,6 +67,7 @@ const filas = computed(() => [
     icon: FileText,
     estado: cotizaciones,
     subject: 'las cotizaciones',
+    to: { name: 'admin-quotes', query: { estado: 'PENDIENTE' } },
     valor: cotizaciones.data.value?.filter((c) => c.estado === 'PENDIENTE').length,
     detalle: (() => {
       const lista = cotizaciones.data.value
@@ -70,7 +76,33 @@ const filas = computed(() => [
       return `De ${cantidad(lista.length, 'recibida', 'recibidas')} en total`
     })(),
   },
+  ...(citas
+    ? [
+        {
+          id: 'citas',
+          titulo: 'Citas por confirmar',
+          icon: CalendarDays,
+          estado: citas,
+          subject: 'las citas',
+          to: { name: 'admin-appointments' },
+          valor: citas.data.value?.filter((c) => c.estado === 'PENDIENTE').length,
+          detalle: (() => {
+            const lista = citas.data.value
+            if (!lista) return ''
+            if (!lista.length) return 'Aún no hay citas agendadas'
+            // "Hoy" en Caracas, como la agenda (src/utils/fecha.js).
+            const hoy = ahoraEnCaracas().fecha
+            const deHoy = lista.filter((c) => c.fecha === hoy && c.estado !== 'CANCELADA').length
+            return deHoy ? `${cantidad(deHoy, 'cita', 'citas')} hoy` : 'Ninguna cita hoy'
+          })(),
+        },
+      ]
+    : []),
 ])
+
+// El enlace cubre toda la fila con un ::after; el anillo de foco va en ese ::after, por dentro.
+const enlaceFila =
+  "after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-brand"
 
 const cargando = computed(() => filas.value.some((fila) => fila.estado.loading.value))
 
@@ -78,6 +110,7 @@ function actualizar() {
   productos.retry()
   categorias.retry()
   cotizaciones.retry()
+  citas?.retry()
 }
 </script>
 
@@ -98,7 +131,8 @@ function actualizar() {
       <li
         v-for="fila in filas"
         :key="fila.id"
-        class="flex min-h-20 items-center gap-4 px-4 py-4 sm:px-5"
+        class="relative flex min-h-20 items-center gap-4 px-4 py-4 transition-colors duration-200 ease-out sm:px-5"
+        :class="fila.to && 'hover:bg-ground'"
         :aria-busy="fila.estado.loading.value"
       >
         <component
@@ -112,8 +146,15 @@ function actualizar() {
         <div class="min-w-0 flex-1">
           <!-- El número se lee junto al título ("Categorías: 5"); el grande de la derecha es solo visual. -->
           <h2 :id="`resumen-${fila.id}`" class="font-semibold text-ink">
-            {{ fila.titulo
-            }}<span v-if="!fila.estado.loading.value && !fila.estado.error.value" class="sr-only">: {{ numero.format(fila.valor ?? 0) }}</span>
+            <!-- Enlace estirado: toda la fila lleva a la sección -->
+            <component
+              :is="fila.to ? RouterLink : 'span'"
+              :to="fila.to"
+              :class="fila.to && enlaceFila"
+            >
+              {{ fila.titulo
+              }}<span v-if="!fila.estado.loading.value && !fila.estado.error.value" class="sr-only">: {{ numero.format(fila.valor ?? 0) }}</span>
+            </component>
           </h2>
 
           <div v-if="fila.estado.loading.value" class="mt-1.5 h-3 w-40 max-w-full animate-pulse rounded-sm bg-line" aria-hidden="true" />
@@ -128,7 +169,7 @@ function actualizar() {
           v-else-if="fila.estado.error.value && !isForbidden(fila.estado.error.value)"
           variant="ghost"
           size="sm"
-          class="shrink-0"
+          class="relative z-10 shrink-0"
           :aria-describedby="`resumen-${fila.id}`"
           @click="fila.estado.retry()"
         >

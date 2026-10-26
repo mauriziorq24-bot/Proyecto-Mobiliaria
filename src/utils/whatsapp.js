@@ -1,5 +1,6 @@
 import { company } from '../config/empresa'
 import { formatearPrecio } from './formato'
+import { normalizarTelefono } from './telefono'
 
 // Enlace de WhatsApp con un mensaje opcional ya escrito.
 // wa.me abre el chat con el número de la empresa; el texto va codificado en ?text=.
@@ -91,5 +92,42 @@ export function citaNoEncontradaUrl({ codigoCita, cuando }) {
 export function consultarCotizacionUrl(codigoCotizacion) {
   return whatsappUrl(
     `Hola, quiero consultar por mi solicitud de cotización ${codigoCotizacion}, enviada desde la página web.`,
+  )
+}
+
+// --- Panel de administración: escribirle al cliente, no a la empresa ---
+
+// Chat con el teléfono del cliente. Lo normal es '+58…' (el frontend lo normaliza al enviar), pero
+// si llegara en otro formato se usan sus dígitos tal cual. null si no hay número utilizable.
+export function whatsappClienteUrl(telefono, message = '') {
+  const digitos = (normalizarTelefono(telefono) ?? String(telefono ?? '')).replace(/\D/g, '')
+  if (digitos.length < 10 || digitos.length > 15) return null
+  const base = `https://wa.me/${digitos}`
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base
+}
+
+// Solo el nombre de pila, para que el saludo suene a persona: "Carla Méndez" → "Carla".
+const nombreDePila = (nombre) => String(nombre ?? '').trim().split(/\s+/)[0] ?? ''
+
+export function responderCotizacionUrl({ codigoCotizacion, nombreCliente, telefono }) {
+  const saludo = nombreDePila(nombreCliente) ? `Hola, ${nombreDePila(nombreCliente)}` : 'Hola'
+  return whatsappClienteUrl(
+    telefono,
+    `${saludo}. Te escribimos de ${company.name} por tu solicitud de cotización ${codigoCotizacion}.`,
+  )
+}
+
+// `cuando` ya en texto ("viernes 30 de octubre, 2:00 p. m."), como lo muestra el panel.
+export function confirmarCitaUrl({ codigoCita, nombreCliente, telefono, tipo, cuando }) {
+  const saludo = nombreDePila(nombreCliente) ? `Hola, ${nombreDePila(nombreCliente)}` : 'Hola'
+  return whatsappClienteUrl(
+    telefono,
+    [
+      `${saludo}. Te escribimos de ${company.name} para confirmar tu cita:`,
+      `• ${tipo}`,
+      `• ${cuando}`,
+      `• Código: ${codigoCita}`,
+      `Showroom: ${company.showroom.address}.`,
+    ].join('\n'),
   )
 }

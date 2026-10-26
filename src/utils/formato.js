@@ -67,3 +67,24 @@ export const OPCIONES_TIPO_ASESORIA = Object.entries(TIPOS_ASESORIA).map(([valor
 export function etiquetaTipoAsesoria(valor) {
   return TIPOS_ASESORIA[valor]?.etiqueta ?? valor ?? ''
 }
+
+// Estados de cotizaciones y citas según el backend (API.md) → texto y tono de BaseBadge.
+// El orden es el de los botones para cambiar el estado en el panel.
+// `filtro` es el texto de la pestaña que filtra la lista ("Pendientes").
+export const ESTADOS_COTIZACION = {
+  PENDIENTE: { etiqueta: 'Pendiente', filtro: 'Pendientes', tono: 'warning' },
+  CONTACTADO: { etiqueta: 'Contactado', filtro: 'Contactados', tono: 'success' },
+  CANCELADA: { etiqueta: 'Cancelada', filtro: 'Canceladas', tono: 'error' },
+}
+
+export const ESTADOS_CITA = {
+  PENDIENTE: { etiqueta: 'Pendiente', filtro: 'Pendientes', tono: 'warning' },
+  CONFIRMADA: { etiqueta: 'Confirmada', filtro: 'Confirmadas', tono: 'info' },
+  COMPLETADA: { etiqueta: 'Completada', filtro: 'Completadas', tono: 'success' },
+  CANCELADA: { etiqueta: 'Cancelada', filtro: 'Canceladas', tono: 'error' },
+}
+
+// Un estado nuevo del backend se muestra con su valor crudo y tono neutro, en vez de nada.
+export function describirEstado(estados, valor) {
+  return estados[valor] ?? { etiqueta: valor ?? '', filtro: valor ?? '', tono: 'info' }
+}

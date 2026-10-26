@@ -1,16 +1,25 @@
+import { MOCK_SIN_PERMISO_COTIZACIONES } from '../mocks/auth'
 import {
   CODIGO_INEXISTENTE,
+  MOCK_CITA_FALLA,
+  mockCambiarEstadoCita,
   mockCitaCreada,
   mockCitaEliminada,
   mockCitaModificada,
+  mockCitasAdmin,
 } from '../mocks/citas'
-import { aFechaHoraBackend, esHorarioDisponible } from '../utils/fecha'
-import { TIPOS_ASESORIA } from '../utils/formato'
+import { aFechaHoraBackend, desdeFechaHoraBackend, esHorarioDisponible } from '../utils/fecha'
+import { ESTADOS_CITA, TIPOS_ASESORIA } from '../utils/formato'
+import { decodeJwtPayload } from '../utils/jwt'
 import { normalizarTelefono } from '../utils/telefono'
-import api from './api'
+import api, { getSessionToken } from './api'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
 const useMocks = import.meta.env.VITE_USE_MOCKS === 'true'
+
+// Sección Citas del panel /admin (GET y PATCH /api/v1/citas, publicados el 26/10/2026; ver API.md).
+// false: la sección y su contador no aparecen · true: aparecen. Se lee al compilar.
+export const citasAdminActiva = import.meta.env.VITE_ADMIN_CITAS_API === 'true'
 
 // Simula la demora de la red para poder ver el estado "enviando" con los mocks.
 function fakeDelay(data, ms = 400) {
@@ -136,4 +145,82 @@ export async function cancelarCita(codigoCita) {
   } catch (error) {
     throw traducirError(error, { conCodigo: true })
   }
+}
+
+// --- Panel de administración (solo ADMIN) ---
+// Aquí los errores NO se traducen a los de arriba: un 403 es "sin permiso" (el panel lo muestra con
+// isForbidden), no una sesión vencida.
+
+function mockHttpError(status, error) {
+  return Object.assign(new Error(error), { response: { status, data: { status, error } } })
+}
+
+// Con mocks, "admin.limitado" tampoco tiene permiso para las citas (ver mocks/auth.js).
+async function mockComprobarPermiso() {
+  if (MOCK_SIN_PERMISO_COTIZACIONES.includes(decodeJwtPayload(getSessionToken())?.sub)) {
+    await fakeDelay(null, 400)
+    throw mockHttpError(403, 'Forbidden')
+  }
+}
+
+const textoONull = (texto) => String(texto ?? '').trim() || null
+
+// Sin fecha válida, la cita no entra en la agenda, pero sí en la lista.
+function partesDeFechaHora(fechaHora) {
+  try {
+    return desdeFechaHoraBackend(fechaHora)
+  } catch {
+    return { fecha: null, hora: null }
+  }
+}
+
+// CitaShowroom del backend → la cita que usa el panel. Se arma campo por campo a propósito:
+// hoy el backend manda `usuario` como el User completo, con el hash de la contraseña (pendiente 33
+// de API.md), y nada de eso debe quedar guardado en el estado de la app.
+// Nombre y correo: los de la cita si algún día vienen (es lo que pedimos), si no, los de la cuenta.
+// fecha y hora salen de fechaHora, en hora de Caracas (src/utils/fecha.js).
+function aCitaAdmin(cita) {
+  const { fecha, hora } = partesDeFechaHora(cita.fechaHora)
+  return {
+    codigoCita: cita.codigoCita,
+    nombreCliente: textoONull(cita.nombreCliente) ?? textoONull(cita.usuario?.username),
+    email: textoONull(cita.email) ?? textoONull(cita.usuario?.email),
+    empresa: textoONull(cita.empresa),
+    telefono: textoONull(cita.telefono),
+    fechaHora: cita.fechaHora ?? null,
+    fecha,
+    hora,
+    tipoAsesoria: cita.tipoAsesoria ?? null,
+    estado: cita.estado ?? null,
+    notas: textoONull(cita.notas),
+    creadoEn: cita.creadoEn ?? null,
+  }
+}
+
+// GET /api/v1/citas (solo ADMIN) → [cita del panel] (ver aCitaAdmin).
+export async function obtenerCitasAdmin() {
+  if (useMocks) {
+    await mockComprobarPermiso()
+    return (await fakeDelay(mockCitasAdmin(), 500)).map(aCitaAdmin)
+  }
+
+  const { data } = await api.get('/api/v1/citas')
+  return Array.isArray(data) ? data.map(aCitaAdmin) : []
+}
+
+// PATCH /api/v1/citas/{codigoCita} (solo ADMIN) con { estado } → 200 { mensaje }.
+// Errores tal cual: 403 sin permiso, 400 estado inválido, 500 si el código no existe (pendiente 35).
+export async function cambiarEstadoCita(codigoCita, estado) {
+  if (!ESTADOS_CITA[estado]) throw new Error(`Estado de cita inválido: "${estado}"`)
+
+  if (useMocks) {
+    await mockComprobarPermiso()
+    await fakeDelay(null, 500)
+    const respuesta = codigoCita === MOCK_CITA_FALLA ? null : mockCambiarEstadoCita(codigoCita, estado)
+    if (!respuesta) throw mockHttpError(500, 'Internal Server Error')
+    return respuesta
+  }
+
+  const { data } = await api.patch(`/api/v1/citas/${encodeURIComponent(codigoCita)}`, { estado })
+  return data
 }

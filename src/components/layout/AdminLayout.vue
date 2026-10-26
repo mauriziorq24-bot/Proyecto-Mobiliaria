@@ -1,9 +1,10 @@
 <script setup>
-import { LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-vue-next'
+import { CalendarDays, FileText, LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
 import { useLogout } from '../../composables/useLogout'
+import { citasAdminActiva } from '../../services/citaService'
 import { useAuthStore } from '../../stores/auth'
 import BaseIconButton from '../ui/BaseIconButton.vue'
 import AppToast from './AppToast.vue'
@@ -21,8 +22,12 @@ const { logout } = useLogout()
 
 // Secciones del panel. Cada fase agrega la suya aquí y su ruta hija en router/index.js.
 // rutas: las páginas donde la sección se marca como activa (Productos también en su formulario).
+// Cotizaciones y Citas van primero: son lo que se atiende desde el teléfono (PRODUCT.md).
+// Citas solo aparece con VITE_ADMIN_CITAS_API=true.
 const secciones = [
   { name: 'admin-summary', label: 'Resumen', icon: LayoutDashboard, rutas: ['admin-summary'] },
+  { name: 'admin-quotes', label: 'Cotizaciones', icon: FileText, rutas: ['admin-quotes'] },
+  ...(citasAdminActiva ? [{ name: 'admin-appointments', label: 'Citas', icon: CalendarDays, rutas: ['admin-appointments'] }] : []),
   { name: 'admin-products', label: 'Productos', icon: Package, rutas: ['admin-products', 'admin-product-new', 'admin-product-edit'] },
   { name: 'admin-categories', label: 'Categorías', icon: Tags, rutas: ['admin-categories', 'admin-category-new', 'admin-category-edit'] },
 ]

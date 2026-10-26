@@ -1,5 +1,11 @@
 import { MOCK_SIN_PERMISO_COTIZACIONES } from '../mocks/auth'
-import { mockCotizacionCreada, mockCotizacionesAdmin } from '../mocks/cotizaciones'
+import {
+  MOCK_COTIZACION_FALLA,
+  mockCambiarEstadoCotizacion,
+  mockCotizacionCreada,
+  mockCotizacionesAdmin,
+} from '../mocks/cotizaciones'
+import { ESTADOS_COTIZACION } from '../utils/formato'
 import { decodeJwtPayload } from '../utils/jwt'
 import { normalizarTelefono } from '../utils/telefono'
 import api, { getSessionToken } from './api'
@@ -75,19 +81,49 @@ export async function solicitarCotizacion(datos, items) {
   }
 }
 
+// Errores simulados con la forma de los de axios (error.response.status), para que el panel
+// los trate igual que los reales.
+function mockHttpError(status, error) {
+  return Object.assign(new Error(error), { response: { status, data: { status, error } } })
+}
+
+// Con mocks, la cuenta "admin.limitado" recibe 403 en todo lo de cotizaciones para administración.
+async function mockComprobarPermiso() {
+  const username = decodeJwtPayload(getSessionToken())?.sub
+  if (MOCK_SIN_PERMISO_COTIZACIONES.includes(username)) {
+    await fakeDelay(null, 400)
+    throw mockHttpError(403, 'Forbidden')
+  }
+}
+
 // GET /api/v1/cotizaciones (solo ADMIN) → [Cotizacion] con estado PENDIENTE | CONTACTADO | CANCELADA.
+// Cada detalle trae el Producto como entidad (ver API.md). Se devuelve tal cual, con sus nombres de campo.
 // Un usuario normal recibe 403: lo decide el backend con el token, no el frontend.
-// Con mocks, la cuenta "admin.limitado" recibe ese 403 para poder ver el aviso del panel.
 export async function obtenerCotizaciones() {
   if (useMocks) {
-    const username = decodeJwtPayload(getSessionToken())?.sub
-    if (MOCK_SIN_PERMISO_COTIZACIONES.includes(username)) {
-      await fakeDelay(null, 400)
-      throw Object.assign(new Error('Forbidden'), { response: { status: 403, data: { status: 403, error: 'Forbidden' } } })
-    }
+    await mockComprobarPermiso()
     return fakeDelay(mockCotizacionesAdmin(), 500)
   }
 
   const { data } = await api.get('/api/v1/cotizaciones')
+  return data
+}
+
+// PATCH /api/v1/cotizaciones/{codigo} (solo ADMIN) con { estado } → 200 { mensaje }.
+// No devuelve la cotización: el panel ya la cambió en pantalla (actualización optimista).
+// Errores tal cual los da axios: 403 sin permiso, 400 con un estado inválido y 500 si el código
+// no existe (debería ser 404: pendiente 35 de API.md).
+export async function cambiarEstadoCotizacion(codigoCotizacion, estado) {
+  if (!ESTADOS_COTIZACION[estado]) throw new Error(`Estado de cotización inválido: "${estado}"`)
+
+  if (useMocks) {
+    await mockComprobarPermiso()
+    await fakeDelay(null, 500)
+    const respuesta = codigoCotizacion === MOCK_COTIZACION_FALLA ? null : mockCambiarEstadoCotizacion(codigoCotizacion, estado)
+    if (!respuesta) throw mockHttpError(500, 'Internal Server Error')
+    return respuesta
+  }
+
+  const { data } = await api.patch(`/api/v1/cotizaciones/${encodeURIComponent(codigoCotizacion)}`, { estado })
   return data
 }

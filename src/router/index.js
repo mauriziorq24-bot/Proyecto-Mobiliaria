@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { citasAdminActiva } from '../services/citaService'
 import { useAuthStore } from '../stores/auth'
 import { buscarCitaReciente } from '../utils/citasGuardadas'
 import { buscarCotizacionReciente } from '../utils/cotizacionesEnviadas'
@@ -65,6 +66,16 @@ const routes = [
     meta: { requiereAdmin: true, layout: 'admin', noIndex: true },
     children: [
       { path: '', name: 'admin-summary', component: () => import('../views/admin/AdminSummaryView.vue'), meta: { title: 'Resumen · Panel' } },
+      // Cotizaciones y citas: lista y detalle en la misma página; el detalle abierto va en ?codigo=.
+      { path: 'cotizaciones', name: 'admin-quotes', component: () => import('../views/admin/AdminQuotesView.vue'), meta: { title: 'Cotizaciones · Panel' } },
+      // Con VITE_ADMIN_CITAS_API=false la sección no existe: quien entre por la URL va al resumen.
+      {
+        path: 'citas',
+        name: 'admin-appointments',
+        component: () => import('../views/admin/AdminAppointmentsView.vue'),
+        meta: { title: 'Citas · Panel' },
+        beforeEnter: () => (citasAdminActiva ? true : { name: 'admin-summary', replace: true }),
+      },
       { path: 'productos', name: 'admin-products', component: () => import('../views/admin/AdminProductsView.vue'), meta: { title: 'Productos · Panel' } },
       // Crear y editar comparten el formulario. "nuevo" va antes que ":id" y el id debe ser numérico.
       { path: 'productos/nuevo', name: 'admin-product-new', component: () => import('../views/admin/AdminProductFormView.vue'), meta: { title: 'Nuevo producto · Panel' } },
@@ -111,9 +122,9 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Con sesión pero sin rol de admin: al inicio. El rol llega con el perfil (GET /auth/v1/me):
-  // si todavía no llegó, se espera; si falla, cuenta como "no es admin". Hoy en producción /me da 500
-  // (pendiente 30 de API.md), así que nadie entra hasta que el backend lo arregle.
+  // Con sesión pero sin rol de admin: al inicio. El rol sale del JWT (claim "rol", desde el 26/10/2026)
+  // o, si no viniera, del perfil (GET /auth/v1/me): si todavía no llegó, se espera; si falla, cuenta
+  // como "no es admin". Hoy /me da 500 en producción (pendiente 30 de API.md), pero el JWT basta.
   if (to.meta.requiereAdmin) {
     await auth.cargarPerfil()
     if (!auth.esAdmin) return { name: 'home' }

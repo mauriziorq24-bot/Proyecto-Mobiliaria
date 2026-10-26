@@ -1,6 +1,6 @@
 # API.md — Contrato del backend
 
-Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026). Y el 21/10/2026, **respuestas del compañero** sobre citas: `fechaHora` en hora de Caracas, lista de `tipoAsesoria`, `400` para enum inválido y horario de atención (cierran los pendientes 11 y 11-bis). Actualizado el 22/10/2026: **favoritos** (`/api/v1/favoritos`), contrato del Swagger y prueba con curl; ver [Favoritos](#favoritos--apiv1favoritos). El mismo día el backend corrigió el pendiente 27 y se volvió a probar con curl.
+Fuente: Swagger del backend (Spring Boot), revisado el 17/10/2026. Actualizado el 19/10/2026 (`tipoEspacio` y categorías) y el 20/10/2026 (nuevos endpoints de productos, categorías y citas; seed del backend; respuestas reales de la ficha de producto, probadas contra el backend vía ngrok). Desde el 20/10/2026 el backend está en producción en Render. Actualizado el 21/10/2026: **comportamiento real de autenticación probado con curl contra Render** (registro, duplicados, login, errores, contenido del JWT y qué endpoints exigen token). Ver [Comportamiento real de auth](#comportamiento-real-de-auth-probado-el-21102026). También el 21/10/2026: **citas probadas con curl** (respuesta de `POST`, `tipoAsesoria`, validaciones, zona horaria y seguridad de `PUT`/`DELETE`). Ver [Comportamiento real de citas](#comportamiento-real-de-citas-probado-el-21102026). Y el 21/10/2026, **respuestas del compañero** sobre citas: `fechaHora` en hora de Caracas, lista de `tipoAsesoria`, `400` para enum inválido y horario de atención (cierran los pendientes 11 y 11-bis). Actualizado el 22/10/2026: **favoritos** (`/api/v1/favoritos`), contrato del Swagger y prueba con curl; ver [Favoritos](#favoritos--apiv1favoritos). El mismo día el backend corrigió el pendiente 27 y se volvió a probar con curl. Actualizado el 26/10/2026: **administración de cotizaciones y citas** (`GET` y `PATCH`), contrato del Swagger comparado con nuestra propuesta y **probado con curl con una cuenta ADMIN y una normal**; ver [Administración de cotizaciones y citas](#administración-de-cotizaciones-y-citas-probado-el-26102026).
 Swagger UI: `https://backendmobiliariodeoficina.onrender.com/swagger-ui/index.html` · Spec JSON: `https://backendmobiliariodeoficina.onrender.com/v3/api-docs` (en local: `http://localhost:8080/...`)
 
 > Si este archivo y el Swagger no coinciden, **manda el Swagger**. Actualizar este archivo cuando cambie el backend.
@@ -117,9 +117,10 @@ Aparece en el Swagger con respuesta `PerfilResponse`:
   |---|---|
   | Sin token | `403` |
   | Con token válido (usuario normal) | **`500`** `{ "status":500, "error":"Internal Server Error" }` ❌ (pendiente 30) |
-- **Cómo lo usa el frontend:** `authService.obtenerPerfil()`. El store de auth lo pide al abrir la app con sesión y al iniciar sesión; el rol sale del JWT si algún día lo trae (`rol` o `role`) y, si no, de `/me`. Si `/me` falla, la persona queda como usuario normal: **hoy nadie ve el panel `/admin` en producción** hasta que se arregle el `500`. `api.js` manda el token a `/auth/v1/me` (al resto de `/auth/v1` no).
-- **Con mocks:** el usuario `admin` es `ADMIN`; `admin.limitado` también, pero el mock de `GET /api/v1/cotizaciones` le responde `403` (para ver el aviso de permisos del panel). Los demás son `USER`.
+- **Cómo lo usa el frontend:** `authService.obtenerPerfil()`. El store de auth lo pide al abrir la app con sesión y al iniciar sesión; el rol sale del JWT si algún día lo trae (`rol` o `role`) y, si no, de `/me`. Si el JWT no trae el rol y `/me` falla, la persona queda como usuario normal. Desde el 26/10/2026 el JWT trae `rol`, así que el panel se abre aunque `/me` falle. `api.js` manda el token a `/auth/v1/me` (al resto de `/auth/v1` no).
+- **Con mocks:** el usuario `admin` es `ADMIN`; `admin.limitado` también, pero los mocks de cotizaciones y citas para administración (`GET` y `PATCH`) le responden `403` (para ver el aviso de permisos del panel). Los demás son `USER`.
 - Con un token de usuario normal, `GET /api/v1/cotizaciones` da **`403`** (probado el 23/10/2026): el backend sí protege los endpoints de administración por rol.
+- **26/10/2026: el JWT ya trae el rol** en el claim `"rol"` (`{ "rol": "ADMIN", "sub": "…", "iss": "…", "exp": … }`) y el store de auth lo lee de ahí. Así el panel **sí se abre en producción** aunque `/me` siga dando `500`.
 
 ### Qué endpoints exigen token
 
@@ -132,6 +133,8 @@ Aparece en el Swagger con respuesta `PerfilResponse`:
 | `POST /api/v1/categorias` | `403` | **`403`** (ídem — pendiente 15) |
 | `POST /api/v1/citas` | `403` | **sí** (con token pasa auth; `400` si el JSON va mal) |
 | `PUT`/`DELETE /api/v1/citas/{codigoCita}` | `403` | `200` con un código existente; `500` con uno inexistente (ver [citas](#comportamiento-real-de-citas-probado-el-21102026)) |
+| `GET /api/v1/cotizaciones`, `PATCH /api/v1/cotizaciones/{codigo}` | `403` | **`403`** (solo `ADMIN`; probado el 26/10/2026) |
+| `GET /api/v1/citas`, `PATCH /api/v1/citas/{codigoCita}` | `403` | **`403`** (solo `ADMIN`; probado el 26/10/2026) |
 
 - **Las lecturas de catálogo (productos y categorías) son públicas:** la home, el catálogo y la ficha **no necesitan que el usuario esté logueado**.
 - **⚠️ Agendar cita exige estar logueado.** `POST /api/v1/citas` da `403` sin token y pasa la autenticación con un token válido de usuario normal. Esto **contradice la idea de "agendar cita" como formulario público** (ver `CLAUDE.md`): o el usuario debe iniciar sesión antes de agendar, o hay que pedir al backend que `POST /api/v1/citas` sea público (ver pendiente 10-quater). Confirmar con el compañero.
@@ -331,20 +334,9 @@ Modifica una cita. Body: `CitaRequest` (el mismo de `POST`). Respuesta: `200 { "
 ### `DELETE /api/v1/citas/{codigoCita}`
 Cancela (elimina) una cita. Respuesta: `200 { "mensaje": "Cita eliminada con éxito" }`.
 
-### ⏳ Propuesta pendiente: citas para administración (23/10/2026)
+### Citas para administración
 
-> **No existe todavía.** Es el contrato que le propusimos al backend (paso 10B) para la sección Citas del panel `/admin`. Ver pendiente 29. El frontend lo usa solo con `VITE_ADMIN_CITAS_API=true`; con `VITE_USE_MOCKS=true` responde un mock con la misma forma.
-
-| Método | Ruta | Uso |
-|---|---|---|
-| `GET` | `/api/v1/citas` | Todas las citas (fecha, cliente, tipo, estado). Solo `ADMIN`. |
-| `PATCH` | `/api/v1/citas/{codigoCita}` | Cambia el estado. Body: `{ "estado": "CONFIRMADA" }`. Solo `ADMIN`. |
-
-- **Estados propuestos:** `PENDIENTE`, `CONFIRMADA`, `CANCELADA`, `ATENDIDA`.
-- **Por confirmar con el backend:**
-  - El Swagger (revisado el 23/10/2026) ya tiene la entidad `CitaShowroom` con `estado`: `PENDIENTE | CONFIRMADA | COMPLETADA | CANCELADA`. Dice **`COMPLETADA`** donde la propuesta dice **`ATENDIDA`**: hay que quedarse con un solo nombre.
-  - `CitaShowroom` no tiene `nombreCliente` ni `email` (solo `usuario`, `empresa` y `telefono`), aunque `CitaRequest` sí los manda. El `GET` tiene que devolver `codigoCita`, `nombreCliente`, `empresa`, `telefono`, `email`, `fechaHora`, `tipoAsesoria`, `estado`, `notas` y `creadoEn`, sin exponer el `User` completo (hoy trae `password`).
-  - Hoy solo existe `GET /api/v1/citas/mis-citas` (las citas de la persona con sesión).
+✅ Publicado el 26/10/2026 (cierra el pendiente 29). Contrato y pruebas en [Administración de cotizaciones y citas](#administración-de-cotizaciones-y-citas-probado-el-26102026). La sección Citas del panel lo usa con `VITE_ADMIN_CITAS_API=true`.
 
 ### Comportamiento real de citas (probado el 21/10/2026)
 
@@ -400,9 +392,7 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 >
 > Resultados de la prueba: cuerpo válido → `201 {"codigoCotizacion":"COT-0001"}` (el código es **secuencial**). `400` (cuerpo vacío, sin detalle de qué falló) con: `{}`, `items: []`, `productoId` inexistente, `cantidad: 0`, `nombreCliente` en blanco, email o teléfono con formato inválido. El Swagger dice `200`, pero responde `201`.
 >
-> El backend también expone `GET /api/v1/cotizaciones` (lista con `detalles`, `totalUsd`, `estado`: `PENDIENTE` | `CONTACTADO` | `CANCELADA`) y `PATCH /api/v1/cotizaciones/{id}/estado`. Sin token, o con el token de un usuario normal, responden `403`: son solo para `ADMIN`. **El panel `/admin` usa el `GET`** para el contador "Cotizaciones por atender" (las `PENDIENTE`); el `PATCH` todavía no.
->
-> Forma de cada elemento según el Swagger (**no probada**: no tenemos una cuenta ADMIN): `Cotizacion` = `{ id, codigoCotizacion, nombreCliente, empresa, telefono, email, notas, totalUsd, fechaCreacion, estado, detalles: [{ id, producto, cantidad, precioUnitario }] }`, donde `producto` es la **entidad** `Producto` (`categoria` como objeto e `imagenes` como `[{ id, urlImagen }]`), no `ProductoResponse`. El mock (`mockCotizacionesAdmin` en `src/mocks/cotizaciones.js`) sigue esa forma.
+> `GET /api/v1/cotizaciones` y `PATCH /api/v1/cotizaciones/{codigo}` (solo `ADMIN`) los usa el panel `/admin`: ver [Administración de cotizaciones y citas](#administración-de-cotizaciones-y-citas-probado-el-26102026).
 
 ### `POST /api/v1/cotizaciones`
 
@@ -432,6 +422,69 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 - Los campos opcionales vacíos no se envían.
 
 ---
+
+## Administración de cotizaciones y citas (probado el 26/10/2026)
+
+Publicado por el backend el 26/10/2026. Contrato leído de `/v3/api-docs` y probado con `curl` contra Render con una cuenta `ADMIN` y una `USER`. Lo usa el panel `/admin` (secciones Cotizaciones y Citas, y el Resumen).
+
+| Método | Ruta | Body | Respuesta |
+|---|---|---|---|
+| `GET` | `/api/v1/cotizaciones` | — | `200 [Cotizacion]` |
+| `PATCH` | `/api/v1/cotizaciones/{codigo}` | `{ "estado": "CONTACTADO" }` | `200 { "mensaje": "Estado de la cotización actualizado a CONTACTADO" }` |
+| `GET` | `/api/v1/citas` | — | `200 [CitaShowroom]` |
+| `PATCH` | `/api/v1/citas/{codigoCita}` | `{ "estado": "CONFIRMADA" }` | `200 { "mensaje": "Estado de la cita actualizado a CONFIRMADA" }` |
+
+- **Estados de cotización:** `PENDIENTE` | `CONTACTADO` | `CANCELADA` (ojo: `CONTACTADO` en masculino).
+- **Estados de cita:** `PENDIENTE` | `CONFIRMADA` | `COMPLETADA` | `CANCELADA`.
+- El `PATCH` **no devuelve** el objeto actualizado, solo `{ mensaje }`. El panel ya lo cambió en pantalla (actualización optimista) y lo revierte si falla.
+- Las etiquetas en español de los estados viven en `src/utils/formato.js` (`ESTADOS_COTIZACION`, `ESTADOS_CITA`).
+
+### Diferencias con lo que propusimos
+
+| | Propuesta | Backend real |
+|---|---|---|
+| Rutas | `GET`/`PATCH /api/v1/cotizaciones/{codigo}` y `GET`/`PATCH /api/v1/citas/{codigoCita}` | ✅ Iguales. (Antes se había anotado `PATCH /api/v1/cotizaciones/{id}/estado`: ya no existe.) |
+| Body del `PATCH` | `{ "estado" }` | ✅ Igual (`EstadoCotizacionRequest`, `EstadoCitaRequest`) |
+| Estado final de una cita | `ATENDIDA` | **`COMPLETADA`**. Se usa la del backend. |
+| `GET /api/v1/citas` | DTO con `codigoCita`, `nombreCliente`, `email`, `empresa`, `telefono`, `fechaHora`, `tipoAsesoria`, `estado`, `notas`, `creadoEn` | La **entidad** `CitaShowroom`: sin `nombreCliente` ni `email`, y con `usuario` = el `User` completo **con `password`** (pendiente 33) |
+| Respuesta del `PATCH` | — | `{ mensaje }` |
+
+### Forma real (curl)
+
+`Cotizacion` = `{ id, codigoCotizacion, nombreCliente, empresa, telefono, email, notas, totalUsd, fechaCreacion, estado, detalles: [{ id, producto, cantidad, precioUnitario }] }`. `producto` es la **entidad** `Producto` (`categoria` como objeto, `imagenes` como `[{ id, urlImagen }]` y algún `"hibernateLazyInitializer": {}` suelto), no `ProductoResponse`. `fechaCreacion` viene sin zona: `"2026-10-21T23:31:49.453401"` (pendiente 34). El mock (`src/mocks/cotizaciones.js`) sigue esta forma.
+
+`CitaShowroom`:
+
+```json
+{
+  "id": 6,
+  "codigoCita": "CITA-BE74C1",
+  "usuario": { "id": 5, "username": "…", "password": "$2a$10$…", "email": "…", "role": "ADMIN", "authorities": [{ "authority": "ADMIN" }], "enabled": true },
+  "empresa": "UJAP",
+  "telefono": "+584245733046",
+  "fechaHora": "2026-10-30T14:00:00",
+  "tipoAsesoria": "VISITA_SHOWROOM",
+  "estado": "PENDIENTE",
+  "notas": null,
+  "creadoEn": "2026-10-21T15:04:32.162127"
+}
+```
+
+**Cómo lo usa el frontend:** `citaService.obtenerCitasAdmin()` arma cada cita **campo por campo** (`aCitaAdmin`) y nunca guarda `usuario`. Nombre y correo salen de `nombreCliente`/`email` si algún día vienen y, si no, de `usuario.username`/`usuario.email` (los de la **cuenta**, que pueden no ser los que la persona escribió en el formulario). `fechaHora` se separa en `fecha` y `hora` de Caracas con `src/utils/fecha.js`. Cuando el backend pase al DTO, no hay que tocar nada más. El mock (`src/mocks/citas.js`) imita la entidad, sin `password`.
+
+### Resultados de la prueba
+
+| Endpoint | `ADMIN` | `USER` | Sin token |
+|---|---|---|---|
+| `GET /api/v1/cotizaciones` | `200` | `403` | `403` |
+| `GET /api/v1/citas` | `200` | `403` | `403` |
+| `PATCH /api/v1/cotizaciones/{codigo}` | `200` (el `GET` lo refleja) | `403` | — |
+| `PATCH /api/v1/citas/{codigoCita}` | `200` (el `GET` lo refleja) | `403` | — |
+| `PATCH` con un código inexistente (`COT-9999`, `CITA-000000`) | **`500`** (debería ser `404`; pendiente 35) | — | — |
+| `PATCH` con un estado inválido (`ATENDIDA`) | `400`, con un mensaje que habla de "tipoAsesoria o la fecha" (pendiente 35) | — | — |
+
+- Nadie recibió `401` con un token válido, y el usuario normal recibe `403` (no `401`) en los cuatro: el panel muestra "No tienes permiso para esta acción." sin cerrar la sesión.
+- Los cambios de la prueba se revirtieron: `COT-0001` y `CITA-BE74C1` quedaron en `PENDIENTE`, como estaban.
 
 ## Favoritos — `/api/v1/favoritos`
 
@@ -540,14 +593,17 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
 28. **`enShowroom` y `tipoEspacio` no se combinan.** Probado con curl contra Render: `?tipoEspacio=HOGAR` → 20 productos (todos `HOGAR`), pero `?enShowroom=true&tipoEspacio=HOGAR` (en cualquier orden) → los 41 del showroom, de todos los ambientes. Con `enShowroom` presente, `tipoEspacio` se ignora (probablemente un `if / else if` en el controlador). Pedir que los filtros se apliquen juntos. Mientras tanto el frontend **no envía filtros**: `obtenerProductos` pide el catálogo completo y filtra en el navegador con `filtrarProductos`, la misma función de `/buscar`.
 
 ### Para el panel de administración (23/10/2026)
-30. **`GET /auth/v1/me` da `500` con un token válido** (probado con curl el 23/10/2026; sin token, `403`). Es lo único que le dice al frontend si alguien es admin, así que **el panel no se puede abrir en producción** hasta que responda `200 { nombre, email, role }`. Probablemente el controlador no recibe el usuario autenticado (p. ej. `@AuthenticationPrincipal` nulo porque `/auth/**` está en `permitAll` y el filtro JWT no lo procesa). Alternativa: incluir `role` en el JWT. También hace falta **una cuenta ADMIN** para probar (¿cómo se crea? ¿seed?).
+30. **`GET /auth/v1/me` da `500` con un token válido** (probado con curl el 23/10/2026; sin token, `403`; **sigue igual el 26/10/2026**, también con la cuenta ADMIN). Ya no bloquea el panel: desde el 26/10/2026 el JWT trae `"rol"` y el frontend lo lee de ahí. Sigue haciendo falta para el perfil (nombre y correo). Es lo único que le dice al frontend si alguien es admin, así que **el panel no se puede abrir en producción** hasta que responda `200 { nombre, email, role }`. Probablemente el controlador no recibe el usuario autenticado (p. ej. `@AuthenticationPrincipal` nulo porque `/auth/**` está en `permitAll` y el filtro JWT no lo procesa). Alternativa: incluir `role` en el JWT. También hace falta **una cuenta ADMIN** para probar (¿cómo se crea? ¿seed?).
 31. **Errores `400` de productos (`POST`/`PUT`):** no sabemos qué devuelven. Propuesta: `{ "message": "Datos inválidos", "errores": { "nombre": "Ya existe otro producto con ese nombre." } }`, con los nombres de campo de `ProductoRequest`. El frontend también entiende un mapa plano (`{ "nombre": "…" }`) y la forma de Spring (`{ "errors": [{ "field", "defaultMessage" }] }`); sin campos, muestra un aviso general. Confirmar además los largos máximos (el panel usa: nombre 120, descripción 1000, material 255, dimensiones 60) y si un nombre repetido se rechaza.
 32. **Categorías (`PUT`/`DELETE`), preguntas abiertas:**
     - **¿Qué pasa al eliminar una categoría que tiene productos?** No está documentado. Propuesta: `409 { "message": "La categoría tiene 3 productos. Muévelos o elimínalos antes." }`. Hay que descartar que los borre en cascada o los deje con `categoriaId: null` sin avisar. Hoy el panel no deja intentarlo si sabe que tiene productos.
     - **¿`PUT` regenera el `slug` al cambiar el nombre?** Si sí, los enlaces viejos (`/categoria/silleria`) dejan de funcionar; el formulario lo avisa con un "podría". Si no, el slug queda desalineado del nombre (también vale, pero hay que saberlo).
     - **Largos máximos** de `nombre` y `descripcion`. El panel usa 60 y 255 (el largo por defecto de una columna de texto en JPA).
     - Un `id` inexistente en `PUT`/`DELETE` debería dar `404` (como el pendiente 20 de productos).
-29. **Citas para administración:** pedir `GET /api/v1/citas` y `PATCH /api/v1/citas/{codigoCita}` con `{ "estado" }`, los dos solo para `ADMIN` (ver [la propuesta](#-propuesta-pendiente-citas-para-administración-23102026)). Confirmar si el estado final se llama `ATENDIDA` (propuesta) o `COMPLETADA` (entidad del Swagger), y que el `GET` devuelva nombre y correo del cliente. Mientras no exista, `VITE_ADMIN_CITAS_API=false` y la sección no aparece en el panel.
+29. ~~**Citas para administración.**~~ ✅ **Publicado el 26/10/2026** (ver [Administración de cotizaciones y citas](#administración-de-cotizaciones-y-citas-probado-el-26102026)). El estado final es `COMPLETADA`. Lo que falta del `GET` (nombre y correo del cliente, sin el `User`) sigue en el pendiente 33.
+33. **🚨 `GET /api/v1/citas` expone el hash de la contraseña** (probado el 26/10/2026). Cada cita trae `usuario` como la entidad `User` completa: `password` (bcrypt), `role`, `authorities`… Un hash filtrado se puede atacar sin conexión, y las contraseñas cortas caen rápido. Probablemente pase lo mismo en `GET /api/v1/citas/mis-citas`. **Pedir:** que los dos devuelvan un DTO `{ codigoCita, nombreCliente, email, empresa, telefono, fechaHora, tipoAsesoria, estado, notas, creadoEn }` sin `usuario` (o, como mínimo, `@JsonIgnore` en `User.password`). Relacionado: la cita **no guarda** el `nombreCliente` ni el `email` que manda `CitaRequest`; hoy el panel muestra los de la cuenta.
+34. **Zona horaria de `fechaCreacion` (cotizaciones) y `creadoEn` (citas):** vienen sin zona (`"2026-10-21T23:31:49.453401"`). `fechaHora` de las citas es hora de Caracas (pendiente 11-bis), pero estas dos las pone el servidor, y Render suele correr en UTC. Confirmar en qué zona se guardan. Mientras tanto el panel las muestra tal cual (`formatearRegistro` en `src/utils/fecha.js`) y podrían verse 4 h adelantadas.
+35. **Errores del `PATCH` de administración:** un código inexistente da `500` (debería ser `404`) y un estado inválido da `400` con el mensaje genérico de citas ("Verifica que los valores (como el tipoAsesoria o la fecha)…"). El panel trata el `500` como "Puede que ya no exista: actualiza la lista."
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).

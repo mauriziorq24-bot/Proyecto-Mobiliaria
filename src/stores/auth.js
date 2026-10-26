@@ -43,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
   const perfil = ref(null)
   let perfilPromise = null
 
-  // El rol se busca primero en el JWT (hoy no lo trae: solo sub, iss y exp) y después en /auth/v1/me.
+  // El rol se busca primero en el JWT (desde el 26/10/2026 lo trae como "rol") y después en /auth/v1/me.
   // Se aceptan "rol" y "role" en el token porque el backend todavía no decidió el nombre del claim;
   // /me ya lo llama "role" (Swagger). Ver "Perfil y rol" en API.md.
   const usuario = computed(() => {
