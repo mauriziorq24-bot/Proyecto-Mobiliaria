@@ -35,7 +35,7 @@ export function useCambioDeEstado({ carga, clave, enviar, etiqueta }) {
   function motivo(error) {
     if (isForbidden(error)) return FORBIDDEN_MESSAGE
     if (isNetworkError(error)) return 'Revisa tu conexión e inténtalo de nuevo.'
-    // El backend da 500 (no 404) con un código que no existe (pendiente 35 de API.md).
+    // Código que no existe: citas da 404; cotizaciones todavía da 500 (pendiente 35 de API.md).
     const status = error?.response?.status
     if (status === 404 || status === 500) return 'Puede que ya no exista: actualiza la lista.'
     return 'Inténtalo en unos minutos.'

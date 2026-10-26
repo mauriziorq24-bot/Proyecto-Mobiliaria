@@ -17,34 +17,22 @@ export const mockCitaModificada = { mensaje: 'Cita modificada con éxito' }
 export const mockCitaEliminada = { mensaje: 'Cita eliminada con éxito' }
 
 // --- Panel de administración: GET /api/v1/citas y PATCH /api/v1/citas/{codigoCita} ---
-// Forma real (curl, 26/10/2026): la entidad `CitaShowroom`, con `usuario` como el `User` completo y
-// sin `nombreCliente` ni `email` (pendiente 33 de API.md). El mock la imita, salvo `password`:
-// el backend real lo envía y no debería; aquí no se copia ni de mentira.
+// Forma real (curl, 26/10/2026): `CitaResponse` = { codigoCita, nombreCliente, email, empresa,
+// telefono, fechaHora, tipoAsesoria, estado, notas, creadoEn }. Hoy `creadoEn` llega en null
+// (pendiente 36 de API.md); el mock lo trae con fecha para ver cómo se muestra cuando se arregle.
 // Datos FICTICIOS. Las fechas se calculan desde hoy (hora de Caracas) para que la agenda tenga
 // citas de hoy, de los próximos días y alguna pasada.
 
 // Con mocks, cambiar el estado de esta cita siempre falla (500): sirve para ver la reversión.
 export const MOCK_CITA_FALLA = 'CITA-FA1100'
 
-const usuarioMock = (id, username, email) => ({
-  id,
-  username,
-  email,
-  role: 'USER',
-  accountNonExpired: true,
-  accountNonLocked: true,
-  authorities: [{ authority: 'USER' }],
-  credentialsNonExpired: true,
-  enabled: true,
-})
-
 function crearCitasAdmin() {
   const hoy = ahoraEnCaracas().fecha
   const dia = (n, hora) => `${sumarDias(hoy, n)}T${hora}:00`
-  const cita = (id, codigoCita, usuario, fechaHora, tipoAsesoria, estado, extra = {}) => ({
-    id,
+  const cita = (codigoCita, [nombreCliente, email], fechaHora, tipoAsesoria, estado, extra = {}) => ({
     codigoCita,
-    usuario,
+    nombreCliente,
+    email,
     empresa: null,
     telefono: '+584120000000',
     fechaHora,
@@ -54,19 +42,19 @@ function crearCitasAdmin() {
     creadoEn: dia(-3, '10:15'),
     ...extra,
   })
-  const carla = usuarioMock(11, 'carla.mendez', 'carla@ejemplo.com')
-  const luis = usuarioMock(12, 'luis.herrera', 'luis@ejemplo.com')
-  const ana = usuarioMock(13, 'ana.rivas', 'ana@ejemplo.com')
+  const carla = ['Carla Méndez', 'carla@ejemplo.com']
+  const luis = ['Luis Herrera', 'luis@ejemplo.com']
+  const ana = ['Ana Rivas', 'ana@ejemplo.com']
 
   return [
-    cita(1, 'CITA-3B9A01', carla, dia(0, '09:30'), 'VISITA_SHOWROOM', 'CONFIRMADA', { empresa: 'Consultorio Méndez', notas: 'Me interesa: Silla Ejecutiva Malla Transpirable.' }),
-    cita(2, 'CITA-7C2D44', luis, dia(0, '15:00'), 'COTIZACION_GENERAL', 'PENDIENTE'),
-    cita(3, 'CITA-A1E5F2', ana, dia(1, '10:00'), 'DISENO_DE_ESPACIOS', 'PENDIENTE', { notas: 'Es para el cuarto de estudio de la casa.' }),
-    cita(4, 'CITA-0D4C88', carla, dia(2, '11:30'), 'RETIRO_DE_COMPRA', 'CONFIRMADA'),
-    cita(5, 'CITA-5E6F70', luis, dia(4, '14:00'), 'PROYECTO_CORPORATIVO', 'CANCELADA', { empresa: 'Herrera & Asociados' }),
-    cita(6, MOCK_CITA_FALLA, usuarioMock(14, 'prueba.error', 'error@ejemplo.com'), dia(3, '09:00'), 'VISITA_SHOWROOM', 'PENDIENTE', { notas: 'Con mocks, cambiar el estado de esta cita siempre falla.' }),
-    cita(7, 'CITA-9F0B12', ana, dia(-2, '16:00'), 'VISITA_SHOWROOM', 'COMPLETADA'),
-    cita(8, 'CITA-2C7E9D', carla, dia(-1, '08:30'), 'COTIZACION_GENERAL', 'PENDIENTE'),
+    cita('CITA-3B9A01', carla, dia(0, '09:30'), 'VISITA_SHOWROOM', 'CONFIRMADA', { empresa: 'Consultorio Méndez', notas: 'Me interesa: Silla Ejecutiva Malla Transpirable.' }),
+    cita('CITA-7C2D44', luis, dia(0, '15:00'), 'COTIZACION_GENERAL', 'PENDIENTE'),
+    cita('CITA-A1E5F2', ana, dia(1, '10:00'), 'DISENO_DE_ESPACIOS', 'PENDIENTE', { notas: 'Es para el cuarto de estudio de la casa.' }),
+    cita('CITA-0D4C88', carla, dia(2, '11:30'), 'RETIRO_DE_COMPRA', 'CONFIRMADA'),
+    cita('CITA-5E6F70', luis, dia(4, '14:00'), 'PROYECTO_CORPORATIVO', 'CANCELADA', { empresa: 'Herrera & Asociados' }),
+    cita(MOCK_CITA_FALLA, ['Prueba de error', 'error@ejemplo.com'], dia(3, '09:00'), 'VISITA_SHOWROOM', 'PENDIENTE', { notas: 'Con mocks, cambiar el estado de esta cita siempre falla.' }),
+    cita('CITA-9F0B12', ana, dia(-2, '16:00'), 'VISITA_SHOWROOM', 'COMPLETADA'),
+    cita('CITA-2C7E9D', carla, dia(-1, '08:30'), 'COTIZACION_GENERAL', 'PENDIENTE'),
   ]
 }
 

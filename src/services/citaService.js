@@ -174,17 +174,15 @@ function partesDeFechaHora(fechaHora) {
   }
 }
 
-// CitaShowroom del backend → la cita que usa el panel. Se arma campo por campo a propósito:
-// hoy el backend manda `usuario` como el User completo, con el hash de la contraseña (pendiente 33
-// de API.md), y nada de eso debe quedar guardado en el estado de la app.
-// Nombre y correo: los de la cita si algún día vienen (es lo que pedimos), si no, los de la cuenta.
-// fecha y hora salen de fechaHora, en hora de Caracas (src/utils/fecha.js).
+// CitaResponse del backend → la cita que usa el panel: los mismos campos, más fecha y hora de
+// Caracas separadas (src/utils/fecha.js) para la agenda. Se arma campo por campo: si el backend
+// agregara algo, no entra al estado de la app sin que lo decidamos (ver pendiente 33 de API.md).
 function aCitaAdmin(cita) {
   const { fecha, hora } = partesDeFechaHora(cita.fechaHora)
   return {
     codigoCita: cita.codigoCita,
-    nombreCliente: textoONull(cita.nombreCliente) ?? textoONull(cita.usuario?.username),
-    email: textoONull(cita.email) ?? textoONull(cita.usuario?.email),
+    nombreCliente: textoONull(cita.nombreCliente),
+    email: textoONull(cita.email),
     empresa: textoONull(cita.empresa),
     telefono: textoONull(cita.telefono),
     fechaHora: cita.fechaHora ?? null,
@@ -197,7 +195,7 @@ function aCitaAdmin(cita) {
   }
 }
 
-// GET /api/v1/citas (solo ADMIN) → [cita del panel] (ver aCitaAdmin).
+// GET /api/v1/citas (solo ADMIN) → [CitaResponse] → [cita del panel] (ver aCitaAdmin).
 export async function obtenerCitasAdmin() {
   if (useMocks) {
     await mockComprobarPermiso()
@@ -209,15 +207,16 @@ export async function obtenerCitasAdmin() {
 }
 
 // PATCH /api/v1/citas/{codigoCita} (solo ADMIN) con { estado } → 200 { mensaje }.
-// Errores tal cual: 403 sin permiso, 400 estado inválido, 500 si el código no existe (pendiente 35).
+// Errores tal cual: 403 sin permiso, 400 estado inválido, 404 si el código no existe (26/10/2026).
 export async function cambiarEstadoCita(codigoCita, estado) {
   if (!ESTADOS_CITA[estado]) throw new Error(`Estado de cita inválido: "${estado}"`)
 
   if (useMocks) {
     await mockComprobarPermiso()
     await fakeDelay(null, 500)
-    const respuesta = codigoCita === MOCK_CITA_FALLA ? null : mockCambiarEstadoCita(codigoCita, estado)
-    if (!respuesta) throw mockHttpError(500, 'Internal Server Error')
+    if (codigoCita === MOCK_CITA_FALLA) throw mockHttpError(500, 'Internal Server Error')
+    const respuesta = mockCambiarEstadoCita(codigoCita, estado)
+    if (!respuesta) throw mockHttpError(404, 'Not Found')
     return respuesta
   }
 

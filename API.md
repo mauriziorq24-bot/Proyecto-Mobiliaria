@@ -431,7 +431,7 @@ Publicado por el backend el 26/10/2026. Contrato leído de `/v3/api-docs` y prob
 |---|---|---|---|
 | `GET` | `/api/v1/cotizaciones` | — | `200 [Cotizacion]` |
 | `PATCH` | `/api/v1/cotizaciones/{codigo}` | `{ "estado": "CONTACTADO" }` | `200 { "mensaje": "Estado de la cotización actualizado a CONTACTADO" }` |
-| `GET` | `/api/v1/citas` | — | `200 [CitaShowroom]` |
+| `GET` | `/api/v1/citas` | — | `200 [CitaResponse]` (desde el 26/10/2026; antes, la entidad `CitaShowroom`) |
 | `PATCH` | `/api/v1/citas/{codigoCita}` | `{ "estado": "CONFIRMADA" }` | `200 { "mensaje": "Estado de la cita actualizado a CONFIRMADA" }` |
 
 - **Estados de cotización:** `PENDIENTE` | `CONTACTADO` | `CANCELADA` (ojo: `CONTACTADO` en masculino).
@@ -446,31 +446,31 @@ Publicado por el backend el 26/10/2026. Contrato leído de `/v3/api-docs` y prob
 | Rutas | `GET`/`PATCH /api/v1/cotizaciones/{codigo}` y `GET`/`PATCH /api/v1/citas/{codigoCita}` | ✅ Iguales. (Antes se había anotado `PATCH /api/v1/cotizaciones/{id}/estado`: ya no existe.) |
 | Body del `PATCH` | `{ "estado" }` | ✅ Igual (`EstadoCotizacionRequest`, `EstadoCitaRequest`) |
 | Estado final de una cita | `ATENDIDA` | **`COMPLETADA`**. Se usa la del backend. |
-| `GET /api/v1/citas` | DTO con `codigoCita`, `nombreCliente`, `email`, `empresa`, `telefono`, `fechaHora`, `tipoAsesoria`, `estado`, `notas`, `creadoEn` | La **entidad** `CitaShowroom`: sin `nombreCliente` ni `email`, y con `usuario` = el `User` completo **con `password`** (pendiente 33) |
+| `GET /api/v1/citas` | DTO con `codigoCita`, `nombreCliente`, `email`, `empresa`, `telefono`, `fechaHora`, `tipoAsesoria`, `estado`, `notas`, `creadoEn` | Al principio, la **entidad** `CitaShowroom` con el `User` completo **y su `password`**. ✅ **Corregido el mismo 26/10/2026:** ahora es `CitaResponse`, igual a la propuesta (pendiente 33), salvo que `creadoEn` llega en `null` (pendiente 36) |
 | Respuesta del `PATCH` | — | `{ mensaje }` |
 
 ### Forma real (curl)
 
 `Cotizacion` = `{ id, codigoCotizacion, nombreCliente, empresa, telefono, email, notas, totalUsd, fechaCreacion, estado, detalles: [{ id, producto, cantidad, precioUnitario }] }`. `producto` es la **entidad** `Producto` (`categoria` como objeto, `imagenes` como `[{ id, urlImagen }]` y algún `"hibernateLazyInitializer": {}` suelto), no `ProductoResponse`. `fechaCreacion` viene sin zona: `"2026-10-21T23:31:49.453401"` (pendiente 34). El mock (`src/mocks/cotizaciones.js`) sigue esta forma.
 
-`CitaShowroom`:
+`CitaResponse` (también en `GET /api/v1/citas/mis-citas`), probado con curl después del arreglo:
 
 ```json
 {
-  "id": 6,
   "codigoCita": "CITA-BE74C1",
-  "usuario": { "id": 5, "username": "…", "password": "$2a$10$…", "email": "…", "role": "ADMIN", "authorities": [{ "authority": "ADMIN" }], "enabled": true },
+  "nombreCliente": "Manuel",
+  "email": "…",
   "empresa": "UJAP",
   "telefono": "+584245733046",
   "fechaHora": "2026-10-30T14:00:00",
   "tipoAsesoria": "VISITA_SHOWROOM",
   "estado": "PENDIENTE",
   "notas": null,
-  "creadoEn": "2026-10-21T15:04:32.162127"
+  "creadoEn": null
 }
 ```
 
-**Cómo lo usa el frontend:** `citaService.obtenerCitasAdmin()` arma cada cita **campo por campo** (`aCitaAdmin`) y nunca guarda `usuario`. Nombre y correo salen de `nombreCliente`/`email` si algún día vienen y, si no, de `usuario.username`/`usuario.email` (los de la **cuenta**, que pueden no ser los que la persona escribió en el formulario). `fechaHora` se separa en `fecha` y `hora` de Caracas con `src/utils/fecha.js`. Cuando el backend pase al DTO, no hay que tocar nada más. El mock (`src/mocks/citas.js`) imita la entidad, sin `password`.
+**Cómo lo usa el frontend:** `citaService.obtenerCitasAdmin()` arma cada cita **campo por campo** (`aCitaAdmin`) y le agrega `fecha` y `hora` de Caracas, separadas de `fechaHora` con `src/utils/fecha.js`, para la agenda. Con `creadoEn` en `null`, el detalle simplemente no muestra "Agendada el …". El mock (`src/mocks/citas.js`) tiene la forma de `CitaResponse`.
 
 ### Resultados de la prueba
 
@@ -480,7 +480,7 @@ Publicado por el backend el 26/10/2026. Contrato leído de `/v3/api-docs` y prob
 | `GET /api/v1/citas` | `200` | `403` | `403` |
 | `PATCH /api/v1/cotizaciones/{codigo}` | `200` (el `GET` lo refleja) | `403` | — |
 | `PATCH /api/v1/citas/{codigoCita}` | `200` (el `GET` lo refleja) | `403` | — |
-| `PATCH` con un código inexistente (`COT-9999`, `CITA-000000`) | **`500`** (debería ser `404`; pendiente 35) | — | — |
+| `PATCH` con un código inexistente (`COT-9999`, `CITA-000000`) | Al principio **`500`** en los dos. Después del arreglo: citas **`404`** ✅, cotizaciones sigue en **`500`** (pendiente 35) | — | — |
 | `PATCH` con un estado inválido (`ATENDIDA`) | `400`, con un mensaje que habla de "tipoAsesoria o la fecha" (pendiente 35) | — | — |
 
 - Nadie recibió `401` con un token válido, y el usuario normal recibe `403` (no `401`) en los cuatro: el panel muestra "No tienes permiso para esta acción." sin cerrar la sesión.
@@ -601,9 +601,10 @@ Primera prueba (22/10/2026, antes del arreglo, usuario `prueba_fav_2210`): `GET`
     - **Largos máximos** de `nombre` y `descripcion`. El panel usa 60 y 255 (el largo por defecto de una columna de texto en JPA).
     - Un `id` inexistente en `PUT`/`DELETE` debería dar `404` (como el pendiente 20 de productos).
 29. ~~**Citas para administración.**~~ ✅ **Publicado el 26/10/2026** (ver [Administración de cotizaciones y citas](#administración-de-cotizaciones-y-citas-probado-el-26102026)). El estado final es `COMPLETADA`. Lo que falta del `GET` (nombre y correo del cliente, sin el `User`) sigue en el pendiente 33.
-33. **🚨 `GET /api/v1/citas` expone el hash de la contraseña** (probado el 26/10/2026). Cada cita trae `usuario` como la entidad `User` completa: `password` (bcrypt), `role`, `authorities`… Un hash filtrado se puede atacar sin conexión, y las contraseñas cortas caen rápido. Probablemente pase lo mismo en `GET /api/v1/citas/mis-citas`. **Pedir:** que los dos devuelvan un DTO `{ codigoCita, nombreCliente, email, empresa, telefono, fechaHora, tipoAsesoria, estado, notas, creadoEn }` sin `usuario` (o, como mínimo, `@JsonIgnore` en `User.password`). Relacionado: la cita **no guarda** el `nombreCliente` ni el `email` que manda `CitaRequest`; hoy el panel muestra los de la cuenta.
-34. **Zona horaria de `fechaCreacion` (cotizaciones) y `creadoEn` (citas):** vienen sin zona (`"2026-10-21T23:31:49.453401"`). `fechaHora` de las citas es hora de Caracas (pendiente 11-bis), pero estas dos las pone el servidor, y Render suele correr en UTC. Confirmar en qué zona se guardan. Mientras tanto el panel las muestra tal cual (`formatearRegistro` en `src/utils/fecha.js`) y podrían verse 4 h adelantadas.
-35. **Errores del `PATCH` de administración:** un código inexistente da `500` (debería ser `404`) y un estado inválido da `400` con el mensaje genérico de citas ("Verifica que los valores (como el tipoAsesoria o la fecha)…"). El panel trata el `500` como "Puede que ya no exista: actualiza la lista."
+33. ~~**🚨 `GET /api/v1/citas` expone el hash de la contraseña.**~~ ✅ **Corregido el 26/10/2026** (vuelto a probar con curl): `/api/v1/citas` y `/mis-citas` devuelven `CitaResponse`, sin `usuario` ni `password`, y con `nombreCliente` y `email`. Lo que decía el pendiente: Cada cita trae `usuario` como la entidad `User` completa: `password` (bcrypt), `role`, `authorities`… Un hash filtrado se puede atacar sin conexión, y las contraseñas cortas caen rápido. Probablemente pase lo mismo en `GET /api/v1/citas/mis-citas`. **Pedir:** que los dos devuelvan un DTO `{ codigoCita, nombreCliente, email, empresa, telefono, fechaHora, tipoAsesoria, estado, notas, creadoEn }` sin `usuario` (o, como mínimo, `@JsonIgnore` en `User.password`). Relacionado: la cita **no guarda** el `nombreCliente` ni el `email` que manda `CitaRequest`; hoy el panel muestra los de la cuenta.
+34. **Zona horaria de `fechaCreacion` (cotizaciones) y `creadoEn` (citas):** vienen sin zona (`"2026-10-21T23:31:49.453401"`). `fechaHora` de las citas es hora de Caracas (pendiente 11-bis), pero estas dos las pone el servidor, y Render suele correr en UTC. Confirmar en qué zona se guardan. Mientras tanto el panel las muestra tal cual (`formatearRegistro` en `src/utils/fecha.js`) y podrían verse 4 h adelantadas. **Pista (26/10/2026):** los códigos son secuenciales, pero `COT-0002` dice 21/10 23:36 y `COT-0003`, creada después, dice 21/10 19:59. Parece que el servidor pasó de UTC a hora de Caracas entre las dos: las cotizaciones viejas estarían en UTC y las nuevas en Caracas. Confirmarlo con el compañero.
+35. **Errores del `PATCH` de administración (a medias tras el arreglo del 26/10/2026):** ✅ citas ya da `404` con un código inexistente. ❌ **Cotizaciones sigue dando `500`** (`COT-9999`). ❌ Un estado inválido sigue dando `400` con el mensaje genérico de citas ("Verifica que los valores (como el tipoAsesoria o la fecha)…"), también en cotizaciones. El panel trata `404` y `500` como "Puede que ya no exista: actualiza la lista."
+36. **`creadoEn` llega en `null` en `CitaResponse`** (nuevo tras el arreglo del pendiente 33, 26/10/2026). Antes, la entidad traía la fecha (`"2026-10-21T15:04:32.162127"`), así que el dato existe y probablemente falta copiarlo al armar el DTO. El panel no muestra "Agendada el …" mientras venga `null`.
 
 ### Para cuando crezca el catálogo
 22. **Paginación, orden y precio en el servidor:** hoy no existen y el frontend lo resuelve localmente (ver la decisión en `GET /api/v1/productos`). Si el catálogo crece, pedir paginación y parámetros como `?orden=` y `?precioMin=&precioMax=`, además de `?categoria=` (pendiente 2).
