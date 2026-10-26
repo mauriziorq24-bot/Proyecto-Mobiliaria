@@ -63,6 +63,14 @@ const numero = new Intl.NumberFormat('es-VE')
 const plural = (n, una, varias) => `${numero.format(n)} ${n === 1 ? una : varias}`
 const estadoDe = (cita) => describirEstado(ESTADOS_CITA, cita.estado)
 const cuando = (cita) => (cita.fecha ? formatearFechaHora(cita.fecha, cita.hora) : 'Sin fecha')
+
+// "9:30 a. m." → { hora: '9:30', periodo: 'a. m.' }: en la agenda van en dos líneas a propósito.
+// En una sola, "a. m." no cabe en el teléfono y se partía en cualquier punto ("9:30 a." / "m.").
+// Intl puede separarlos con un espacio fino (U+202F): \s también lo reconoce.
+function partesHora(hora) {
+  const [hh, periodo = ''] = formatearHora(hora).split(/\s(.*)/)
+  return { hora: hh, periodo }
+}
 const yaPaso = (cita) => Boolean(cita.fecha) && cita.fecha < hoy.value
 // Una cita que ya pasó y nadie cerró: hay que marcarla Completada o Cancelada.
 const sinCerrar = (cita) => yaPaso(cita) && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')
@@ -220,7 +228,7 @@ const whatsappLink = computed(() => {
             ]"
             :key="opcion.valor"
             type="button"
-            class="min-h-10 rounded-sm font-semibold transition-colors duration-200 ease-out"
+            class="min-h-11 rounded-sm font-semibold transition-colors duration-200 ease-out"
             :class="vista === opcion.valor ? 'bg-ink text-white' : 'text-ink hover:bg-ground'"
             :aria-pressed="vista === opcion.valor"
             @click="vista = opcion.valor"
@@ -236,7 +244,12 @@ const whatsappLink = computed(() => {
             class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md bg-warning-bg px-3.5 py-3 text-small text-warning"
           >
             <span>{{ plural(pasadasSinCerrar, 'cita que ya pasó sigue', 'citas que ya pasaron siguen') }} sin cerrar.</span>
-            <button type="button" class="min-h-9 font-semibold underline underline-offset-2" @click="vista = 'lista'">
+            <!-- El ::before lleva el área de toque a 44px sin agrandar el aviso (como BaseButton sm) -->
+            <button
+              type="button"
+              class="relative min-h-9 font-semibold underline underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-1"
+              @click="vista = 'lista'"
+            >
               Verlas en la lista
             </button>
           </p>
@@ -269,7 +282,10 @@ const whatsappLink = computed(() => {
                   "
                   :aria-current="cita.codigoCita === codigo ? 'true' : undefined"
                 >
-                  <span class="w-[4.5rem] shrink-0 font-bold text-ink tabular-nums">{{ formatearHora(cita.hora) }}</span>
+                  <span class="w-14 shrink-0 leading-tight tabular-nums">
+                    <span class="block font-bold text-ink">{{ partesHora(cita.hora).hora }}</span>
+                    <span class="block text-small text-ink-muted">{{ partesHora(cita.hora).periodo }}</span>
+                  </span>
                   <span class="min-w-0 flex-1">
                     <span class="flex items-start justify-between gap-3">
                       <span class="min-w-0 font-semibold [overflow-wrap:anywhere] text-ink">{{ cita.nombreCliente || 'Sin nombre' }}</span>
@@ -334,7 +350,12 @@ const whatsappLink = computed(() => {
       </section>
 
       <!-- Detalle -->
-      <section v-if="codigo" aria-labelledby="cita-detalle-titulo" class="lg:sticky lg:top-6">
+      <!-- Desde lg, fijo y con scroll propio si es más alto que la pantalla (como en cotizaciones) -->
+      <section
+        v-if="codigo"
+        aria-labelledby="cita-detalle-titulo"
+        class="thin-scrollbar lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain"
+      >
         <BaseButton variant="ghost" size="sm" class="-ml-2 lg:hidden" @click="volver">
           <template #icon-left><ChevronLeft /></template>
           {{ vista === 'lista' ? 'Todas las citas' : 'Agenda' }}
@@ -411,28 +432,32 @@ const whatsappLink = computed(() => {
 
             <section aria-labelledby="cita-cliente">
               <h3 id="cita-cliente" class="text-label text-ink-muted uppercase">Cliente</h3>
-              <dl class="mt-2 space-y-2">
-                <div v-if="seleccionada.empresa" class="flex gap-3">
+              <!-- Filas de 44px: teléfono y correo se tocan con el pulgar (WCAG 2.5.8) -->
+              <dl class="mt-1">
+                <div v-if="seleccionada.empresa" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Empresa</dt>
-                  <Building2 class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Building2 class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd class="min-w-0 [overflow-wrap:anywhere] text-ink">{{ seleccionada.empresa }}</dd>
                 </div>
-                <div v-if="seleccionada.telefono" class="flex gap-3">
+                <div v-if="seleccionada.telefono" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Teléfono</dt>
-                  <Phone class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Phone class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd>
-                    <a :href="`tel:${seleccionada.telefono}`" class="font-semibold text-brand-deep underline-offset-2 hover:underline">
+                    <a
+                      :href="`tel:${seleccionada.telefono}`"
+                      class="inline-flex min-h-11 items-center font-semibold text-brand-deep underline-offset-2 hover:underline"
+                    >
                       {{ seleccionada.telefono }}
                     </a>
                   </dd>
                 </div>
-                <div v-if="seleccionada.email" class="flex gap-3">
+                <div v-if="seleccionada.email" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Correo</dt>
-                  <Mail class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Mail class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd class="min-w-0">
                     <a
                       :href="`mailto:${seleccionada.email}?subject=${encodeURIComponent(`Tu cita ${seleccionada.codigoCita}`)}`"
-                      class="font-semibold [overflow-wrap:anywhere] text-brand-deep underline-offset-2 hover:underline"
+                      class="inline-flex min-h-11 items-center font-semibold [overflow-wrap:anywhere] text-brand-deep underline-offset-2 hover:underline"
                     >
                       {{ seleccionada.email }}
                     </a>

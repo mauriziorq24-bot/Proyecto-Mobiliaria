@@ -221,11 +221,12 @@ function onImageError(event) {
         </ul>
       </section>
 
-      <!-- Detalle -->
+      <!-- Detalle. Desde lg queda fijo junto a la lista: si es más alto que la pantalla (muchos
+           productos), tiene su propio scroll; si no, el final solo se vería al terminar la lista. -->
       <section
         v-if="codigo"
         aria-labelledby="cotizacion-detalle-titulo"
-        class="lg:sticky lg:top-6"
+        class="thin-scrollbar lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain"
       >
         <BaseButton variant="ghost" size="sm" class="-ml-2 lg:hidden" @click="volver">
           <template #icon-left><ChevronLeft /></template>
@@ -283,28 +284,32 @@ function onImageError(event) {
 
             <section aria-labelledby="cotizacion-cliente">
               <h3 id="cotizacion-cliente" class="text-label text-ink-muted uppercase">Cliente</h3>
-              <dl class="mt-2 space-y-2">
-                <div v-if="seleccionada.empresa" class="flex gap-3">
+              <!-- Filas de 44px: teléfono y correo se tocan con el pulgar (WCAG 2.5.8) -->
+              <dl class="mt-1">
+                <div v-if="seleccionada.empresa" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Empresa</dt>
-                  <Building2 class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Building2 class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd class="min-w-0 [overflow-wrap:anywhere] text-ink">{{ seleccionada.empresa }}</dd>
                 </div>
-                <div v-if="seleccionada.telefono" class="flex gap-3">
+                <div v-if="seleccionada.telefono" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Teléfono</dt>
-                  <Phone class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Phone class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd>
-                    <a :href="`tel:${seleccionada.telefono}`" class="font-semibold text-brand-deep underline-offset-2 hover:underline">
+                    <a
+                      :href="`tel:${seleccionada.telefono}`"
+                      class="inline-flex min-h-11 items-center font-semibold text-brand-deep underline-offset-2 hover:underline"
+                    >
                       {{ seleccionada.telefono }}
                     </a>
                   </dd>
                 </div>
-                <div v-if="seleccionada.email" class="flex gap-3">
+                <div v-if="seleccionada.email" class="flex min-h-11 items-center gap-3">
                   <dt class="sr-only">Correo</dt>
-                  <Mail class="mt-0.5 size-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Mail class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd class="min-w-0">
                     <a
                       :href="`mailto:${seleccionada.email}?subject=${encodeURIComponent(`Tu solicitud de cotización ${seleccionada.codigoCotizacion}`)}`"
-                      class="font-semibold [overflow-wrap:anywhere] text-brand-deep underline-offset-2 hover:underline"
+                      class="inline-flex min-h-11 items-center font-semibold [overflow-wrap:anywhere] text-brand-deep underline-offset-2 hover:underline"
                     >
                       {{ seleccionada.email }}
                     </a>

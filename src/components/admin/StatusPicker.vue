@@ -18,10 +18,18 @@ const props = defineProps({
 const emit = defineEmits(['cambiar'])
 const legendId = useId()
 const opciones = computed(() => Object.entries(props.estados).map(([valor, estado]) => ({ valor, ...estado })))
+
+// Rejilla según el ancho de la tarjeta (container query), no de la pantalla: el mismo detalle
+// es angosto en el teléfono y ancho junto a la lista en escritorio.
+// 4 opciones: siempre 2 × 2. 3 opciones: en una fila solo desde 24rem (384px); por debajo,
+// "Contactado" con su check no cabe en un tercio, así que van 2 arriba y la tercera a lo ancho.
+const rejilla = computed(() =>
+  opciones.value.length === 3 ? 'grid-cols-2 [&>:last-child]:col-span-2 @sm:grid-cols-3 @sm:[&>:last-child]:col-span-1' : 'grid-cols-2',
+)
 </script>
 
 <template>
-  <div role="group" :aria-labelledby="legendId">
+  <div role="group" :aria-labelledby="legendId" class="@container">
     <div class="flex items-center justify-between gap-3">
       <p :id="legendId" class="text-label text-ink-muted uppercase">{{ legend }}</p>
       <p class="flex items-center gap-1.5 text-small text-ink-muted" aria-live="polite">
@@ -31,7 +39,7 @@ const opciones = computed(() => Object.entries(props.estados).map(([valor, estad
         </template>
       </p>
     </div>
-    <div class="mt-2 grid gap-2" :class="opciones.length === 4 ? 'grid-cols-2' : 'grid-cols-3'">
+    <div class="mt-2 grid gap-2" :class="rejilla">
       <button
         v-for="opcion in opciones"
         :key="opcion.valor"

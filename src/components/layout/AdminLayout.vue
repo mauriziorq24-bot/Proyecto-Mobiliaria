@@ -1,6 +1,6 @@
 <script setup>
 import { CalendarDays, FileText, LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
 import { useLogout } from '../../composables/useLogout'
@@ -65,6 +65,19 @@ onMounted(() => {
   publishHeaderHeight()
 })
 onBeforeUnmount(() => resizeObserver?.disconnect())
+
+// En el teléfono las cinco pestañas no caben: si la activa (Productos, Categorías) queda fuera,
+// la fila se desplaza hasta verla, igual que la fila de categorías de la tienda (AppHeader).
+// 'nearest' solo la mueve lo justo. En escritorio la fila está oculta y no hace nada.
+const tabList = ref(null)
+watch(
+  () => route.name,
+  async () => {
+    await nextTick()
+    tabList.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  },
+  { immediate: true },
+)
 
 const sideLink =
   'flex min-h-11 items-center gap-3 rounded-md px-3 font-semibold text-ink transition-colors duration-200 ease-out hover:bg-ground [&>svg]:size-[18px] [&>svg]:shrink-0 [&>svg]:text-ink-muted'
@@ -135,7 +148,7 @@ const sideLinkActive = 'bg-brand-tint font-bold text-brand-deep hover:bg-brand-t
         <BaseIconButton :icon="Store" label="Ver la tienda" to="/" />
         <BaseIconButton :icon="LogOut" label="Cerrar sesión" @click="logout" />
       </div>
-      <nav aria-label="Secciones del panel" class="thin-scrollbar overflow-x-auto px-4 sm:px-6">
+      <nav ref="tabList" aria-label="Secciones del panel" class="thin-scrollbar overflow-x-auto px-4 sm:px-6">
         <ul class="flex gap-6">
           <li v-for="seccion in secciones" :key="seccion.name">
             <RouterLink

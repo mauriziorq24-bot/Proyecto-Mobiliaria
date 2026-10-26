@@ -212,7 +212,12 @@ function onImageError(event) {
 
     <template v-else>
       <div v-if="hayFiltros" class="mt-3 flex justify-end">
-        <button type="button" class="min-h-9 text-small font-semibold text-brand-deep underline underline-offset-2 hover:text-brand-deeper" @click="limpiarFiltros">
+        <!-- El ::before lleva el área de toque a 44px sin separar más la lista (como BaseButton sm) -->
+        <button
+          type="button"
+          class="relative min-h-9 text-small font-semibold text-brand-deep underline underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-1 hover:text-brand-deeper"
+          @click="limpiarFiltros"
+        >
           Limpiar filtros
         </button>
       </div>

@@ -181,7 +181,7 @@ const controlClass =
       Es un enlace de GitHub. Funciona, pero el de jsDelivr carga más rápido.
       <button
         type="button"
-        class="font-semibold text-brand-deep underline underline-offset-2 hover:text-brand-deeper"
+        class="inline-flex min-h-11 items-center font-semibold text-brand-deep underline underline-offset-2 hover:text-brand-deeper"
         @click="usarJsDelivr"
       >
         Usar el de jsDelivr
