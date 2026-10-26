@@ -117,7 +117,8 @@ async function confirmarEliminar() {
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div>
         <h1 id="categorias-titulo" tabindex="-1" class="text-headline text-ink focus:outline-none">Categorías</h1>
-        <p class="mt-1 text-ink-muted tabular-nums" aria-live="polite">
+        <!-- Sin aria-live: tras eliminar ya hablan el aviso de Éxito y el foco en el título -->
+        <p class="mt-1 text-ink-muted tabular-nums">
           <template v-if="carga.data.value">{{ resumen }}</template>
           <template v-else>Las secciones del menú de la tienda.</template>
         </p>

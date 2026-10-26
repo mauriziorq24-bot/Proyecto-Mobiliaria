@@ -20,6 +20,7 @@ import StatusPicker from '../../components/admin/StatusPicker.vue'
 import BaseBadge from '../../components/ui/BaseBadge.vue'
 import BaseButton from '../../components/ui/BaseButton.vue'
 import BaseErrorState from '../../components/ui/BaseErrorState.vue'
+import { useAnuncio } from '../../composables/useAnuncio'
 import { useAsync } from '../../composables/useAsync'
 import { useCambioDeEstado } from '../../composables/useCambioDeEstado'
 import { useDetalleEnUrl } from '../../composables/useDetalleEnUrl'
@@ -42,9 +43,14 @@ const citas = computed(() => carga.data.value ?? [])
 const hoy = ref(ahoraEnCaracas().fecha)
 const manana = computed(() => sumarDias(hoy.value, 1))
 
-function actualizar() {
+// "Actualizar" recarga sin skeleton: sin este aviso, quien usa lector de pantalla no sabe
+// que terminó. El resumen visible no lleva aria-live: se anunciaría con cada cambio de estado.
+const { anuncio, anunciar } = useAnuncio()
+
+async function actualizar() {
   hoy.value = ahoraEnCaracas().fecha
-  carga.retry()
+  await carga.retry()
+  if (!carga.error.value) anunciar(`Citas actualizadas: ${resumen.value}.`)
 }
 
 const { codigo, rutaDetalle, volver, ponerQuery } = useDetalleEnUrl({
@@ -161,7 +167,7 @@ const whatsappLink = computed(() => {
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div :class="codigo && 'max-lg:sr-only'">
         <h1 class="text-headline text-ink">Citas</h1>
-        <p class="mt-1 text-ink-muted tabular-nums" aria-live="polite">
+        <p class="mt-1 text-ink-muted tabular-nums">
           <template v-if="carga.data.value">{{ resumen }}</template>
           <template v-else>Las visitas y asesorías agendadas desde la tienda.</template>
         </p>
@@ -483,5 +489,7 @@ const whatsappLink = computed(() => {
         <p class="mt-3 text-ink-muted">Elige una cita para ver sus datos y confirmarla con el cliente.</p>
       </div>
     </div>
+
+    <p class="sr-only" role="status">{{ anuncio }}</p>
   </div>
 </template>

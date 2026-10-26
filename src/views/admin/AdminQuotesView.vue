@@ -7,6 +7,7 @@ import StatusPicker from '../../components/admin/StatusPicker.vue'
 import BaseBadge from '../../components/ui/BaseBadge.vue'
 import BaseButton from '../../components/ui/BaseButton.vue'
 import BaseErrorState from '../../components/ui/BaseErrorState.vue'
+import { useAnuncio } from '../../composables/useAnuncio'
 import { useAsync } from '../../composables/useAsync'
 import { useCambioDeEstado } from '../../composables/useCambioDeEstado'
 import { useDetalleEnUrl } from '../../composables/useDetalleEnUrl'
@@ -91,6 +92,15 @@ const lineas = computed(() =>
 const total = computed(() => seleccionada.value?.totalUsd ?? lineas.value.reduce((suma, l) => suma + l.subtotal, 0))
 const whatsappLink = computed(() => (seleccionada.value ? responderCotizacionUrl(seleccionada.value) : null))
 
+// "Actualizar" recarga sin skeleton: sin este aviso, quien usa lector de pantalla no sabe
+// que terminó. El resumen visible no lleva aria-live: se anunciaría con cada cambio de estado.
+const { anuncio, anunciar } = useAnuncio()
+
+async function actualizar() {
+  await carga.retry()
+  if (!carga.error.value) anunciar(`Lista actualizada: ${resumen.value}.`)
+}
+
 function onImageError(event) {
   if (!event.target.src.endsWith('/placeholder-producto.svg')) event.target.src = '/placeholder-producto.svg'
 }
@@ -103,7 +113,7 @@ function onImageError(event) {
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div :class="codigo && 'max-lg:sr-only'">
         <h1 class="text-headline text-ink">Cotizaciones</h1>
-        <p class="mt-1 text-ink-muted tabular-nums" aria-live="polite">
+        <p class="mt-1 text-ink-muted tabular-nums">
           <template v-if="carga.data.value">{{ resumen }}</template>
           <template v-else>Las solicitudes que llegan desde Mi cotización.</template>
         </p>
@@ -113,7 +123,7 @@ function onImageError(event) {
         size="sm"
         :class="codigo && 'max-lg:hidden'"
         :loading="carga.loading.value"
-        @click="carga.retry()"
+        @click="actualizar"
       >
         <template #icon-left><RotateCw /></template>
         Actualizar
@@ -378,5 +388,7 @@ function onImageError(event) {
         <p class="mt-3 text-ink-muted">Elige una cotización para ver sus productos y responderle al cliente.</p>
       </div>
     </div>
+
+    <p class="sr-only" role="status">{{ anuncio }}</p>
   </div>
 </template>

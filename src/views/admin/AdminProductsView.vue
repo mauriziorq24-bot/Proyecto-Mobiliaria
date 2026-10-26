@@ -10,6 +10,7 @@ import BaseFormError from '../../components/ui/BaseFormError.vue'
 import BaseIconButton from '../../components/ui/BaseIconButton.vue'
 import BaseInput from '../../components/ui/BaseInput.vue'
 import { useAsync } from '../../composables/useAsync'
+import { useDebounce } from '../../composables/useDebounce'
 import { useToast } from '../../composables/useToast'
 import { estiloTipoEspacio, TIPOS_ESPACIO } from '../../config/tiposEspacio'
 import { getCategorias } from '../../services/categoriaService'
@@ -69,6 +70,18 @@ const resumen = computed(() => {
   return hayFiltros.value ? `Mostrando ${numero.format(resultado.value.length)} de ${base}` : base
 })
 
+// Al filtrar, el lector de pantalla dice cuántos coinciden, una sola vez y cuando la persona
+// deja de escribir. El resumen visible no lleva aria-live: la búsqueda filtra con cada tecla y
+// se leería "Mostrando 12 de 41 productos · 12 en showroom" por cada letra.
+// null = nada que anunciar (sin filtros o sin datos todavía).
+const coincidencias = useDebounce(() => (carga.data.value && hayFiltros.value ? resultado.value.length : null), 600)
+const anuncioFiltro = computed(() => {
+  const n = coincidencias.value
+  if (n === null) return ''
+  if (n === 0) return 'Ningún producto coincide.'
+  return `${numero.format(n)} ${n === 1 ? 'producto coincide' : 'productos coinciden'}.`
+})
+
 // --- Eliminar ---
 const aEliminar = ref(null)
 const eliminacion = useAsync((id) => eliminarProducto(id), { immediate: false })
@@ -123,7 +136,7 @@ function onImageError(event) {
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div>
         <h1 id="productos-titulo" tabindex="-1" class="text-headline text-ink focus:outline-none">Productos</h1>
-        <p class="mt-1 text-ink-muted tabular-nums" aria-live="polite">
+        <p class="mt-1 text-ink-muted tabular-nums">
           <template v-if="carga.data.value">{{ resumen }}</template>
           <template v-else>El catálogo de la tienda.</template>
         </p>
@@ -321,5 +334,7 @@ function onImageError(event) {
         <div v-if="errorEliminar" class="mt-4"><BaseFormError>{{ errorEliminar }}</BaseFormError></div>
       </template>
     </BaseConfirmDialog>
+
+    <p class="sr-only" role="status">{{ anuncioFiltro }}</p>
   </div>
 </template>

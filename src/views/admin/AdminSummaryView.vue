@@ -3,6 +3,7 @@ import { CalendarDays, FileText, Lock, Package, RotateCw, Tags, TriangleAlert } 
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '../../components/ui/BaseButton.vue'
+import { useAnuncio } from '../../composables/useAnuncio'
 import { useAsync } from '../../composables/useAsync'
 import { getCategorias } from '../../services/categoriaService'
 import { citasAdminActiva, obtenerCitasAdmin } from '../../services/citaService'
@@ -106,11 +107,13 @@ const enlaceFila =
 
 const cargando = computed(() => filas.value.some((fila) => fila.estado.loading.value))
 
-function actualizar() {
-  productos.retry()
-  categorias.retry()
-  cotizaciones.retry()
-  citas?.retry()
+// Al terminar "Actualizar" se avisa al lector de pantalla. Si alguna fila falla, no hace falta:
+// su error ya se anuncia solo (role="alert").
+const { anuncio, anunciar } = useAnuncio()
+
+async function actualizar() {
+  await Promise.all([productos.retry(), categorias.retry(), cotizaciones.retry(), citas?.retry()])
+  if (!filas.value.some((fila) => fila.estado.error.value)) anunciar('Resumen actualizado.')
 }
 </script>
 
@@ -184,5 +187,7 @@ function actualizar() {
         </p>
       </li>
     </ul>
+
+    <p class="sr-only" role="status">{{ anuncio }}</p>
   </div>
 </template>
