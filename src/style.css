@@ -15,7 +15,7 @@
   teléfono acostado). En una media query, 1em es el tamaño de letra que eligió la persona,
   así que 32em son 512px con letra normal y más con letra grande.
   Ahí lo fijo (header, barra de filtros) deja de serlo: si no, tapa la mitad de la pantalla.
-  Si cambias el valor, cambia también SHORT_VIEWPORT en AppHeader.vue.
+  useAlturaFija lo nota solo (el elemento pasa a position: static) y su altura vale 0.
 */
 @custom-variant short (@media (max-height: 32em));
 
@@ -190,12 +190,18 @@
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    /* Lo fijo arriba (header y, en /buscar, la barra "Filtros / Ordenar") y abajo (barra de cotización
-       o del producto) no tapa lo que tiene el foco de teclado (WCAG 2.4.11): el navegador deja este
-       espacio al desplazarse hasta él, y también al saltar a un #ancla. Las alturas las publican
-       AppHeader, SearchView y useBottomBarHeight; en pantallas bajas el header no es fijo y vale 0. */
-    scroll-padding-top: calc(var(--header-h, 0px) + var(--subbar-h, 0px));
-    scroll-padding-bottom: var(--bottom-bar-h, 0px);
+    /* scroll-padding le dice al navegador qué franjas de la ventana están tapadas por lo fijo: arriba el
+       header (y, en /buscar, la barra "Filtros / Ordenar"); abajo la barra de cotización o del producto.
+       El navegador las descuenta de forma nativa, sin JavaScript:
+       - RePag/AvPag y Espacio/Shift+Espacio avanzan solo el alto que queda libre (menos un poco que se
+         repite para no perder el hilo), así lo que estaba junto a la barra no termina detrás del header;
+       - saltar a un #ancla deja la sección justo debajo del header;
+       - el foco de teclado (Tab, o el foco al primer campo con error) no queda debajo de lo fijo (WCAG 2.4.11).
+       Las alturas las mide useAlturaFija en cada página y tamaño; si algo no está o no es fijo, vale 0.
+       --margen-scroll: un poco de aire extra; también deja ver entero el anillo de foco, que sobresale 4px. */
+    --margen-scroll: 0.5rem;
+    scroll-padding-top: calc(var(--altura-header, 0px) + var(--altura-subbarra, 0px) + var(--margen-scroll));
+    scroll-padding-bottom: calc(var(--altura-barra-inferior, 0px) + var(--margen-scroll));
   }
 
   body {

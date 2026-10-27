@@ -3,6 +3,7 @@ import { CalendarCheck, Heart, LayoutGrid, Menu, RotateCw, Search, ShoppingCart 
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
+import { useAlturaFija } from '../../composables/useAlturaFija'
 import { useCategorias } from '../../composables/useCategorias'
 import { useDebounce } from '../../composables/useDebounce'
 import { company } from '../../config/empresa'
@@ -102,18 +103,10 @@ function submitSearch(event) {
 // --- Altura de la franja fija ---
 // La barra "Filtros" de /buscar y su barra lateral se pegan justo debajo del header.
 // La altura cambia entre móvil (buscador en su propia fila) y escritorio, así que se mide
-// y se publica como variable CSS para usarla con top-(--header-h).
-// En pantallas bajas (variante `short` de style.css) la franja deja de ser fija:
-// entonces no tapa nada y la variable vale 0.
-const SHORT_VIEWPORT = '(max-height: 32em)'
+// y se publica como --altura-header (también la usa el scroll-padding-top de style.css).
+// En pantallas bajas (variante `short` de style.css) la franja deja de ser fija y vale 0.
 const stickyBar = ref(null)
-let resizeObserver = null
-let shortViewport = null
-
-function publishHeaderHeight() {
-  const height = shortViewport.matches ? 0 : stickyBar.value.offsetHeight
-  document.documentElement.style.setProperty('--header-h', `${height}px`)
-}
+useAlturaFija(stickyBar, '--altura-header')
 
 // --- Sombra al hacer scroll (La regla de lo que flota) ---
 const scrolled = ref(false)
@@ -156,18 +149,12 @@ watch(
 )
 
 onMounted(() => {
-  shortViewport = window.matchMedia(SHORT_VIEWPORT)
-  shortViewport.addEventListener('change', publishHeaderHeight)
-  resizeObserver = new ResizeObserver(publishHeaderHeight)
-  resizeObserver.observe(stickyBar.value)
   onScroll()
   window.addEventListener('scroll', onScroll, { passive: true })
   document.addEventListener('pointerdown', onPointerDown)
   document.addEventListener('keydown', onKeydown)
 })
 onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  shortViewport?.removeEventListener('change', publishHeaderHeight)
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('pointerdown', onPointerDown)
   document.removeEventListener('keydown', onKeydown)

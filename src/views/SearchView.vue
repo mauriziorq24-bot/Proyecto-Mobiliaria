@@ -1,6 +1,6 @@
 <script setup>
 import { ArrowUpDown, ChevronDown, MessageCircle, SearchX, SlidersHorizontal, X } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import ActiveFilterChips from '../components/product/ActiveFilterChips.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
@@ -8,6 +8,7 @@ import SearchFilters from '../components/product/SearchFilters.vue'
 import BaseBottomSheet from '../components/ui/BaseBottomSheet.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
+import { useAlturaFija } from '../composables/useAlturaFija'
 import { useAsync } from '../composables/useAsync'
 import { useFiltrosUrl } from '../composables/useFiltrosUrl'
 import { contarOpciones, FILTROS_VACIOS, filtrarProductos, obtenerCatalogo } from '../services/productoService'
@@ -192,29 +193,11 @@ const mensajeWhatsapp = computed(() =>
 )
 
 // --- Altura de la barra "Filtros / Ordenar" ---
-// En móvil y tablet queda fija bajo el header: publica su altura (--subbar-h) para que el
-// scroll-padding-top de style.css la sume y el foco de teclado no quede debajo de ella.
+// En móvil y tablet queda fija bajo el header: publica su altura (--altura-subbarra) para que el
+// scroll-padding-top de style.css la sume y ni RePag/AvPag ni el foco de teclado queden debajo de ella.
 // Si no está fija (pantallas bajas, `short:static`) o no se ve (escritorio, display: none), vale 0.
 const subbar = ref(null)
-let subbarObserver = null
-
-function publishSubbarHeight() {
-  const el = subbar.value
-  const height = el && getComputedStyle(el).position === 'sticky' ? el.offsetHeight : 0
-  document.documentElement.style.setProperty('--subbar-h', `${height}px`)
-}
-
-onMounted(() => {
-  subbarObserver = new ResizeObserver(publishSubbarHeight)
-  subbarObserver.observe(subbar.value)
-  // Pasar a pantalla baja cambia la posición sin cambiar el tamaño: el observer no se entera.
-  window.addEventListener('resize', publishSubbarHeight)
-})
-onBeforeUnmount(() => {
-  subbarObserver?.disconnect()
-  window.removeEventListener('resize', publishSubbarHeight)
-  document.documentElement.style.setProperty('--subbar-h', '0px')
-})
+useAlturaFija(subbar, '--altura-subbarra')
 
 const linkClass = 'font-semibold text-brand-deep underline hover:text-brand-deeper'
 
@@ -249,7 +232,7 @@ const selectClass =
        En pantallas bajas deja de ser fija, como el header (variante `short` de style.css).
        basis-40 (10rem): si los dos botones no caben lado a lado (letra grande, zoom), se apilan
        en vez de achicarse hasta cortar el texto. -->
-  <div ref="subbar" class="sticky top-[var(--header-h,0px)] z-30 border-b border-line bg-surface short:static lg:hidden">
+  <div ref="subbar" class="sticky top-[var(--altura-header,0px)] z-30 border-b border-line bg-surface short:static lg:hidden">
     <div class="container-page flex flex-wrap items-center gap-2 py-2.5">
       <BaseButton
         variant="secondary"
@@ -284,7 +267,7 @@ const selectClass =
       <!-- El scroll recorta también a los lados: -ml-1 pl-1 deja lugar al anillo de foco de los campos
            y de las opciones sin mover el contenido. -->
       <div
-        class="thin-scrollbar sticky top-[calc(var(--header-h,0px)+1.5rem)] -ml-1 max-h-[calc(100dvh-var(--header-h,0px)-3rem)] overflow-y-auto overscroll-contain pr-2 pb-2 pl-1"
+        class="thin-scrollbar sticky top-[calc(var(--altura-header,0px)+1.5rem)] -ml-1 max-h-[calc(100dvh-var(--altura-header,0px)-3rem)] overflow-y-auto overscroll-contain pr-2 pb-2 pl-1"
       >
         <h2 id="filters-title" class="mb-5 text-title">Filtros</h2>
         <SearchFilters

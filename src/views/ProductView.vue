@@ -10,7 +10,7 @@ import BaseButton from '../components/ui/BaseButton.vue'
 import BaseErrorState from '../components/ui/BaseErrorState.vue'
 import BaseQuantityInput from '../components/ui/BaseQuantityInput.vue'
 import { useAsync } from '../composables/useAsync'
-import { useBottomBarHeight } from '../composables/useBottomBarHeight'
+import { useAlturaFija } from '../composables/useAlturaFija'
 import { useCategorias } from '../composables/useCategorias'
 import { estiloTipoEspacio } from '../config/tiposEspacio'
 import { useToast } from '../composables/useToast'
@@ -150,7 +150,7 @@ function addToQuote() {
 
 // La barra del producto publica su altura para que el aviso aparezca encima de ella.
 const productBar = ref(null)
-useBottomBarHeight(productBar)
+useAlturaFija(productBar, '--altura-barra-inferior')
 
 // --- Productos relacionados ---
 // Hasta 4 de la misma categoría, sin el actual. Se pide 1 de más por si el actual viene en la lista.

@@ -12,7 +12,7 @@ const waking = useServerWaking()
        cambios dentro de una región que ya existía cuando apareció el texto. -->
   <div
     role="status"
-    class="pointer-events-none fixed inset-x-4 bottom-[calc(1rem+var(--bottom-bar-h,0px))] z-40 flex justify-center"
+    class="pointer-events-none fixed inset-x-4 bottom-[calc(1rem+var(--altura-barra-inferior,0px))] z-40 flex justify-center"
   >
     <Transition
       enter-active-class="transition duration-200 ease-out motion-reduce:transition-none"

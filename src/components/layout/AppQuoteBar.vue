@@ -1,7 +1,7 @@
 <script setup>
 import { MessageCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
-import { useBottomBarHeight } from '../../composables/useBottomBarHeight'
+import { useAlturaFija } from '../../composables/useAlturaFija'
 import { useCotizacionStore } from '../../stores/cotizacion'
 import { formatearPrecio } from '../../utils/formato'
 import { cotizacionUrl } from '../../utils/whatsapp'
@@ -18,7 +18,7 @@ const totalTexto = computed(() => formatearPrecio(cotizacion.totalReferencial))
 const whatsappLink = computed(() => cotizacionUrl(cotizacion.itemsDisponibles, totalTexto.value))
 
 const bar = ref(null)
-useBottomBarHeight(bar)
+useAlturaFija(bar, '--altura-barra-inferior')
 </script>
 
 <template>

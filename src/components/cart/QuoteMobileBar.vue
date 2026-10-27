@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import { useBottomBarHeight } from '../../composables/useBottomBarHeight'
+import { useAlturaFija } from '../../composables/useAlturaFija'
 
 // Barra fija de Mi cotización en móvil y tablet: total referencial + la acción principal (slot).
 // Reemplaza a la barra global (la ruta tiene meta.ocultarBarraCotizacion). "Vaciar" no va aquí.
-// Es un componente aparte para que useBottomBarHeight viva y muera con la barra: así el aviso
+// Es un componente aparte para que useAlturaFija viva y muera con la barra: así el aviso
 // breve (AppToast) aparece encima de ella y baja cuando la barra se quita.
 defineProps({
   // Total ya formateado con formatearPrecio.
@@ -12,7 +12,7 @@ defineProps({
 })
 
 const bar = ref(null)
-useBottomBarHeight(bar)
+useAlturaFija(bar, '--altura-barra-inferior')
 </script>
 
 <template>

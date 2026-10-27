@@ -1,8 +1,9 @@
 <script setup>
 import { CalendarDays, FileText, LayoutDashboard, LogOut, Package, Store, Tags } from 'lucide-vue-next'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/logo-80.png'
+import { useAlturaFija } from '../../composables/useAlturaFija'
 import { useLogout } from '../../composables/useLogout'
 import { citasAdminActiva } from '../../services/citaService'
 import { useAuthStore } from '../../stores/auth'
@@ -50,21 +51,11 @@ watch(
   },
 )
 
-// Alto de la barra superior móvil, publicado como --header-h igual que AppHeader: <html> lo usa en
-// scroll-padding-top para que lo fijo no tape el foco. En escritorio la barra no existe y vale 0.
+// Alto de la barra superior móvil, publicado como --altura-header igual que AppHeader: <html> lo usa en
+// scroll-padding-top para que lo fijo no tape RePag/AvPag ni el foco. En escritorio la barra no existe
+// y en pantallas bajas no es fija: en los dos casos vale 0. La barra lateral no cuenta: va en su columna.
 const topBar = ref(null)
-let resizeObserver = null
-
-function publishHeaderHeight() {
-  document.documentElement.style.setProperty('--header-h', `${topBar.value?.offsetHeight ?? 0}px`)
-}
-
-onMounted(() => {
-  resizeObserver = new ResizeObserver(publishHeaderHeight)
-  resizeObserver.observe(topBar.value)
-  publishHeaderHeight()
-})
-onBeforeUnmount(() => resizeObserver?.disconnect())
+useAlturaFija(topBar, '--altura-header')
 
 // En el teléfono las cinco pestañas no caben: si la activa (Productos, Categorías) queda fuera,
 // la fila se desplaza hasta verla, igual que la fila de categorías de la tienda (AppHeader).
