@@ -1,7 +1,5 @@
 <script setup>
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import BaseIconButton from '../ui/BaseIconButton.vue'
 import ShowroomVitrine from './ShowroomVitrine.vue'
 
 const AUTOPLAY_MS = 5000
@@ -13,7 +11,8 @@ const props = defineProps({
 
 const root = ref(null)
 const track = ref(null)
-const toggleButton = ref(null)
+// Botones de los puntos por índice, para mover el foco con las flechas.
+const dotButtons = []
 const activeIndex = ref(0)
 // Índices de las fotos que fallaron al cargar: ese paso muestra la ilustración.
 const failed = ref(new Set())
@@ -57,10 +56,19 @@ function onKeydown(event) {
   goTo(activeIndex.value + step)
 }
 
+// Con el foco en un punto, las flechas pasan al punto vecino. Al recibir el foco ese punto
+// muestra su foto (@focus), así que el teclado cambia de foto sin pulsar Enter.
+function onDotKeydown(event, index) {
+  const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
+  if (!step) return
+  event.preventDefault()
+  const count = props.photos.length
+  dotButtons[(index + step + count) % count]?.focus()
+}
+
 // --- Avance automático ---
 // Cada motivo de pausa es un estado aparte: el carrusel solo avanza si no hay ninguno.
 const reduceMotion = ref(false)
-const userPaused = ref(false) // botón de pausa: dura hasta que la persona pulse "Reproducir"
 const hovered = ref(false)
 const keyboardFocus = ref(false)
 const touching = ref(false)
@@ -70,7 +78,6 @@ const isRotating = computed(
   () =>
     isMultiple.value &&
     !reduceMotion.value &&
-    !userPaused.value &&
     !hovered.value &&
     !keyboardFocus.value &&
     !touching.value &&
@@ -86,12 +93,6 @@ function schedule() {
 }
 watch([isRotating, activeIndex], schedule)
 
-function togglePlay() {
-  userPaused.value = !userPaused.value
-  // Pulsar "Reproducir" es una orden explícita: arranca aunque el mouse siga encima.
-  if (!userPaused.value) hovered.value = false
-}
-
 // Solo el mouse pausa al pasar por encima (en táctil, "hover" lo simula un toque).
 function onPointerEnter(event) {
   if (event.pointerType === 'mouse') hovered.value = true
@@ -101,9 +102,8 @@ function onPointerLeave(event) {
 }
 
 // Pausa con el foco del teclado (:focus-visible), no con el clic en un punto.
-// Excepción: el botón de pausa. Si no, "Reproducir" no tendría efecto mientras tiene el foco.
 function onFocusIn(event) {
-  keyboardFocus.value = event.target !== toggleButton.value?.$el && event.target.matches(':focus-visible')
+  keyboardFocus.value = event.target.matches(':focus-visible')
 }
 function onFocusOut(event) {
   if (!root.value?.contains(event.relatedTarget)) keyboardFocus.value = false
@@ -151,40 +151,34 @@ onBeforeUnmount(() => {
     @focusout="onFocusOut"
   >
     <!--
-      Controles: van primero en el orden del teclado (el botón de pausa debe encontrarse antes que
-      lo que se mueve), aunque se vean abajo. El contenedor deja pasar el dedo (pointer-events-none)
-      para que deslizar sobre la foto funcione; solo la pastilla recibe toques.
+      Puntos de paginación. El contenedor deja pasar el dedo (pointer-events-none) para que
+      deslizar sobre la foto funcione; solo la pastilla recibe toques.
     -->
     <div v-if="isMultiple" class="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center">
-      <div class="pointer-events-auto flex items-center gap-1 rounded-full bg-surface/90 px-1.5 py-1 shadow-sm">
-        <BaseIconButton
-          v-if="!reduceMotion"
-          ref="toggleButton"
-          :icon="userPaused ? Play : Pause"
-          :label="userPaused ? 'Reproducir carrusel' : 'Pausar carrusel'"
-          size="sm"
-          @click="togglePlay"
-        />
-        <BaseIconButton :icon="ChevronLeft" label="Foto anterior" size="sm" @click="goTo(activeIndex - 1)" />
+      <!-- Pastilla oscura translúcida: con el 50% los puntos blancos se ven incluso sobre una foto blanca -->
+      <div class="pointer-events-auto flex items-center rounded-full bg-ink/50 px-1">
         <!--
-          Puntos: la foto activa es una barra más ancha (cambia la forma, no solo el color).
+          La foto activa es una barra más ancha (cambia la forma, no solo el color).
           El punto se ve pequeño, pero el botón mide 24 × 24 px para poder tocarlo.
+          @focus: al llegar a un punto con Tab o con las flechas, se muestra su foto.
         -->
         <button
           v-for="(photo, index) in photos"
           :key="photo.url"
+          :ref="(el) => (dotButtons[index] = el)"
           type="button"
           :aria-label="`Foto ${index + 1} de ${photos.length}`"
           :aria-current="index === activeIndex ? 'true' : undefined"
           class="flex h-6 min-w-6 items-center justify-center rounded-full"
           @click="goTo(index)"
+          @focus="goTo(index)"
+          @keydown="onDotKeydown($event, index)"
         >
           <span
             class="h-1.5 rounded-full transition-[width,background-color] duration-200 ease-out"
-            :class="index === activeIndex ? 'w-4 bg-ink' : 'w-1.5 bg-ink/30'"
+            :class="index === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/55'"
           />
         </button>
-        <BaseIconButton :icon="ChevronRight" label="Foto siguiente" size="sm" @click="goTo(activeIndex + 1)" />
       </div>
     </div>
 
