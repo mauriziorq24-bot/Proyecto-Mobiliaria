@@ -20,6 +20,24 @@ export const company = {
 
   email: null, // pendiente
 
+  // Fotos del carrusel del inicio (src/components/home/HeroCarousel.vue), en este orden.
+  // Para cambiarlas basta con editar esta lista. Si una foto no carga, ese paso muestra
+  // la ilustración de los muebles; si no carga ninguna, el inicio muestra solo la ilustración.
+  heroPhotos: [
+    {
+      url: 'https://www.bkmoffice.com/wp-content/uploads/2024/01/BKM-Commerce-3.jpg',
+      alt: 'Escritorios y muebles de oficina',
+    },
+    {
+      url: 'https://www.tablakala.com/cdn/shop/collections/sillas-de-oficina-4078100.jpg?v=1784947035',
+      alt: 'Sillas de oficina',
+    },
+    {
+      url: 'https://www.calligaris.com.do/cdn/shop/files/3008_n_yoroi-2.jpg?v=1714742803&width=1500',
+      alt: 'Comedor de hogar',
+    },
+  ],
+
   instagram: {
     handle: '@mobiliariodeoficina',
     url: 'https://www.instagram.com/mobiliariodeoficina/',
@@ -29,8 +47,6 @@ export const company = {
     address: 'San Diego, Edo. Carabobo, Venezuela',
     // Enlace a Google Maps con la ubicación exacta del showroom. Pendiente: hoy solo hay ciudad.
     mapsUrl: null,
-    // Foto del showroom para el inicio. Mientras sea null, el inicio muestra las siluetas de los muebles.
-    photoUrl: null,
     schedule: [
       { days: 'Lunes a viernes', hours: '8:30 a. m. – 5:00 p. m.' },
       { days: 'Sábados', hours: '8:30 a. m. – 1:30 p. m.' },

@@ -2,10 +2,10 @@
 import { ArrowRight, CalendarCheck, MessageCircle } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import HeroCarousel from '../components/home/HeroCarousel.vue'
 import ShowroomInfo from '../components/layout/ShowroomInfo.vue'
 import CategoryCard from '../components/product/CategoryCard.vue'
 import CategoryCardSkeleton from '../components/product/CategoryCardSkeleton.vue'
-import CategorySilhouette from '../components/product/CategorySilhouette.vue'
 import ProductGrid from '../components/product/ProductGrid.vue'
 import SpaceTypeSwatches from '../components/product/SpaceTypeSwatches.vue'
 import BaseBadge from '../components/ui/BaseBadge.vue'
@@ -21,10 +21,6 @@ import { obtenerProductos } from '../services/productoService'
 import { useCotizacionStore } from '../stores/cotizacion'
 
 // --- Hero ---
-// Siluetas de la vitrina: son ilustración (no datos), por eso la lista es fija.
-// Cuando exista company.showroom.photoUrl, la foto del showroom las reemplaza.
-const VITRINE_SLUGS = ['escritorios', 'silleria', 'comedores', 'peinadores', 'camillas']
-
 // "Explorar categorías" baja a la sección de categorías ("Ver catálogo" va a /buscar).
 // Con movimiento reducido el salto es instantáneo. El foco pasa al título de la sección
 // para que quien navega con teclado o lector de pantalla siga desde ahí.
@@ -119,35 +115,17 @@ const whatsappLink = whatsappUrl('Hola, vengo de la página web y quiero informa
       </div>
 
       <!--
-        Vitrina: los muebles de cada categoría sobre el piso del showroom.
-        Está lista para recibir la foto real: basta con llenar company.showroom.photoUrl.
+        Carrusel de fotos (company.heroPhotos). La proporción la fija este contenedor, así no hay
+        saltos de contenido mientras cargan. Si ninguna foto carga, se ve la ilustración de los muebles.
       -->
-      <div class="relative overflow-hidden rounded-md border border-line bg-ground">
-        <img
-          v-if="company.showroom.photoUrl"
-          :src="company.showroom.photoUrl"
-          alt="Showroom de Mobiliario de Oficina en San Diego, Carabobo"
-          class="aspect-[2/1] w-full object-cover object-center md:aspect-[5/2] lg:aspect-[16/9]"
-        />
-        <div v-else class="relative aspect-[2/1] md:aspect-[5/2] lg:aspect-[16/9]" aria-hidden="true">
-          <!-- El piso: una franja más clara con su borde como línea de suelo -->
-          <div class="absolute inset-x-0 bottom-0 h-[24%] border-t border-line bg-surface/70" />
-          <!--
-            Las siluetas tienen el piso dibujado en y = 104 de 120: les sobra un 13% abajo.
-            Cada una mide el 24% del ancho, así que ese 13% de su alto (¾ del ancho) es ~2.4% del ancho:
-            el margen negativo las apoya exactamente sobre la línea. Se montan 2.5% por lado sobre la vecina:
-            los dibujos no llenan su lienzo, así que solo se cruzan los márgenes vacíos.
-          -->
-          <div class="absolute inset-x-0 bottom-[24%] -mb-[2.4%] flex items-end justify-center">
-            <CategorySilhouette
-              v-for="slug in VITRINE_SLUGS"
-              :key="slug"
-              :slug="slug"
-              class="-mx-[2.5%] w-[24%] text-ink-muted"
-            />
-          </div>
-        </div>
-        <BaseBadge variant="showroom" class="absolute top-3 left-3">Showroom en San Diego</BaseBadge>
+      <div
+        class="relative aspect-[2/1] overflow-hidden rounded-md border border-line bg-ground md:aspect-[5/2] lg:aspect-[16/9]"
+      >
+        <HeroCarousel :photos="company.heroPhotos" />
+        <!-- Va después del carrusel para quedar encima. Fondo sólido oscuro: se lee sobre cualquier foto. -->
+        <BaseBadge variant="showroom" class="pointer-events-none absolute top-3 left-3 shadow-sm">
+          Showroom en San Diego
+        </BaseBadge>
       </div>
     </div>
   </section>
