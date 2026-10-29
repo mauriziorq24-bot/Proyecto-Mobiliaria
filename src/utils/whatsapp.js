@@ -1,6 +1,5 @@
 import { company } from '../config/empresa'
 import { formatearPrecio } from './formato'
-import { normalizarTelefono } from './telefono'
 
 // Enlace de WhatsApp con un mensaje opcional ya escrito.
 // wa.me abre el chat con el número de la empresa; el texto va codificado en ?text=.
@@ -97,12 +96,13 @@ export function consultarCotizacionUrl(codigoCotizacion) {
 
 // --- Panel de administración: escribirle al cliente, no a la empresa ---
 
-// Chat con el teléfono del cliente. Lo normal es '+58…' (el frontend lo normaliza al enviar), pero
-// si llegara en otro formato se usan sus dígitos tal cual. null si no hay número utilizable.
+// Chat con el teléfono del cliente, de cualquier país. Espera el número en E.164 ('+573001234567'):
+// el panel lo normaliza antes con describirTelefono (src/utils/telefono.js), incluso los guardados
+// en el formato de antes. Este archivo no importa telefono.js a propósito: lo usa toda la tienda
+// (footer, menú) y arrastraría la librería de teléfonos. null si no hay número utilizable.
 export function whatsappClienteUrl(telefono, message = '') {
-  const digitos = (normalizarTelefono(telefono) ?? String(telefono ?? '')).replace(/\D/g, '')
-  if (digitos.length < 10 || digitos.length > 15) return null
-  const base = `https://wa.me/${digitos}`
+  if (!/^\+\d{6,15}$/.test(String(telefono ?? ''))) return null
+  const base = `https://wa.me/${telefono.slice(1)}` // wa.me lo quiere sin el '+'
   return message ? `${base}?text=${encodeURIComponent(message)}` : base
 }
 

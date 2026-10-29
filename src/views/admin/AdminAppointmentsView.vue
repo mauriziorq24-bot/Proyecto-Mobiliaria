@@ -28,6 +28,7 @@ import { cambiarEstadoCita, obtenerCitasAdmin } from '../../services/citaService
 import { FORBIDDEN_MESSAGE, isForbidden } from '../../services/errorMessages'
 import { ahoraEnCaracas, describirDia, formatearFechaHora, formatearHora, formatearRegistro, sumarDias } from '../../utils/fecha'
 import { describirEstado, ESTADOS_CITA, etiquetaTipoAsesoria } from '../../utils/formato'
+import { cargarTelefono, describirTelefono } from '../../utils/telefono'
 import { confirmarCitaUrl } from '../../utils/whatsapp'
 
 // Citas del panel, con dos formas de verlas (?vista=):
@@ -153,10 +154,20 @@ function cuandoRelativo(cita) {
   return ''
 }
 
+// Teléfono del cliente con formato y país ('+57 300 1234567 · Colombia') y en E.164 para tel: y
+// WhatsApp. Los guardados sin código se leen como venezolanos. La librería se carga solo en el
+// panel; mientras llega (o si no carga), se muestra el teléfono tal como vino.
+cargarTelefono()
+const telefonoCliente = computed(() => describirTelefono(seleccionada.value?.telefono))
 const whatsappLink = computed(() => {
   const cita = seleccionada.value
   if (!cita) return null
-  return confirmarCitaUrl({ ...cita, tipo: etiquetaTipoAsesoria(cita.tipoAsesoria), cuando: cuando(cita) })
+  return confirmarCitaUrl({
+    ...cita,
+    telefono: telefonoCliente.value?.e164,
+    tipo: etiquetaTipoAsesoria(cita.tipoAsesoria),
+    cuando: cuando(cita),
+  })
 })
 </script>
 
@@ -450,11 +461,12 @@ const whatsappLink = computed(() => {
                   <Phone class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd>
                     <a
-                      :href="`tel:${seleccionada.telefono}`"
+                      :href="`tel:${telefonoCliente?.e164 ?? seleccionada.telefono}`"
                       class="inline-flex min-h-11 items-center font-semibold text-brand-deep underline-offset-2 hover:underline"
                     >
-                      {{ seleccionada.telefono }}
+                      {{ telefonoCliente?.internacional ?? seleccionada.telefono }}
                     </a>
+                    <span v-if="telefonoCliente?.nombrePais" class="text-ink-muted"> · {{ telefonoCliente.nombrePais }}</span>
                   </dd>
                 </div>
                 <div v-if="seleccionada.email" class="flex min-h-11 items-center gap-3">

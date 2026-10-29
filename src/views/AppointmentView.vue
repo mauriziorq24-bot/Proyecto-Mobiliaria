@@ -7,6 +7,7 @@ import LegalNotice from '../components/legal/LegalNotice.vue'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
+import BasePhoneInput from '../components/ui/BasePhoneInput.vue'
 import { company } from '../config/empresa'
 import { useAsync } from '../composables/useAsync'
 import { useToast } from '../composables/useToast'
@@ -26,7 +27,7 @@ import {
 } from '../utils/fecha'
 import { etiquetaTipoAsesoria, OPCIONES_TIPO_ASESORIA } from '../utils/formato'
 import { isTokenExpired } from '../utils/jwt'
-import { esTelefonoValido } from '../utils/telefono'
+import { PAIS_POR_DEFECTO, validarTelefono } from '../utils/telefono'
 
 // Agendar una visita o asesoría en el showroom (DESIGN.md › Agendar visita).
 // La ruta exige sesión porque POST /api/v1/citas exige token (pendiente 10-quater de API.md).
@@ -46,6 +47,7 @@ const form = reactive({
   nombreCliente: '',
   empresa: '',
   telefono: '',
+  paisTelefono: PAIS_POR_DEFECTO, // 'VE', 'CO'…: el país del selector del teléfono
   email: '',
   notas: '',
 })
@@ -80,8 +82,7 @@ const rules = {
   },
   telefono(value) {
     if (!value.trim()) return 'Escribe un teléfono para confirmar tu visita.'
-    if (!esTelefonoValido(value)) return 'Revisa el teléfono: debe ser venezolano, como 0424-1234567.'
-    return ''
+    return validarTelefono(value, form.paisTelefono)
   },
   email(value) {
     const email = value.trim()
@@ -102,6 +103,12 @@ function validateField(field) {
 function handleBlur(field) {
   if (attempted.value) validateField(field)
 }
+
+// Con otro país, el mismo número puede pasar a ser válido (o dejar de serlo).
+watch(
+  () => form.paisTelefono,
+  () => handleBlur('telefono'),
+)
 
 function focusField(field) {
   if (field === 'fecha') slotPicker.value?.focusDay()
@@ -401,15 +408,13 @@ onBeforeUnmount(() => clearInterval(relojTimer))
           />
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput
+            <BasePhoneInput
               id="cita-telefono"
               v-model="form.telefono"
-              type="tel"
+              v-model:pais="form.paisTelefono"
               label="Teléfono"
-              hint="Fijo o celular, p. ej. 0424-1234567."
+              hint="Fijo o celular. Si es de otro país, elige su código."
               :error="errors.telefono"
-              autocomplete="tel"
-              inputmode="tel"
               @blur="handleBlur('telefono')"
             />
             <BaseInput

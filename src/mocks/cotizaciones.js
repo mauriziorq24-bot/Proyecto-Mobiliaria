@@ -57,9 +57,11 @@ export const MOCK_COTIZACION_FALLA = 'COT-FA11'
 function crearCotizacionesAdmin() {
   return [
     { ...cotizacion({ id: 1, codigo: 'COT-1A2B', nombreCliente: 'Carla Méndez', empresa: 'Consultorio Méndez', fechaCreacion: '2026-10-23T14:12:00', estado: 'PENDIENTE', lineas: [[1, 2]] }), notas: 'Son para la sala de espera. ¿Hacen entregas en Valencia?' },
-    cotizacion({ id: 2, codigo: 'COT-3C4D', nombreCliente: 'Luis Herrera', empresa: null, fechaCreacion: '2026-10-22T10:40:00', estado: 'PENDIENTE', lineas: [[2, 1]] }),
+    // Un cliente de Colombia: el panel lo muestra como '+57 300 1234567 · Colombia'.
+    { ...cotizacion({ id: 2, codigo: 'COT-3C4D', nombreCliente: 'Luis Herrera', empresa: null, fechaCreacion: '2026-10-22T10:40:00', estado: 'PENDIENTE', lineas: [[2, 1]] }), telefono: '+573001234567' },
     cotizacion({ id: 3, codigo: 'COT-5E6F', nombreCliente: 'Barbería El Corte', empresa: 'Barbería El Corte', fechaCreacion: '2026-10-21T16:05:00', estado: 'CONTACTADO', lineas: [[1, 1], [2, 1]] }),
-    cotizacion({ id: 4, codigo: 'COT-7A8B', nombreCliente: 'Ana Rivas', empresa: null, fechaCreacion: '2026-10-20T09:30:00', estado: 'CANCELADA', lineas: [[2, 2]] }),
+    // Un teléfono guardado sin código de país: se lee como venezolano.
+    { ...cotizacion({ id: 4, codigo: 'COT-7A8B', nombreCliente: 'Ana Rivas', empresa: null, fechaCreacion: '2026-10-20T09:30:00', estado: 'CANCELADA', lineas: [[2, 2]] }), telefono: '0414-1234567' },
     { ...cotizacion({ id: 5, codigo: MOCK_COTIZACION_FALLA, nombreCliente: 'Prueba de error', empresa: null, fechaCreacion: '2026-10-19T11:00:00', estado: 'PENDIENTE', lineas: [[1, 1]] }), notas: 'Con mocks, cambiar el estado de esta cotización siempre falla.' },
   ]
 }

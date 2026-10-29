@@ -15,6 +15,7 @@ import { cambiarEstadoCotizacion, obtenerCotizaciones } from '../../services/cot
 import { FORBIDDEN_MESSAGE, isForbidden } from '../../services/errorMessages'
 import { formatearRegistro } from '../../utils/fecha'
 import { describirEstado, ESTADOS_COTIZACION, formatearPrecio } from '../../utils/formato'
+import { cargarTelefono, describirTelefono } from '../../utils/telefono'
 import { responderCotizacionUrl } from '../../utils/whatsapp'
 
 // Cotizaciones del panel: lista (pendientes primero) y detalle de la elegida, en la misma página.
@@ -90,7 +91,14 @@ const lineas = computed(() =>
 )
 // totalUsd lo calcula el backend; si faltara, se suma aquí.
 const total = computed(() => seleccionada.value?.totalUsd ?? lineas.value.reduce((suma, l) => suma + l.subtotal, 0))
-const whatsappLink = computed(() => (seleccionada.value ? responderCotizacionUrl(seleccionada.value) : null))
+// Teléfono del cliente con formato y país ('+57 300 1234567 · Colombia') y en E.164 para tel: y
+// WhatsApp. Los guardados sin código se leen como venezolanos. La librería se carga solo en el
+// panel; mientras llega (o si no carga), se muestra el teléfono tal como vino.
+cargarTelefono()
+const telefonoCliente = computed(() => describirTelefono(seleccionada.value?.telefono))
+const whatsappLink = computed(() =>
+  seleccionada.value ? responderCotizacionUrl({ ...seleccionada.value, telefono: telefonoCliente.value?.e164 }) : null,
+)
 
 // "Actualizar" recarga sin skeleton: sin este aviso, quien usa lector de pantalla no sabe
 // que terminó. El resumen visible no lleva aria-live: se anunciaría con cada cambio de estado.
@@ -306,11 +314,12 @@ function onImageError(event) {
                   <Phone class="size-4 shrink-0 text-ink-muted" aria-hidden="true" />
                   <dd>
                     <a
-                      :href="`tel:${seleccionada.telefono}`"
+                      :href="`tel:${telefonoCliente?.e164 ?? seleccionada.telefono}`"
                       class="inline-flex min-h-11 items-center font-semibold text-brand-deep underline-offset-2 hover:underline"
                     >
-                      {{ seleccionada.telefono }}
+                      {{ telefonoCliente?.internacional ?? seleccionada.telefono }}
                     </a>
+                    <span v-if="telefonoCliente?.nombrePais" class="text-ink-muted"> · {{ telefonoCliente.nombrePais }}</span>
                   </dd>
                 </div>
                 <div v-if="seleccionada.email" class="flex min-h-11 items-center gap-3">

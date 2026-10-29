@@ -418,7 +418,7 @@ Consecuencia: si el frontend usara `new Date(...).toISOString()`, una cita a las
 **Errores:** `400` si falta un campo, si un `productoId` no existe o si la `cantidad` es menor que 1.
 
 - **El frontend nunca envía precios:** el backend los calcula con el `productoId`. El total que ve la persona es referencial.
-- El frontend envía solo los productos que siguen en el catálogo, con cantidades de 1 a 99, y el teléfono en formato `+58…` (como en citas).
+- El frontend envía solo los productos que siguen en el catálogo, con cantidades de 1 a 99, y el teléfono en formato internacional E.164 de cualquier país (`+584141234567`, `+573001234567`), como en citas. El backend guarda `telefono` como `String` (confirmado el 29/10/2026). ⚠️ Pendiente de confirmar: la prueba del 21/10/2026 vio un `400` por "teléfono con formato inválido" en cotizaciones; si esa regla solo acepta `+58`, rechazaría números de otros países.
 - Los campos opcionales vacíos no se envían.
 
 ---

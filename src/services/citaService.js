@@ -11,7 +11,7 @@ import {
 import { aFechaHoraBackend, desdeFechaHoraBackend, esHorarioDisponible } from '../utils/fecha'
 import { ESTADOS_CITA, TIPOS_ASESORIA } from '../utils/formato'
 import { decodeJwtPayload } from '../utils/jwt'
-import { normalizarTelefono } from '../utils/telefono'
+import { cargarTelefono, normalizarTelefono } from '../utils/telefono'
 import api, { getSessionToken } from './api'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
@@ -74,10 +74,12 @@ function normalizarCodigo(codigoCita) {
 const textoOpcional = (texto) => String(texto ?? '').trim() || undefined // undefined no viaja en el JSON
 
 // Datos del formulario → CitaRequest de API.md. Revisa lo que el backend no valida (horario de
-// atención, tipoAsesoria) y normaliza el teléfono. Si algo falla, no se envía nada.
-function armarCitaRequest({ nombreCliente, empresa, telefono, email, fecha, hora, tipoAsesoria, notas }) {
+// atención, tipoAsesoria) y normaliza el teléfono a E.164 ('+584141234567'). Si algo falla, no se
+// envía nada. Sin `paisTelefono` (p. ej. al reprogramar, con el '+58…' ya guardado) se asume Venezuela.
+async function armarCitaRequest({ nombreCliente, empresa, telefono, paisTelefono, email, fecha, hora, tipoAsesoria, notas }) {
   const campos = []
-  const telefonoNormalizado = normalizarTelefono(telefono)
+  await cargarTelefono() // si no carga, normalizarTelefono da null y el teléfono se marca como inválido
+  const telefonoNormalizado = normalizarTelefono(telefono, paisTelefono)
 
   if (!textoOpcional(nombreCliente)) campos.push('nombreCliente')
   if (!telefonoNormalizado) campos.push('telefono')
@@ -103,7 +105,7 @@ function armarCitaRequest({ nombreCliente, empresa, telefono, email, fecha, hora
 // Además de la respuesta devuelve `enviada`, el CitaRequest tal como se envió: es lo que se guarda
 // para reprogramar con PUT (que pide el CitaRequest completo).
 export async function crearCita(datos) {
-  const body = armarCitaRequest(datos)
+  const body = await armarCitaRequest(datos)
   if (useMocks) return fakeDelay({ ...mockCitaCreada(), enviada: body })
 
   try {
@@ -117,7 +119,7 @@ export async function crearCita(datos) {
 // PUT /api/v1/citas/{codigoCita} (exige token) con el mismo CitaRequest → 200 { mensaje }
 export async function modificarCita(codigoCita, datos) {
   const codigo = normalizarCodigo(codigoCita)
-  const body = armarCitaRequest(datos)
+  const body = await armarCitaRequest(datos)
   if (useMocks) {
     if (codigo === CODIGO_INEXISTENTE) throw citaError(ERRORES_CITA.CITA_NO_ENCONTRADA)
     return fakeDelay(mockCitaModificada)

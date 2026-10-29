@@ -7,7 +7,7 @@ import {
 } from '../mocks/cotizaciones'
 import { ESTADOS_COTIZACION } from '../utils/formato'
 import { decodeJwtPayload } from '../utils/jwt'
-import { normalizarTelefono } from '../utils/telefono'
+import { cargarTelefono, normalizarTelefono } from '../utils/telefono'
 import api, { getSessionToken } from './api'
 
 // Las variables de entorno siempre llegan como texto: hay que comparar con 'true'.
@@ -43,9 +43,11 @@ const textoOpcional = (texto) => String(texto ?? '').trim() || undefined // unde
 
 // Datos del formulario + items del store → CotizacionRequest de API.md.
 // Nunca se envían precios: el backend los calcula con el productoId.
-function armarCotizacionRequest({ nombreCliente, empresa, telefono, email, notas }, items) {
+// El teléfono va en E.164 ('+573001234567'), con el país del selector.
+async function armarCotizacionRequest({ nombreCliente, empresa, telefono, paisTelefono, email, notas }, items) {
   const campos = []
-  const telefonoNormalizado = normalizarTelefono(telefono)
+  await cargarTelefono() // si no carga, normalizarTelefono da null y el teléfono se marca como inválido
+  const telefonoNormalizado = normalizarTelefono(telefono, paisTelefono)
 
   if (!textoOpcional(nombreCliente)) campos.push('nombreCliente')
   if (!telefonoNormalizado) campos.push('telefono')
@@ -68,7 +70,7 @@ function armarCotizacionRequest({ nombreCliente, empresa, telefono, email, notas
 // Además de la respuesta devuelve `enviada`, el body tal como se envió.
 // Errores: DATOS_INVALIDOS (con `campos` si lo detectó antes de enviar) o el error de axios tal cual.
 export async function solicitarCotizacion(datos, items) {
-  const body = armarCotizacionRequest(datos, items)
+  const body = await armarCotizacionRequest(datos, items)
   if (useMocks) return fakeDelay({ ...mockCotizacionCreada(), enviada: body })
 
   try {

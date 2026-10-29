@@ -9,6 +9,7 @@ import BaseButton from '../components/ui/BaseButton.vue'
 import BaseConfirmDialog from '../components/ui/BaseConfirmDialog.vue'
 import BaseFormError from '../components/ui/BaseFormError.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
+import BasePhoneInput from '../components/ui/BasePhoneInput.vue'
 import { company } from '../config/empresa'
 import { useAsync } from '../composables/useAsync'
 import { useToast } from '../composables/useToast'
@@ -20,7 +21,7 @@ import { useCotizacionStore } from '../stores/cotizacion'
 import { guardarCotizacionEnviada } from '../utils/cotizacionesEnviadas'
 import { formatearPrecio } from '../utils/formato'
 import { setPageTitle } from '../utils/pageTitle'
-import { esTelefonoValido } from '../utils/telefono'
+import { PAIS_POR_DEFECTO, validarTelefono } from '../utils/telefono'
 import { cotizacionUrl } from '../utils/whatsapp'
 
 // Mi cotización (el "carrito"): revisar la lista y enviarla (DESIGN.md › Mi cotización).
@@ -171,7 +172,8 @@ function vaciar() {
 // Mismo criterio que el formulario de citas: el backend no revisa el formato del correo.
 const EMAIL_FORMAT = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const form = reactive({ nombreCliente: '', empresa: '', telefono: '', email: '', notas: '' })
+// paisTelefono: el país del selector del teléfono ('VE', 'CO'…).
+const form = reactive({ nombreCliente: '', empresa: '', telefono: '', paisTelefono: PAIS_POR_DEFECTO, email: '', notas: '' })
 const errors = reactive({ nombreCliente: '', telefono: '', email: '' })
 
 // TODO: cuando exista GET /auth/v1/me (pendiente 5 de API.md), completar nombre y correo con los datos
@@ -186,8 +188,7 @@ const rules = {
   },
   telefono(value) {
     if (!value.trim()) return 'Escribe un teléfono para enviarte la cotización.'
-    if (!esTelefonoValido(value)) return 'Revisa el teléfono: debe ser venezolano, como 0424-1234567.'
-    return ''
+    return validarTelefono(value, form.paisTelefono)
   },
   email(value) {
     const email = value.trim()
@@ -208,6 +209,12 @@ function validateField(field) {
 function handleBlur(field) {
   if (attempted.value) validateField(field)
 }
+
+// Con otro país, el mismo número puede pasar a ser válido (o dejar de serlo).
+watch(
+  () => form.paisTelefono,
+  () => handleBlur('telefono'),
+)
 
 // "Solicitar cotización" del resumen: lleva al formulario y pone el foco en el primer campo.
 const solicitud = useTemplateRef('solicitud')
@@ -556,15 +563,13 @@ async function handleSubmit() {
               autocomplete="organization"
             />
             <div class="grid gap-4 sm:grid-cols-2">
-              <BaseInput
+              <BasePhoneInput
                 id="cot-telefono"
                 v-model="form.telefono"
-                type="tel"
+                v-model:pais="form.paisTelefono"
                 label="Teléfono"
-                hint="Fijo o celular, p. ej. 0424-1234567."
+                hint="Fijo o celular. Si es de otro país, elige su código."
                 :error="errors.telefono"
-                autocomplete="tel"
-                inputmode="tel"
                 @blur="handleBlur('telefono')"
               />
               <BaseInput
